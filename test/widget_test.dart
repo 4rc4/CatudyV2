@@ -1,0 +1,120 @@
+import 'package:catudy_app/app/catudy_app.dart';
+import 'package:catudy_app/app/demo/catudy_demo_store.dart';
+import 'package:catudy_app/shared/widgets/floating_mascot.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() {
+  testWidgets('renders Catudy shell with bottom navigation', (tester) async {
+    await _pumpCatudy(tester);
+
+    expect(find.text('Odak Zamanı'), findsOneWidget);
+    expect(find.byIcon(Icons.home_rounded), findsWidgets);
+    expect(find.byIcon(Icons.query_stats_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.calendar_month_outlined), findsOneWidget);
+    expect(find.text('Home'), findsNothing);
+    expect(find.text('Stats'), findsNothing);
+    expect(find.text('Calendar'), findsNothing);
+    expect(find.text('Pet'), findsWidgets);
+    expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);
+    expect(find.text('Profile'), findsNothing);
+  });
+
+  testWidgets('renders Stats range controls', (tester) async {
+    await _pumpCatudy(tester, initialLocation: '/stats');
+
+    expect(find.text('Kategori Dağılımı'), findsOneWidget);
+    expect(find.text('Hafta'), findsOneWidget);
+    expect(find.text('Ay'), findsOneWidget);
+    expect(find.text('Tümü'), findsOneWidget);
+  });
+
+  testWidgets('renders category flow with large add toggle', (tester) async {
+    await _pumpCatudy(tester, initialLocation: '/focus/category');
+
+    expect(find.text('Kategori Seç'), findsOneWidget);
+    expect(find.text('Yeni kategori ekle'), findsOneWidget);
+
+    await tester.tap(find.text('Yeni kategori ekle'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Özel kategori'), findsOneWidget);
+  });
+
+  testWidgets('renders calendar month and selected day details', (
+    tester,
+  ) async {
+    await _pumpCatudy(tester, initialLocation: '/calendar');
+
+    expect(find.text('Takvim'), findsOneWidget);
+    expect(find.text('Manuel Ekle'), findsOneWidget);
+    expect(find.text('Planlı Hatırlatma'), findsOneWidget);
+    expect(find.text('Pzt'), findsOneWidget);
+  });
+
+  testWidgets('renders pet room, shop, inventory, and profile pages', (
+    tester,
+  ) async {
+    await _pumpCatudy(tester, initialLocation: '/pet-room');
+    expect(find.text('Pet Odası'), findsOneWidget);
+    expect(find.text('Mochi Odası'), findsOneWidget);
+    expect(find.byType(FloatingMascot), findsOneWidget);
+    expect(find.text('Mağaza'), findsOneWidget);
+    expect(find.text('Envanter'), findsOneWidget);
+
+    await _pumpCatudy(tester, initialLocation: '/shop');
+    expect(find.text('Mağaza'), findsOneWidget);
+
+    await _pumpCatudy(tester, initialLocation: '/inventory');
+    expect(find.text('Envanter'), findsOneWidget);
+
+    await _pumpCatudy(tester, initialLocation: '/profile');
+    expect(find.text('Profil'), findsOneWidget);
+    expect(find.text('Takılı Eşyalar'), findsOneWidget);
+    expect(find.text('Haftalık Özet'), findsOneWidget);
+  });
+
+  testWidgets('renders settings with language support', (tester) async {
+    await _pumpCatudy(tester, initialLocation: '/settings');
+
+    expect(find.text('Ayarlar'), findsOneWidget);
+    expect(find.text('Dil'), findsOneWidget);
+    expect(find.text('Türkçe'), findsOneWidget);
+  });
+
+  testWidgets('switches visible settings copy to English', (tester) async {
+    await _pumpCatudy(tester, initialLocation: '/settings');
+
+    await tester.tap(find.text('Türkçe'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('English').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
+    expect(find.text('Save settings'), findsOneWidget);
+  });
+}
+
+Future<void> _pumpCatudy(
+  WidgetTester tester, {
+  String initialLocation = '/',
+}) async {
+  SharedPreferences.setMockInitialValues({});
+  catudyDemoStore.updateSettings(
+    name: 'Guest Cat',
+    apiUrl: 'http://127.0.0.1:5099',
+    dnd: true,
+    petNotifications: true,
+    language: 'tr',
+    themeMode: 'system',
+  );
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump(const Duration(milliseconds: 16));
+  await tester.pumpWidget(
+    ProviderScope(child: CatudyApp(initialLocation: initialLocation)),
+  );
+  await tester.pump(const Duration(milliseconds: 800));
+}
