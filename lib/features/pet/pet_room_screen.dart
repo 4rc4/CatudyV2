@@ -105,6 +105,8 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             bedItem: bedItem,
             decorItem: decorItem,
             shelfItem: shelfItem,
+            maintenanceTitle: store.t('pet.roomMaintenanceTitle'),
+            maintenanceBody: store.t('pet.roomMaintenanceBody'),
             onSettings: () => context.go('/settings'),
             onInfo: () => showPetIntroTour(context),
             onShop: () => context.go('/shop'),
@@ -132,6 +134,8 @@ class _RoomScene extends StatelessWidget {
     required this.bedItem,
     required this.decorItem,
     required this.shelfItem,
+    required this.maintenanceTitle,
+    required this.maintenanceBody,
     required this.onSettings,
     required this.onInfo,
     required this.onShop,
@@ -152,6 +156,8 @@ class _RoomScene extends StatelessWidget {
   final ShopItem? bedItem;
   final ShopItem? decorItem;
   final ShopItem? shelfItem;
+  final String maintenanceTitle;
+  final String maintenanceBody;
   final VoidCallback onSettings;
   final VoidCallback onInfo;
   final VoidCallback onShop;
@@ -235,6 +241,15 @@ class _RoomScene extends StatelessWidget {
                   rewardBoostPercent: rewardBoostPercent,
                   onSettings: onSettings,
                   onInfo: onInfo,
+                ),
+              ),
+              Positioned(
+                left: horizontalInset,
+                right: horizontalInset,
+                top: (roomHeight * 0.108).clamp(78.0, 98.0).toDouble(),
+                child: _RoomMaintenanceBanner(
+                  title: maintenanceTitle,
+                  body: maintenanceBody,
                 ),
               ),
               Positioned(
@@ -430,6 +445,87 @@ class _RoomBackground extends StatelessWidget {
               color: (dark ? Colors.white : CatudyColors.violet).withValues(
                 alpha: dark ? 0.08 : 0.10,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoomMaintenanceBanner extends StatelessWidget {
+  const _RoomMaintenanceBanner({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = CatudyColors.isDark(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context).withValues(alpha: 0.74),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: (dark ? CatudyColors.yellow : CatudyColors.coral).withValues(
+            alpha: 0.30,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (dark ? Colors.black : CatudyColors.violet).withValues(
+              alpha: dark ? 0.20 : 0.10,
+            ),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: CatudyColors.yellow.withValues(alpha: dark ? 0.22 : 0.34),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.construction_rounded,
+              color: CatudyColors.coral,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: CatudyColors.blueFor(context),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontSize: 11,
+                    height: 1.16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

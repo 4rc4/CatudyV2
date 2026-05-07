@@ -1,13 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
-class DurationScreen extends StatelessWidget {
+class DurationScreen extends StatefulWidget {
   const DurationScreen({super.key});
+
+  @override
+  State<DurationScreen> createState() => _DurationScreenState();
+}
+
+class _DurationScreenState extends State<DurationScreen> {
+  late final TextEditingController _minutesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _minutesController = TextEditingController(
+      text: catudyDemoStore.selectedDurationMinutes.toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _minutesController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +72,54 @@ class DurationScreen extends StatelessWidget {
             childAspectRatio: 1.55,
             children: [
               for (final minutes in store.durations)
-                _DurationCard(minutes: minutes),
+                _DurationCard(
+                  minutes: minutes,
+                  onSelected: () => _selectDuration(store, minutes),
+                ),
             ],
+          ),
+          const SizedBox(height: 14),
+          CatudyPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  store.t('focus.customDuration'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _minutesController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    labelText: store.t('focus.customMinutes'),
+                    prefixIcon: const Icon(Icons.edit_calendar_rounded),
+                    border: const OutlineInputBorder(),
+                  ),
+                  onChanged: (value) {
+                    final minutes = int.tryParse(value);
+                    if (minutes == null || minutes <= 0) {
+                      return;
+                    }
+                    store.selectDuration(minutes.clamp(1, 240).toInt());
+                  },
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  store.t('focus.selectedDuration', {
+                    'minutes': store.selectedDurationMinutes,
+                  }),
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
           SizedBox(
@@ -68,12 +137,26 @@ class DurationScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _selectDuration(CatudyDemoStore store, int minutes) {
+    final normalized = minutes.clamp(1, 240).toInt();
+    store.selectDuration(normalized);
+    final text = '$normalized';
+    if (_minutesController.text == text) {
+      return;
+    }
+    _minutesController.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
 }
 
 class _DurationCard extends StatelessWidget {
-  const _DurationCard({required this.minutes});
+  const _DurationCard({required this.minutes, required this.onSelected});
 
   final int minutes;
+  final VoidCallback onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +164,7 @@ class _DurationCard extends StatelessWidget {
       builder: (context, store) {
         final selected = store.selectedDurationMinutes == minutes;
         return InkWell(
-          onTap: () => store.selectDuration(minutes),
+          onTap: onSelected,
           borderRadius: BorderRadius.circular(8),
           child: CatudyPanel(
             color: selected ? CatudyColors.lavenderSoft : CatudyColors.surface,

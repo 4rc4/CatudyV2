@@ -57,6 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     labelText: store.t('settings.displayName'),
                     border: const OutlineInputBorder(),
                   ),
+                  onChanged: (_) => _save(store),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -115,24 +116,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 8),
                 SwitchListTile(
                   value: _dnd,
-                  onChanged: (value) => setState(() => _dnd = value),
+                  onChanged: (value) {
+                    setState(() => _dnd = value);
+                    _save(store);
+                  },
                   title: Text(store.t('settings.dnd')),
                 ),
                 SwitchListTile(
                   value: _notifications,
-                  onChanged: (value) => setState(() => _notifications = value),
-                  title: Text(store.t('settings.petNotifications')),
-                ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: () {
+                  onChanged: (value) {
+                    setState(() => _notifications = value);
                     _save(store);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(store.t('settings.saved'))),
-                    );
                   },
-                  icon: const Icon(Icons.save_rounded),
-                  label: Text(store.t('settings.save')),
+                  title: Text(store.t('settings.petNotifications')),
                 ),
               ],
             ),

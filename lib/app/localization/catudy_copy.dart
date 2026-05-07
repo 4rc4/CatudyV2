@@ -122,11 +122,15 @@ class CatudyCopy {
     'focus.durationTitle': 'Süre Seç',
     'focus.durationInfo':
         'Odak süresini seç. Tamamlandığında ödül, pet durumu, istatistik ve takvim güncellenir.',
+    'focus.customDuration': 'Özel süre',
+    'focus.customMinutes': 'Dakika',
+    'focus.selectedDuration': 'Seçili süre: {minutes} dakika',
     'focus.startTimer': 'Timer başlat',
     'focus.start': 'Odak başlat',
     'focus.timerTitle': 'Odak Timer',
     'focus.lobbyTimerTitle': 'Lobi Timer',
     'focus.noActiveSession': 'Aktif seans yok. Yeni bir odak seansı başlat.',
+    'focus.endFocus': 'Odağı Bitir',
     'focus.restoreInfo': 'Seans zaman damgasından geri yüklenir.',
     'focus.resultTitle': 'Seans Sonucu',
     'focus.resultEmpty': 'Henüz sonuç yok',
@@ -149,6 +153,9 @@ class CatudyCopy {
     'pet.mood': 'Mutluluk',
     'pet.energy': 'Enerji',
     'pet.roomBoost': 'Oda boostu',
+    'pet.roomMaintenanceTitle': 'Oda yenileniyor',
+    'pet.roomMaintenanceBody':
+        'Bu alan şu an inşaat halinde; bazı eşyalar yerinden oynayabilir.',
 
     'shop.title': 'Mağaza',
     'shop.petUnlocks': 'Pet Kilitleri',
@@ -411,11 +418,15 @@ class CatudyCopy {
     'focus.durationTitle': 'Choose Duration',
     'focus.durationInfo':
         'Choose focus duration. Rewards, pet state, stats, and calendar update when it is complete.',
+    'focus.customDuration': 'Custom duration',
+    'focus.customMinutes': 'Minutes',
+    'focus.selectedDuration': 'Selected duration: {minutes} minutes',
     'focus.startTimer': 'Start timer',
     'focus.start': 'Start focus',
     'focus.timerTitle': 'Focus Timer',
     'focus.lobbyTimerTitle': 'Lobby Timer',
     'focus.noActiveSession': 'No active session. Start a new focus session.',
+    'focus.endFocus': 'End Focus',
     'focus.restoreInfo': 'Session restores from its timestamp.',
     'focus.resultTitle': 'Session Result',
     'focus.resultEmpty': 'No result yet',
@@ -438,6 +449,9 @@ class CatudyCopy {
     'pet.mood': 'Happiness',
     'pet.energy': 'Energy',
     'pet.roomBoost': 'Room boost',
+    'pet.roomMaintenanceTitle': 'Room refresh in progress',
+    'pet.roomMaintenanceBody':
+        'This room is under construction, so a few details may shift for now.',
 
     'shop.title': 'Shop',
     'shop.petUnlocks': 'Pet Unlocks',

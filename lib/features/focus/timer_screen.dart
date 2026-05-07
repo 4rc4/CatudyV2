@@ -100,17 +100,17 @@ class _TimerScreenState extends State<TimerScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 22),
-                  Text(
-                    session == null
-                        ? store.t('focus.noActiveSession')
-                        : store.t('focus.restoreInfo'),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: CatudyColors.muted,
-                      height: 1.45,
+                  if (session == null) ...[
+                    const SizedBox(height: 22),
+                    Text(
+                      store.t('focus.noActiveSession'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: CatudyColors.muted,
+                        height: 1.45,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -137,7 +137,7 @@ class _TimerScreenState extends State<TimerScreen> {
                     context.go('/focus/result');
                   },
                   icon: const Icon(Icons.check_rounded),
-                  label: Text(store.t('common.complete')),
+                  label: Text(store.t('focus.endFocus')),
                 ),
               ),
           ],

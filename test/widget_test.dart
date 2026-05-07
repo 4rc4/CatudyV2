@@ -94,7 +94,8 @@ void main() {
 
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Language'), findsOneWidget);
-    expect(find.text('Save settings'), findsOneWidget);
+    expect(find.text('Pet notifications'), findsOneWidget);
+    expect(find.text('Save settings'), findsNothing);
   });
 }
 

@@ -91,11 +91,13 @@ class CatudyInfoBubble {
 
   static double _topFor(BuildContext context, Offset anchor) {
     final height = MediaQuery.sizeOf(context).height;
-    final preferred = anchor.dy + 12;
-    if (preferred > height - 150) {
-      return (anchor.dy - 132).clamp(14, height - 150).toDouble();
+    const bubbleEstimate = 172.0;
+    const gap = 12.0;
+    final preferredAbove = anchor.dy - bubbleEstimate - gap;
+    if (preferredAbove >= 14) {
+      return preferredAbove.clamp(14, height - bubbleEstimate - 14).toDouble();
     }
-    return preferred.clamp(14, height - 150).toDouble();
+    return (anchor.dy + gap).clamp(14, height - bubbleEstimate - 14).toDouble();
   }
 
   static void _dismiss(ValueNotifier<bool> visible, OverlayEntry entry) {
