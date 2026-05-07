@@ -6,6 +6,7 @@ import 'app/catudy_app.dart';
 import 'app/demo/catudy_demo_store.dart';
 import 'app/notifications/catudy_notification_service.dart';
 import 'app/online/catudy_auth_service.dart';
+import 'app/online/catudy_leaderboard_service.dart';
 import 'app/online/catudy_lobby_service.dart';
 
 const _supabaseUrl = String.fromEnvironment('CATUDY_SUPABASE_URL');
@@ -34,6 +35,9 @@ Future<void> _initializeOnlineLobby() async {
     );
     catudyDemoStore.attachLobbyService(
       CatudySupabaseLobbyService(Supabase.instance.client),
+    );
+    catudyDemoStore.attachLeaderboardService(
+      CatudyLeaderboardService(Supabase.instance.client),
     );
   } catch (error) {
     debugPrint('Catudy Supabase initialization failed: $error');

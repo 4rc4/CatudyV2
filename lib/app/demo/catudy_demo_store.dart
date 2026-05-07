@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../localization/catudy_copy.dart';
 import '../online/catudy_auth_service.dart';
+import '../online/catudy_leaderboard_service.dart';
 import '../online/catudy_lobby_service.dart';
 import '../storage/catudy_local_storage.dart';
 import '../theme/catudy_colors.dart';
@@ -242,6 +243,7 @@ class FocusRecommendation {
 
 class LeaderboardProfile {
   const LeaderboardProfile({
+    required this.userId,
     required this.name,
     required this.petId,
     required this.points,
@@ -250,6 +252,7 @@ class LeaderboardProfile {
     required this.currentUser,
   });
 
+  final String userId;
   final String name;
   final String petId;
   final int points;
@@ -267,13 +270,18 @@ class CatudyDemoStore extends ChangeNotifier {
   final CatudyLocalStorage _storage;
   CatudyAuthService? _authService;
   CatudySupabaseLobbyService? _lobbyService;
+  CatudyLeaderboardService? _leaderboardService;
   StreamSubscription<CatudyAuthSession?>? _authSubscription;
   StreamSubscription<CatudyOnlineLobby>? _onlineLobbySubscription;
   StreamSubscription<List<CatudyOnlineLobbyMember>>? _onlineMembersSubscription;
+  StreamSubscription<List<CatudyOnlineLeaderboardProfile>>?
+  _leaderboardSubscription;
   Future<void>? _loadFuture;
   bool _loaded = false;
   bool _restoredCompletedSession = false;
   List<LobbyMember>? _onlineLobbyMembers;
+  List<LeaderboardProfile>? _onlineLeaderboardProfiles;
+  Timer? _leaderboardSyncTimer;
 
   final categories = <FocusCategory>[];
   final durations = <int>[15, 25, 40, 60];
@@ -348,7 +356,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'common',
       accent: CatudyColors.teal,
       icon: Icons.auto_stories_rounded,
-      assetPath: 'assets/room/generated/roomfit_soft_study_nook.png',
+      assetPath: 'assets/room/soft_study_nook_v2.png',
     ),
     const ShopItem(
       id: 'moonlit_study_nook',
@@ -359,7 +367,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'rare',
       accent: CatudyColors.violet,
       icon: Icons.lightbulb_rounded,
-      assetPath: 'assets/room/generated/roomfit_moonlit_study_nook.png',
+      assetPath: 'assets/room/moonlit_study_nook_v2.png',
     ),
     const ShopItem(
       id: 'cloud_nap_bed',
@@ -370,7 +378,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'common',
       accent: CatudyColors.lavender,
       icon: Icons.bed_rounded,
-      assetPath: 'assets/room/generated/roomfit_cloud_nap_bed.png',
+      assetPath: 'assets/room/cloud_nap_bed_v2.png',
     ),
     const ShopItem(
       id: 'warm_den_bed',
@@ -381,7 +389,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'rare',
       accent: CatudyColors.coral,
       icon: Icons.weekend_rounded,
-      assetPath: 'assets/room/generated/roomfit_warm_den_bed.png',
+      assetPath: 'assets/room/warm_den_bed_v2.png',
     ),
     const ShopItem(
       id: 'glow_lantern',
@@ -392,7 +400,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'common',
       accent: CatudyColors.yellow,
       icon: Icons.emoji_objects_rounded,
-      assetPath: 'assets/room/generated/roomfit_glow_lantern.png',
+      assetPath: 'assets/room/glow_lantern_v2.png',
     ),
     const ShopItem(
       id: 'tiny_library_shelf',
@@ -403,7 +411,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'rare',
       accent: CatudyColors.tealDark,
       icon: Icons.menu_book_rounded,
-      assetPath: 'assets/room/generated/roomfit_tiny_library_shelf.png',
+      assetPath: 'assets/room/tiny_library_shelf_v2.png',
     ),
   ];
 
@@ -441,6 +449,8 @@ class CatudyDemoStore extends ChangeNotifier {
   FocusRecord? lastResult;
   DateTime selectedCalendarDate = DateTime.now();
   String selectedPetId = 'mochi';
+  String petName = 'Mochi';
+  bool petNameChosen = false;
   String profileAvatarId = 'catudy';
   String? customProfileImageBase64;
   String? equippedPetItemId = 'violet_collar';
@@ -542,6 +552,22 @@ class CatudyDemoStore extends ChangeNotifier {
     orElse: () => unlockablePets.first,
   );
 
+  String get petDisplayName {
+    final clean = petName.trim();
+    return clean.isEmpty ? selectedPet.name : clean;
+  }
+
+  List<String> get petNameSuggestions {
+    final base = selectedPet.name;
+    final localized = languageCode == 'en'
+        ? const ['Nova', 'Mochi', 'Pip']
+        : const ['Mochi', 'Pamuk', 'Pati'];
+    return [
+      base,
+      ...localized.where((name) => name.toLowerCase() != base.toLowerCase()),
+    ].take(3).toList();
+  }
+
   FocusRecommendation get focusRecommendation {
     final records = history
         .where((item) => !item.manual && item.minutes > 0)
@@ -594,42 +620,42 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   List<LeaderboardProfile> get leaderboardProfiles {
-    final profiles = <LeaderboardProfile>[
-      LeaderboardProfile(
-        name: displayName,
-        petId: selectedPetId,
-        points: focusPoints,
-        totalMinutes: totalFocusMinutes,
-        streakDays: streakDays,
-        currentUser: true,
-      ),
-      const LeaderboardProfile(
-        name: 'Arda',
-        petId: 'miso',
-        points: 1840,
-        totalMinutes: 920,
-        streakDays: 6,
-        currentUser: false,
-      ),
-      const LeaderboardProfile(
-        name: 'Emre',
-        petId: 'luna',
-        points: 1360,
-        totalMinutes: 720,
-        streakDays: 4,
-        currentUser: false,
-      ),
-      const LeaderboardProfile(
-        name: 'Doganer',
-        petId: 'mochi',
-        points: 980,
-        totalMinutes: 520,
-        streakDays: 3,
-        currentUser: false,
-      ),
-    ];
+    final currentId = _currentLeaderboardUserId;
+    final online = _onlineLeaderboardProfiles;
+    final profiles = online == null || online.isEmpty
+        ? <LeaderboardProfile>[_localLeaderboardProfile(currentId)]
+        : <LeaderboardProfile>[
+            for (final profile in online)
+              LeaderboardProfile(
+                userId: profile.userId,
+                name: profile.name,
+                petId: profile.petId,
+                points: profile.points,
+                totalMinutes: profile.totalMinutes,
+                streakDays: profile.streakDays,
+                currentUser: profile.userId == currentId,
+              ),
+          ];
+    if (!profiles.any((profile) => profile.userId == currentId)) {
+      profiles.add(_localLeaderboardProfile(currentId));
+    }
     profiles.sort((a, b) => b.points.compareTo(a.points));
     return profiles;
+  }
+
+  String get _currentLeaderboardUserId =>
+      authUserId ?? _leaderboardService?.currentUserId ?? 'local';
+
+  LeaderboardProfile _localLeaderboardProfile(String userId) {
+    return LeaderboardProfile(
+      userId: userId,
+      name: displayName,
+      petId: selectedPetId,
+      points: focusPoints,
+      totalMinutes: totalFocusMinutes,
+      streakDays: streakDays,
+      currentUser: true,
+    );
   }
 
   FocusCategory get favoriteCategory {
@@ -707,6 +733,35 @@ class CatudyDemoStore extends ChangeNotifier {
     offlineMode = false;
     notifyListeners();
     unawaited(_save());
+  }
+
+  void attachLeaderboardService(CatudyLeaderboardService service) {
+    _leaderboardService = service;
+    unawaited(_leaderboardSubscription?.cancel());
+    _leaderboardSubscription = service.watchTopProfiles().listen(
+      (profiles) {
+        final currentId = _currentLeaderboardUserId;
+        _onlineLeaderboardProfiles = profiles
+            .map(
+              (profile) => LeaderboardProfile(
+                userId: profile.userId,
+                name: profile.displayName,
+                petId: profile.petId,
+                points: profile.points,
+                totalMinutes: profile.totalMinutes,
+                streakDays: profile.streakDays,
+                currentUser: profile.userId == currentId,
+              ),
+            )
+            .toList();
+        notifyListeners();
+      },
+      onError: (_) {
+        _onlineLeaderboardProfiles = null;
+        notifyListeners();
+      },
+    );
+    _scheduleLeaderboardSync(immediate: true);
   }
 
   String? consumeInitialRestoreRoute() {
@@ -1336,6 +1391,13 @@ class CatudyDemoStore extends ChangeNotifier {
     _commit();
   }
 
+  void updatePetName(String name) {
+    final cleanName = name.trim();
+    petName = cleanName.isEmpty ? selectedPet.name : cleanName;
+    petNameChosen = true;
+    _commit();
+  }
+
   void updateSettings({
     required String name,
     required String apiUrl,
@@ -1425,6 +1487,35 @@ class CatudyDemoStore extends ChangeNotifier {
   void _commit() {
     notifyListeners();
     unawaited(_save());
+    _scheduleLeaderboardSync();
+  }
+
+  void _scheduleLeaderboardSync({bool immediate = false}) {
+    final service = _leaderboardService;
+    if (service == null) {
+      return;
+    }
+    _leaderboardSyncTimer?.cancel();
+    _leaderboardSyncTimer = Timer(
+      immediate ? Duration.zero : const Duration(seconds: 2),
+      () {
+        unawaited(
+          service
+              .upsertCurrentProfile(
+                displayName: displayName,
+                petId: selectedPetId,
+                points: focusPoints,
+                totalMinutes: totalFocusMinutes,
+                streakDays: streakDays,
+              )
+              .catchError((Object _) {
+                _onlineLeaderboardProfiles = null;
+                notifyListeners();
+                return '';
+              }),
+        );
+      },
+    );
   }
 
   Future<void> _save() async {
@@ -1544,10 +1635,13 @@ class CatudyDemoStore extends ChangeNotifier {
     lobbyError = null;
     localBreakVote = null;
     _onlineLobbyMembers = null;
+    _onlineLeaderboardProfiles = null;
     activeSession = null;
     lastResult = null;
     selectedCalendarDate = DateTime.now();
     selectedPetId = 'mochi';
+    petName = 'Mochi';
+    petNameChosen = false;
     profileAvatarId = 'catudy';
     customProfileImageBase64 = null;
     equippedPetItemId = 'violet_collar';
@@ -1628,6 +1722,8 @@ class CatudyDemoStore extends ChangeNotifier {
     if (!unlockedPetIds.contains(selectedPetId)) {
       selectedPetId = 'mochi';
     }
+    petName = _readString(json, 'petName', selectedPet.name);
+    petNameChosen = _readBool(json, 'petNameChosen', false);
     profileAvatarId = _readString(json, 'profileAvatarId', 'catudy');
     customProfileImageBase64 = _readNullableString(
       json,
@@ -1708,6 +1804,8 @@ class CatudyDemoStore extends ChangeNotifier {
     'ownedItems': ownedItems.toList(),
     'unlockedPetIds': unlockedPetIds.toList(),
     'selectedPetId': selectedPetId,
+    'petName': petName,
+    'petNameChosen': petNameChosen,
     'profileAvatarId': profileAvatarId,
     'customProfileImageBase64': customProfileImageBase64,
     'equippedPetItemId': equippedPetItemId,

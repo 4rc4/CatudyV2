@@ -23,6 +23,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
   late final int _dialogueIndex;
   Timer? _greetingTimer;
   bool _showGreeting = true;
+  bool _petNameDialogOpen = false;
 
   static const _dialoguesTr = [
     'Burada olduğunu bilmiyordum! Odayı biraz daha güzelleştirelim mi?',
@@ -75,6 +76,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
   Widget build(BuildContext context) {
     return StoreBuilder(
       builder: (context, store) {
+        _schedulePetNameDialog(context, store);
         final equippedItem = store.equippedPetItemId == null
             ? null
             : store.shopItemById(store.equippedPetItemId!);
@@ -91,7 +93,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
 
         return SizedBox.expand(
           child: _RoomScene(
-            petName: store.selectedPet.name,
+            petName: store.petDisplayName,
             equipped: equipped,
             dialogue: dialogue,
             showGreeting: _showGreeting,
@@ -115,6 +117,111 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
         );
       },
     );
+  }
+
+  void _schedulePetNameDialog(BuildContext context, CatudyDemoStore store) {
+    if (store.petNameChosen || _petNameDialogOpen) {
+      return;
+    }
+    _petNameDialogOpen = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || store.petNameChosen) {
+        _petNameDialogOpen = false;
+        return;
+      }
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => _PetNameDialog(store: store),
+      );
+      if (mounted) {
+        setState(() => _petNameDialogOpen = false);
+      } else {
+        _petNameDialogOpen = false;
+      }
+    });
+  }
+}
+
+class _PetNameDialog extends StatefulWidget {
+  const _PetNameDialog({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  State<_PetNameDialog> createState() => _PetNameDialogState();
+}
+
+class _PetNameDialogState extends State<_PetNameDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: widget.store.petNameSuggestions.first,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = widget.store;
+    return AlertDialog(
+      title: Text(store.t('pet.nameDialogTitle')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            store.t('pet.nameDialogBody'),
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(labelText: store.t('pet.nameField')),
+            onSubmitted: (_) => _save(),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final name in store.petNameSuggestions)
+                ChoiceChip(
+                  label: Text(name),
+                  selected: _controller.text.trim() == name,
+                  onSelected: (_) => setState(() {
+                    _controller.text = name;
+                    _controller.selection = TextSelection.collapsed(
+                      offset: _controller.text.length,
+                    );
+                  }),
+                ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        FilledButton(onPressed: _save, child: Text(store.t('pet.nameSave'))),
+      ],
+    );
+  }
+
+  void _save() {
+    widget.store.updatePetName(_controller.text);
+    Navigator.of(context).pop();
   }
 }
 
@@ -165,8 +272,6 @@ class _RoomScene extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = CatudyColors.isDark(context);
-
     return ClipRect(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -176,34 +281,34 @@ class _RoomScene extends StatelessWidget {
           final roomHeight = constraints.maxHeight.isFinite
               ? constraints.maxHeight
               : 760.0;
-          final wallBottom = roomHeight * 0.55;
-          final controlsReserve = (roomHeight * 0.23)
-              .clamp(178.0, 202.0)
+          final wallBottom = roomHeight * 0.56;
+          final controlsReserve = (roomHeight * 0.25)
+              .clamp(188.0, 220.0)
               .toDouble();
           final sceneBottom = roomHeight - controlsReserve;
-          final floorTop = wallBottom + 4;
-          final floorItemBottom = sceneBottom - 8;
+          final floorTop = wallBottom + 8;
+          final floorItemBottom = sceneBottom - 12;
           final horizontalInset = (roomWidth * 0.06)
               .clamp(18.0, 28.0)
               .toDouble();
-          final shelfWidth = (roomWidth * 0.31).clamp(126.0, 158.0).toDouble();
-          final shelfHeight = shelfWidth * 1.20;
-          final windowWidth = (roomWidth * 0.30).clamp(130.0, 160.0).toDouble();
-          final windowHeight = windowWidth * 0.78;
-          final lanternWidth = (roomWidth * 0.20).clamp(74.0, 104.0).toDouble();
-          final lanternHeight = lanternWidth * 1.94;
-          final bedWidth = (roomWidth * 0.32).clamp(128.0, 170.0).toDouble();
-          final bedHeight = bedWidth * 0.86;
-          final studyWidth = (roomWidth * 0.38).clamp(152.0, 196.0).toDouble();
-          final studyHeight = studyWidth * 0.72;
-          final rugHeight = (roomHeight * 0.18).clamp(126.0, 158.0).toDouble();
-          final rugInset = (roomWidth * 0.08).clamp(24.0, 42.0).toDouble();
-          final petSize = (roomWidth * (studying ? 0.34 : 0.38))
-              .clamp(138.0, 188.0)
+          final shelfWidth = (roomWidth * 0.24).clamp(92.0, 118.0).toDouble();
+          final shelfHeight = shelfWidth * 1.34;
+          final windowWidth = (roomWidth * 0.38).clamp(148.0, 178.0).toDouble();
+          final windowHeight = windowWidth * 1.36;
+          final sofaWidth = (roomWidth * 0.43).clamp(158.0, 190.0).toDouble();
+          final sofaHeight = sofaWidth * 0.68;
+          final bedWidth = (roomWidth * 0.28).clamp(106.0, 132.0).toDouble();
+          final bedHeight = bedWidth * 0.62;
+          final studyWidth = (roomWidth * 0.40).clamp(150.0, 188.0).toDouble();
+          final studyHeight = studyWidth * 0.86;
+          final rugHeight = (roomHeight * 0.17).clamp(118.0, 146.0).toDouble();
+          final rugInset = (roomWidth * 0.13).clamp(42.0, 58.0).toDouble();
+          final petSize = (roomWidth * (studying ? 0.28 : 0.30))
+              .clamp(104.0, 136.0)
               .toDouble();
           final petBoxWidth = petSize * (studying ? 1.32 : 1.18);
           final petBoxHeight = petSize * (studying ? 1.05 : 1.14);
-          final petCenterX = roomWidth * (studying ? 0.60 : 0.50);
+          final petCenterX = roomWidth * (studying ? 0.54 : 0.50);
           final maxPetLeft = (roomWidth - petBoxWidth - 24).clamp(
             24.0,
             roomWidth,
@@ -211,8 +316,8 @@ class _RoomScene extends StatelessWidget {
           final petLeft = (petCenterX - petBoxWidth / 2)
               .clamp(24.0, maxPetLeft)
               .toDouble();
-          final petBottom = (roomHeight - sceneBottom + 2)
-              .clamp(188.0, 226.0)
+          final petBottom = (controlsReserve + 56)
+              .clamp(232.0, 278.0)
               .toDouble();
           final speechBottom = (petBottom + petBoxHeight - 8)
               .clamp(roomHeight * 0.43, roomHeight * 0.62)
@@ -230,31 +335,10 @@ class _RoomScene extends StatelessWidget {
           return Stack(
             fit: StackFit.expand,
             children: [
-              Positioned.fill(child: _RoomBackground(dark: dark)),
+              const Positioned.fill(child: _RoomBackground()),
               Positioned(
-                left: horizontalInset,
-                right: horizontalInset,
-                top: (roomHeight * 0.02).clamp(10.0, 18.0).toDouble(),
-                child: _RoomTopBar(
-                  petName: petName,
-                  gold: gold,
-                  rewardBoostPercent: rewardBoostPercent,
-                  onSettings: onSettings,
-                  onInfo: onInfo,
-                ),
-              ),
-              Positioned(
-                left: horizontalInset,
-                right: horizontalInset,
-                top: (roomHeight * 0.108).clamp(78.0, 98.0).toDouble(),
-                child: _RoomMaintenanceBanner(
-                  title: maintenanceTitle,
-                  body: maintenanceBody,
-                ),
-              ),
-              Positioned(
-                left: roomWidth * 0.07,
-                top: roomHeight * 0.245,
+                left: roomWidth * 0.08,
+                top: (roomHeight * 0.24).clamp(150.0, 178.0).toDouble(),
                 child: _TinyShelf(
                   item: shelfItem,
                   width: shelfWidth,
@@ -262,22 +346,22 @@ class _RoomScene extends StatelessWidget {
                 ),
               ),
               Positioned(
-                right: roomWidth * 0.07,
-                top: roomHeight * 0.205,
+                left: (roomWidth - windowWidth) / 2,
+                top: (roomHeight * 0.17).clamp(122.0, 150.0).toDouble(),
                 child: _RoomWindow(width: windowWidth, height: windowHeight),
               ),
               Positioned(
-                right: roomWidth * 0.045,
-                top: floorTopFor(lanternHeight, 18),
+                left: roomWidth * 0.005,
+                top: floorTopFor(sofaHeight, 12),
                 child: _CozySofa(
                   item: decorItem,
-                  width: lanternWidth,
-                  height: lanternHeight,
+                  width: sofaWidth,
+                  height: sofaHeight,
                 ),
               ),
               Positioned(
-                right: roomWidth * 0.095,
-                top: floorTopFor(bedHeight, 6),
+                right: roomWidth * 0.30,
+                top: floorTopFor(bedHeight, 0),
                 child: _PetBed(
                   item: bedItem,
                   width: bedWidth,
@@ -285,8 +369,8 @@ class _RoomScene extends StatelessWidget {
                 ),
               ),
               Positioned(
-                left: roomWidth * 0.045,
-                top: floorTopFor(studyHeight, 8),
+                right: roomWidth * 0.02,
+                top: floorTopFor(studyHeight, 4),
                 child: _StudyDesk(
                   item: studyItem,
                   studying: studying,
@@ -297,16 +381,9 @@ class _RoomScene extends StatelessWidget {
               Positioned(
                 left: rugInset,
                 right: rugInset,
-                bottom: (roomHeight - sceneBottom + 14)
-                    .clamp(196.0, 236.0)
-                    .toDouble(),
+                bottom: (controlsReserve + 38).clamp(220.0, 262.0).toDouble(),
                 height: rugHeight,
-                child: Image.asset(
-                  'assets/room/generated/roomfit_focus_rug.png',
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.medium,
-                  isAntiAlias: true,
-                ),
+                child: _PerspectiveRug(item: bedItem),
               ),
               Positioned(
                 left: petLeft,
@@ -329,6 +406,27 @@ class _RoomScene extends StatelessWidget {
                     curve: Curves.easeOutCubic,
                     child: _SpeechBubble(message: dialogue),
                   ),
+                ),
+              ),
+              Positioned(
+                left: horizontalInset,
+                right: horizontalInset,
+                top: (roomHeight * 0.02).clamp(10.0, 18.0).toDouble(),
+                child: _RoomTopBar(
+                  petName: petName,
+                  gold: gold,
+                  rewardBoostPercent: rewardBoostPercent,
+                  onSettings: onSettings,
+                  onInfo: onInfo,
+                ),
+              ),
+              Positioned(
+                left: horizontalInset,
+                right: horizontalInset,
+                top: (roomHeight * 0.108).clamp(78.0, 98.0).toDouble(),
+                child: _RoomMaintenanceBanner(
+                  title: maintenanceTitle,
+                  body: maintenanceBody,
                 ),
               ),
               Positioned(
@@ -408,48 +506,11 @@ class _RoomScene extends StatelessWidget {
 }
 
 class _RoomBackground extends StatelessWidget {
-  const _RoomBackground({required this.dark});
-
-  final bool dark;
+  const _RoomBackground();
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _RoomPerspectivePainter(dark: dark),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 30,
-            top: 118,
-            child: Icon(
-              Icons.auto_awesome_rounded,
-              color: CatudyColors.teal.withValues(alpha: 0.42),
-              size: 24,
-            ),
-          ),
-          Positioned(
-            right: 110,
-            top: 156,
-            child: Icon(
-              Icons.star_rounded,
-              color: CatudyColors.violet.withValues(alpha: 0.26),
-              size: 20,
-            ),
-          ),
-          Positioned(
-            left: 54,
-            right: 54,
-            top: 96,
-            child: Container(
-              height: 2,
-              color: (dark ? Colors.white : CatudyColors.violet).withValues(
-                alpha: dark ? 0.08 : 0.10,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return CustomPaint(painter: const _RoomPerspectivePainter());
   }
 }
 
@@ -535,121 +596,181 @@ class _RoomMaintenanceBanner extends StatelessWidget {
 }
 
 class _RoomPerspectivePainter extends CustomPainter {
-  const _RoomPerspectivePainter({required this.dark});
-
-  final bool dark;
+  const _RoomPerspectivePainter();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final wallBottom = size.height * 0.54;
-    final vanishingPoint = Offset(size.width / 2, wallBottom - 18);
-    final backWall = Rect.fromLTWH(0, 0, size.width, wallBottom + 18);
-    final wallPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: dark
-            ? const [Color(0xFF211B3A), Color(0xFF28224A)]
-            : const [Color(0xFFF2EEFF), Color(0xFFE9FAF7)],
-      ).createShader(backWall);
-    canvas.drawRect(backWall, wallPaint);
+    final wallTop = size.height * 0.07;
+    final wallBottom = size.height * 0.56;
+    final sideInset = size.width * 0.12;
+    final vanishingPoint = Offset(size.width * 0.50, wallBottom + 10);
+
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xFFE6F4F6),
+    );
+
+    final ceiling = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width - sideInset, wallTop)
+      ..lineTo(sideInset, wallTop)
+      ..close();
+    canvas.drawPath(ceiling, Paint()..color = const Color(0xFFF3FAFA));
+
+    final leftWall = Path()
+      ..moveTo(0, 0)
+      ..lineTo(sideInset, wallTop)
+      ..lineTo(sideInset, wallBottom)
+      ..lineTo(0, wallBottom + 56)
+      ..close();
+    final rightWall = Path()
+      ..moveTo(size.width, 0)
+      ..lineTo(size.width - sideInset, wallTop)
+      ..lineTo(size.width - sideInset, wallBottom)
+      ..lineTo(size.width, wallBottom + 56)
+      ..close();
+    canvas.drawPath(leftWall, Paint()..color = const Color(0xFFC4E4E9));
+    canvas.drawPath(rightWall, Paint()..color = const Color(0xFFAED2DA));
+
+    final backWall = Rect.fromLTRB(
+      sideInset,
+      wallTop,
+      size.width - sideInset,
+      wallBottom,
+    );
+    canvas.drawRect(backWall, Paint()..color = const Color(0xFFD7ECF0));
 
     final floor = Path()
       ..moveTo(0, wallBottom)
       ..lineTo(size.width, wallBottom)
-      ..lineTo(size.width + 72, size.height)
-      ..lineTo(-72, size.height)
+      ..lineTo(size.width + 36, size.height)
+      ..lineTo(-36, size.height)
       ..close();
     final floorPaint = Paint()
-      ..shader = LinearGradient(
+      ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: dark
-            ? const [Color(0xFF19142C), Color(0xFF120E22)]
-            : const [Color(0xFFFFF7F0), Color(0xFFFFE8D8)],
+        colors: [Color(0xFFC8863F), Color(0xFFA9652A)],
       ).createShader(Rect.fromLTWH(0, wallBottom, size.width, size.height));
     canvas.drawPath(floor, floorPaint);
 
-    final leftWall = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width * 0.11, 0)
-      ..lineTo(size.width * 0.19, wallBottom)
-      ..lineTo(0, wallBottom + 62)
-      ..close();
-    final rightWall = Path()
-      ..moveTo(size.width * 0.89, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, wallBottom + 62)
-      ..lineTo(size.width * 0.81, wallBottom)
-      ..close();
-    final sidePaint = Paint()
-      ..color = (dark ? Colors.black : CatudyColors.violet).withValues(
-        alpha: dark ? 0.14 : 0.06,
-      );
-    canvas.drawPath(leftWall, sidePaint);
-    canvas.drawPath(rightWall, sidePaint);
-
-    final linePaint = Paint()
-      ..color = (dark ? Colors.white : CatudyColors.violet).withValues(
-        alpha: dark ? 0.08 : 0.10,
-      )
+    final cornerPaint = Paint()
+      ..color = const Color(0xFF6F9DA8).withValues(alpha: 0.32)
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
     canvas.drawLine(
-      Offset(0, wallBottom),
-      Offset(size.width, wallBottom),
-      linePaint,
+      Offset(sideInset, wallTop),
+      Offset(sideInset, wallBottom),
+      cornerPaint,
     );
+    canvas.drawLine(
+      Offset(size.width - sideInset, wallTop),
+      Offset(size.width - sideInset, wallBottom),
+      cornerPaint,
+    );
+    canvas.drawLine(
+      Offset(sideInset, wallTop),
+      Offset(size.width - sideInset, wallTop),
+      cornerPaint,
+    );
+
     final baseboardPaint = Paint()
-      ..color = (dark ? const Color(0xFF504673) : const Color(0xFFD8C8FF))
-          .withValues(alpha: dark ? 0.40 : 0.42)
-      ..strokeWidth = 7
+      ..color = const Color(0xFF8B5A30)
+      ..strokeWidth = 8
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(
-      Offset(14, wallBottom - 4),
-      Offset(size.width - 14, wallBottom - 4),
+      Offset(8, wallBottom - 3),
+      Offset(size.width - 8, wallBottom - 3),
       baseboardPaint,
     );
+    final baseboardHighlight = Paint()
+      ..color = const Color(0xFFE7B672).withValues(alpha: 0.62)
+      ..strokeWidth = 2;
     canvas.drawLine(
-      Offset(size.width * 0.19, wallBottom),
-      Offset(0, wallBottom + 62),
-      linePaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.81, wallBottom),
-      Offset(size.width, wallBottom + 62),
-      linePaint,
+      Offset(10, wallBottom - 8),
+      Offset(size.width - 10, wallBottom - 8),
+      baseboardHighlight,
     );
 
     final floorLinePaint = Paint()
-      ..color = (dark ? Colors.white : CatudyColors.tealDark).withValues(
-        alpha: dark ? 0.05 : 0.065,
-      )
-      ..strokeWidth = 1;
-
-    for (var i = 0; i < 6; i++) {
-      final y = wallBottom + 26 + i * 42;
+      ..color = const Color(0xFF5B381F).withValues(alpha: 0.24)
+      ..strokeWidth = 1.1;
+    for (var i = 0; i < 7; i++) {
+      final y = wallBottom + 34 + i * 42;
       canvas.drawLine(
-        Offset(-32, y),
-        Offset(size.width + 32, y + 10),
+        Offset(-24, y),
+        Offset(size.width + 24, y + 4),
         floorLinePaint,
       );
     }
     for (final x in <double>[
-      size.width * 0.20,
+      -size.width * 0.08,
+      size.width * 0.16,
       size.width * 0.34,
       size.width * 0.50,
       size.width * 0.66,
-      size.width * 0.80,
+      size.width * 0.84,
+      size.width * 1.08,
     ]) {
-      canvas.drawLine(Offset(x, size.height), vanishingPoint, floorLinePaint);
+      canvas.drawLine(
+        Offset(x, size.height + 12),
+        vanishingPoint,
+        floorLinePaint,
+      );
     }
+
+    final framePaint = Paint()..color = const Color(0xFF3A2D35);
+    final frameMatPaint = Paint()..color = const Color(0xFFFFE7B7);
+    final leftFrame = Rect.fromLTWH(
+      size.width * 0.16,
+      size.height * 0.19,
+      size.width * 0.065,
+      size.height * 0.072,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(leftFrame, const Radius.circular(2)),
+      framePaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(leftFrame.deflate(4), const Radius.circular(1)),
+      frameMatPaint,
+    );
+    canvas.drawOval(
+      leftFrame.deflate(8),
+      Paint()..color = const Color(0xFFAF8DD5),
+    );
+
+    final lowerFrame = leftFrame.translate(
+      size.width * 0.045,
+      size.height * 0.075,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(lowerFrame, const Radius.circular(2)),
+      framePaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(lowerFrame.deflate(4), const Radius.circular(1)),
+      frameMatPaint,
+    );
+    canvas.drawOval(
+      lowerFrame.deflate(8),
+      Paint()..color = const Color(0xFF8FC6C4),
+    );
+
+    final wallShelfPaint = Paint()
+      ..color = const Color(0xFF5E4A78)
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(size.width * 0.78, size.height * 0.20),
+      Offset(size.width * 0.92, size.height * 0.20),
+      wallShelfPaint,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _RoomPerspectivePainter oldDelegate) {
-    return oldDelegate.dark != dark;
-  }
+  bool shouldRepaint(covariant _RoomPerspectivePainter oldDelegate) => false;
 }
 
 class _RoomTopBar extends StatelessWidget {
@@ -689,16 +810,6 @@ class _RoomTopBar extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: CatudyColors.blueFor(context),
                   fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                catudyDemoStore.t('pet.roomSubtitle'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: CatudyColors.mutedFor(context),
-                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -882,6 +993,64 @@ class _CarePanel extends StatelessWidget {
   }
 }
 
+class _PerspectiveRug extends StatelessWidget {
+  const _PerspectiveRug({required this.item});
+
+  final ShopItem? item;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _RugPainter(accent: item?.accent ?? const Color(0xFF9DC581)),
+    );
+  }
+}
+
+class _RugPainter extends CustomPainter {
+  const _RugPainter({required this.accent});
+
+  final Color accent;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final shadowRect = Rect.fromLTWH(
+      size.width * 0.10,
+      size.height * 0.26,
+      size.width * 0.80,
+      size.height * 0.58,
+    );
+    canvas.drawOval(
+      shadowRect.translate(0, size.height * 0.07),
+      Paint()..color = Colors.black.withValues(alpha: 0.11),
+    );
+    canvas.drawOval(shadowRect, Paint()..color = accent);
+    canvas.drawOval(
+      shadowRect.deflate(size.width * 0.07),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..color = Colors.white.withValues(alpha: 0.34),
+    );
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.30,
+        size.height * 0.40,
+        size.width * 0.38,
+        size.height * 0.22,
+      ),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = Colors.white.withValues(alpha: 0.22),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _RugPainter oldDelegate) {
+    return oldDelegate.accent != accent;
+  }
+}
+
 class _RoomWindow extends StatelessWidget {
   const _RoomWindow({required this.width, required this.height});
 
@@ -890,12 +1059,142 @@ class _RoomWindow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _RoomFurnitureAsset(
-      path: 'assets/room/generated/roomfit_window.png',
+    return SizedBox(
       width: width,
       height: height,
+      child: const CustomPaint(painter: _RoomWindowPainter()),
     );
   }
+}
+
+class _RoomWindowPainter extends CustomPainter {
+  const _RoomWindowPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final shadow = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.04,
+        size.height * 0.05,
+        size.width * 0.92,
+        size.height * 0.90,
+      ),
+      Radius.circular(size.width * 0.04),
+    );
+    canvas.drawRRect(
+      shadow,
+      Paint()..color = Colors.black.withValues(alpha: 0.10),
+    );
+
+    final frame = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height * 0.94),
+      Radius.circular(size.width * 0.035),
+    );
+    canvas.drawRRect(frame, Paint()..color = const Color(0xFFD58A23));
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        frame.outerRect.deflate(size.width * 0.07),
+        Radius.circular(size.width * 0.015),
+      ),
+      Paint()..color = const Color(0xFF2B98E5),
+    );
+
+    final pane = frame.outerRect.deflate(size.width * 0.10);
+    final skyPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF58B9FF), Color(0xFF1784D4)],
+      ).createShader(pane);
+    canvas.drawRect(pane, skyPaint);
+
+    final cloudPaint = Paint()..color = Colors.white.withValues(alpha: 0.86);
+    void cloud(double x, double y, double scale) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(size.width * x, size.height * y),
+          width: size.width * 0.22 * scale,
+          height: size.height * 0.09 * scale,
+        ),
+        cloudPaint,
+      );
+      canvas.drawCircle(
+        Offset(
+          size.width * (x - 0.04 * scale),
+          size.height * (y - 0.025 * scale),
+        ),
+        size.width * 0.045 * scale,
+        cloudPaint,
+      );
+      canvas.drawCircle(
+        Offset(
+          size.width * (x + 0.045 * scale),
+          size.height * (y - 0.03 * scale),
+        ),
+        size.width * 0.055 * scale,
+        cloudPaint,
+      );
+    }
+
+    cloud(0.37, 0.28, 1.00);
+    cloud(0.66, 0.20, 0.82);
+
+    final buildingPaint = Paint()..color = const Color(0xFF6F5A46);
+    for (final rect in <Rect>[
+      Rect.fromLTWH(
+        size.width * 0.20,
+        size.height * 0.61,
+        size.width * 0.16,
+        size.height * 0.23,
+      ),
+      Rect.fromLTWH(
+        size.width * 0.37,
+        size.height * 0.70,
+        size.width * 0.13,
+        size.height * 0.14,
+      ),
+      Rect.fromLTWH(
+        size.width * 0.53,
+        size.height * 0.58,
+        size.width * 0.18,
+        size.height * 0.26,
+      ),
+    ]) {
+      canvas.drawRect(rect, buildingPaint);
+    }
+    final lightPaint = Paint()..color = const Color(0xFFFFF356);
+    for (var row = 0; row < 3; row++) {
+      for (var col = 0; col < 5; col++) {
+        canvas.drawRect(
+          Rect.fromLTWH(
+            size.width * (0.24 + col * 0.08),
+            size.height * (0.66 + row * 0.06),
+            size.width * 0.035,
+            size.height * 0.026,
+          ),
+          lightPaint,
+        );
+      }
+    }
+
+    final muntinPaint = Paint()
+      ..color = const Color(0xFF7A4A1F)
+      ..strokeWidth = size.width * 0.035
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(size.width * 0.50, size.height * 0.08),
+      Offset(size.width * 0.50, size.height * 0.88),
+      muntinPaint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.10, size.height * 0.49),
+      Offset(size.width * 0.90, size.height * 0.49),
+      muntinPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _RoomWindowPainter oldDelegate) => false;
 }
 
 class _RoomPet extends StatelessWidget {
@@ -1031,105 +1330,212 @@ class _StudyDesk extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final assetPath = item?.assetPath;
-    if (assetPath != null) {
-      return _RoomFurnitureAsset(
-        path: assetPath,
-        width: width,
-        height: height,
-        overlay: studying
-            ? Positioned(
-                right: 24,
-                top: 8,
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: CatudyColors.yellow.withValues(alpha: 0.30),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: CatudyColors.coral,
-                    size: 18,
-                  ),
-                ),
-              )
-            : null,
-      );
-    }
-    final accent = item?.accent ?? CatudyColors.teal;
-    final premium = item != null;
     return SizedBox(
-      width: 172,
-      height: 150,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 14,
-            right: 4,
-            top: 92,
-            child: Container(
-              height: 22,
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 8,
-            right: 10,
-            top: 58,
-            child: Container(
-              height: premium ? 34 : 28,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: premium ? 0.72 : 0.46),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: accent.withValues(alpha: 0.22)),
-              ),
-            ),
-          ),
-          Positioned(left: 30, top: 84, child: _FurnitureLeg(color: accent)),
-          Positioned(right: 34, top: 84, child: _FurnitureLeg(color: accent)),
-          Positioned(
-            left: premium ? 16 : 20,
-            top: premium ? 12 : 22,
-            child: Container(
-              width: premium ? 58 : 46,
-              height: premium ? 44 : 34,
-              decoration: BoxDecoration(
-                color: CatudyColors.surfaceFor(context).withValues(alpha: 0.88),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: accent.withValues(alpha: 0.22)),
-              ),
-              child: Icon(
-                premium ? Icons.auto_stories_rounded : Icons.menu_book_rounded,
-                color: accent,
-              ),
-            ),
-          ),
-          Positioned(
-            right: 18,
-            top: premium ? 2 : 12,
-            child: Container(
-              width: premium ? 42 : 34,
-              height: premium ? 64 : 52,
-              decoration: BoxDecoration(
-                color: (studying ? CatudyColors.yellow : accent).withValues(
-                  alpha: studying ? 0.36 : 0.18,
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                Icons.lightbulb_rounded,
-                color: studying ? CatudyColors.coral : accent,
-              ),
-            ),
-          ),
-        ],
+      width: width,
+      height: height,
+      child: CustomPaint(
+        painter: _StudyDeskPainter(
+          accent: item?.accent ?? const Color(0xFFB66453),
+          upgraded: item != null,
+          studying: studying,
+        ),
       ),
     );
+  }
+}
+
+class _StudyDeskPainter extends CustomPainter {
+  const _StudyDeskPainter({
+    required this.accent,
+    required this.upgraded,
+    required this.studying,
+  });
+
+  final Color accent;
+  final bool upgraded;
+  final bool studying;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final wood = Color.lerp(
+      const Color(0xFF8C4F2B),
+      accent,
+      upgraded ? 0.24 : 0.08,
+    )!;
+    final woodDark = Color.lerp(wood, Colors.black, 0.22)!;
+    final woodLight = Color.lerp(wood, Colors.white, 0.16)!;
+    final linePaint = Paint()
+      ..color = const Color(0xFF3C2A22).withValues(alpha: 0.22)
+      ..strokeWidth = 1.4
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.13,
+        size.height * 0.75,
+        size.width * 0.78,
+        size.height * 0.18,
+      ),
+      Paint()..color = Colors.black.withValues(alpha: 0.13),
+    );
+
+    final legPaint = Paint()..color = woodDark;
+    for (final leg in <Rect>[
+      Rect.fromLTWH(
+        size.width * 0.25,
+        size.height * 0.58,
+        size.width * 0.06,
+        size.height * 0.28,
+      ),
+      Rect.fromLTWH(
+        size.width * 0.76,
+        size.height * 0.51,
+        size.width * 0.06,
+        size.height * 0.30,
+      ),
+      Rect.fromLTWH(
+        size.width * 0.37,
+        size.height * 0.67,
+        size.width * 0.05,
+        size.height * 0.22,
+      ),
+    ]) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(leg, Radius.circular(size.width * 0.025)),
+        legPaint,
+      );
+    }
+
+    final top = Path()
+      ..moveTo(size.width * 0.18, size.height * 0.42)
+      ..lineTo(size.width * 0.76, size.height * 0.34)
+      ..lineTo(size.width * 0.94, size.height * 0.48)
+      ..lineTo(size.width * 0.34, size.height * 0.59)
+      ..close();
+    canvas.drawPath(top, Paint()..color = woodLight);
+    canvas.drawPath(top, linePaint);
+
+    final front = Path()
+      ..moveTo(size.width * 0.34, size.height * 0.59)
+      ..lineTo(size.width * 0.94, size.height * 0.48)
+      ..lineTo(size.width * 0.88, size.height * 0.72)
+      ..lineTo(size.width * 0.35, size.height * 0.84)
+      ..close();
+    canvas.drawPath(front, Paint()..color = wood);
+    canvas.drawPath(front, linePaint);
+
+    final side = Path()
+      ..moveTo(size.width * 0.18, size.height * 0.42)
+      ..lineTo(size.width * 0.34, size.height * 0.59)
+      ..lineTo(size.width * 0.35, size.height * 0.84)
+      ..lineTo(size.width * 0.20, size.height * 0.67)
+      ..close();
+    canvas.drawPath(side, Paint()..color = woodDark);
+    canvas.drawPath(side, linePaint);
+
+    final drawerPaint = Paint()
+      ..color = Color.lerp(accent, Colors.white, 0.18)!;
+    for (var index = 0; index < 2; index++) {
+      final drawer = Rect.fromLTWH(
+        size.width * 0.65,
+        size.height * (0.54 + index * 0.10),
+        size.width * 0.18,
+        size.height * 0.072,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(drawer, Radius.circular(size.width * 0.015)),
+        drawerPaint,
+      );
+      canvas.drawCircle(
+        Offset(drawer.right - size.width * 0.035, drawer.center.dy),
+        size.width * 0.009,
+        Paint()..color = woodDark,
+      );
+    }
+
+    final monitorFrame = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.48,
+        size.height * 0.08,
+        size.width * 0.30,
+        size.height * 0.27,
+      ),
+      Radius.circular(size.width * 0.018),
+    );
+    canvas.drawRRect(monitorFrame, Paint()..color = const Color(0xFFFFE6BA));
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        monitorFrame.outerRect.deflate(size.width * 0.025),
+        Radius.circular(size.width * 0.010),
+      ),
+      Paint()..color = const Color(0xFF1C2130),
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.63, size.height * 0.35),
+      Offset(size.width * 0.62, size.height * 0.43),
+      Paint()
+        ..color = const Color(0xFFFFE6BA)
+        ..strokeWidth = size.width * 0.025
+        ..strokeCap = StrokeCap.round,
+    );
+
+    final bookColors = [
+      const Color(0xFF58B7B4),
+      const Color(0xFFFFD86B),
+      const Color(0xFF8E73C7),
+    ];
+    for (var index = 0; index < 3; index++) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            size.width * (0.26 + index * 0.055),
+            size.height * (0.34 - index * 0.015),
+            size.width * 0.045,
+            size.height * 0.14,
+          ),
+          Radius.circular(size.width * 0.010),
+        ),
+        Paint()..color = bookColors[index],
+      );
+    }
+
+    final lampGlow = Paint()
+      ..color = (studying ? CatudyColors.yellow : accent).withValues(
+        alpha: studying ? 0.23 : 0.12,
+      );
+    canvas.drawCircle(
+      Offset(size.width * 0.86, size.height * 0.27),
+      size.width * 0.16,
+      lampGlow,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.84, size.height * 0.30),
+      Offset(size.width * 0.79, size.height * 0.45),
+      Paint()
+        ..color = woodDark
+        ..strokeWidth = size.width * 0.018
+        ..strokeCap = StrokeCap.round,
+    );
+    final shade = Path()
+      ..moveTo(size.width * 0.78, size.height * 0.22)
+      ..lineTo(size.width * 0.93, size.height * 0.20)
+      ..lineTo(size.width * 0.88, size.height * 0.31)
+      ..lineTo(size.width * 0.75, size.height * 0.32)
+      ..close();
+    canvas.drawPath(
+      shade,
+      Paint()
+        ..color = studying
+            ? CatudyColors.yellow
+            : Color.lerp(accent, Colors.white, 0.22)!,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _StudyDeskPainter oldDelegate) {
+    return oldDelegate.accent != accent ||
+        oldDelegate.upgraded != upgraded ||
+        oldDelegate.studying != studying;
   }
 }
 
@@ -1146,64 +1552,66 @@ class _PetBed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final assetPath = item?.assetPath;
-    if (assetPath != null) {
-      return _RoomFurnitureAsset(path: assetPath, width: width, height: height);
-    }
-    final accent = item?.accent ?? CatudyColors.lavender;
-    final premium = item != null;
     return SizedBox(
-      width: 158,
-      height: 126,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 10,
-            right: 8,
-            bottom: 8,
-            child: Container(
-              height: 24,
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 20,
-            child: Container(
-              height: premium ? 62 : 50,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: premium ? 0.32 : 0.22),
-                borderRadius: BorderRadius.circular(premium ? 34 : 28),
-                border: Border.all(
-                  color: accent.withValues(alpha: premium ? 0.38 : 0.22),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            left: premium ? 28 : 34,
-            top: premium ? 20 : 28,
-            child: Container(
-              width: premium ? 88 : 74,
-              height: premium ? 46 : 36,
-              decoration: BoxDecoration(
-                color: CatudyColors.surfaceFor(context).withValues(alpha: 0.72),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: accent.withValues(alpha: 0.18)),
-              ),
-              child: Icon(
-                premium ? Icons.nights_stay_rounded : Icons.bed_rounded,
-                color: accent,
-              ),
-            ),
-          ),
-        ],
+      width: width,
+      height: height,
+      child: CustomPaint(
+        painter: _PetCushionPainter(
+          accent: item?.accent ?? CatudyColors.lavender,
+          upgraded: item != null,
+        ),
       ),
     );
+  }
+}
+
+class _PetCushionPainter extends CustomPainter {
+  const _PetCushionPainter({required this.accent, required this.upgraded});
+
+  final Color accent;
+  final bool upgraded;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.10,
+        size.height * 0.56,
+        size.width * 0.80,
+        size.height * 0.30,
+      ),
+      Paint()..color = Colors.black.withValues(alpha: 0.12),
+    );
+    final base = Rect.fromLTWH(
+      size.width * 0.06,
+      size.height * 0.26,
+      size.width * 0.88,
+      size.height * 0.48,
+    );
+    canvas.drawOval(
+      base,
+      Paint()..color = accent.withValues(alpha: upgraded ? 0.70 : 0.54),
+    );
+    canvas.drawOval(
+      base.deflate(size.width * 0.08),
+      Paint()
+        ..color = Color.lerp(accent, Colors.white, upgraded ? 0.34 : 0.22)!,
+    );
+    canvas.drawArc(
+      base.deflate(size.width * 0.15),
+      3.24,
+      2.82,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = Colors.white.withValues(alpha: 0.38),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _PetCushionPainter oldDelegate) {
+    return oldDelegate.accent != accent || oldDelegate.upgraded != upgraded;
   }
 }
 
@@ -1220,63 +1628,132 @@ class _CozySofa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final assetPath = item?.assetPath;
-    if (assetPath != null) {
-      return _RoomFurnitureAsset(path: assetPath, width: width, height: height);
-    }
-    final accent = item?.accent ?? CatudyColors.violet;
     return SizedBox(
-      width: 136,
-      height: 118,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 18,
-            right: 10,
-            bottom: 8,
-            child: Container(
-              height: 20,
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.09),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 32,
-            bottom: 20,
-            child: Container(
-              width: item == null ? 48 : 58,
-              height: item == null ? 56 : 72,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: item == null ? 0.22 : 0.34),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: accent.withValues(alpha: 0.20)),
-              ),
-              child: Icon(
-                item == null
-                    ? Icons.local_florist_rounded
-                    : Icons.emoji_objects_rounded,
-                color: accent,
-              ),
-            ),
-          ),
-          Positioned(
-            right: 8,
-            top: 12,
-            child: Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: CatudyColors.surfaceFor(context).withValues(alpha: 0.62),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.auto_awesome_rounded, color: accent),
-            ),
-          ),
-        ],
+      width: width,
+      height: height,
+      child: CustomPaint(
+        painter: _RightFacingSofaPainter(
+          accent: item?.accent ?? const Color(0xFF9A78B9),
+          upgraded: item != null,
+        ),
       ),
     );
+  }
+}
+
+class _RightFacingSofaPainter extends CustomPainter {
+  const _RightFacingSofaPainter({required this.accent, required this.upgraded});
+
+  final Color accent;
+  final bool upgraded;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final main = Color.lerp(accent, Colors.white, upgraded ? 0.08 : 0.16)!;
+    final side = Color.lerp(accent, Colors.black, 0.14)!;
+    final dark = Color.lerp(accent, Colors.black, 0.28)!;
+
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.10,
+        size.height * 0.78,
+        size.width * 0.76,
+        size.height * 0.16,
+      ),
+      Paint()..color = Colors.black.withValues(alpha: 0.10),
+    );
+
+    final back = RRect.fromRectAndCorners(
+      Rect.fromLTWH(
+        size.width * 0.05,
+        size.height * 0.24,
+        size.width * 0.46,
+        size.height * 0.48,
+      ),
+      topLeft: Radius.circular(size.width * 0.16),
+      bottomLeft: Radius.circular(size.width * 0.10),
+      topRight: Radius.circular(size.width * 0.10),
+      bottomRight: Radius.circular(size.width * 0.04),
+    );
+    canvas.drawRRect(back, Paint()..color = main);
+
+    final seatTop = Path()
+      ..moveTo(size.width * 0.18, size.height * 0.54)
+      ..lineTo(size.width * 0.70, size.height * 0.48)
+      ..lineTo(size.width * 0.92, size.height * 0.62)
+      ..lineTo(size.width * 0.34, size.height * 0.76)
+      ..close();
+    canvas.drawPath(
+      seatTop,
+      Paint()..color = Color.lerp(main, Colors.white, 0.10)!,
+    );
+
+    final front = Path()
+      ..moveTo(size.width * 0.34, size.height * 0.76)
+      ..lineTo(size.width * 0.92, size.height * 0.62)
+      ..lineTo(size.width * 0.86, size.height * 0.80)
+      ..lineTo(size.width * 0.32, size.height * 0.92)
+      ..close();
+    canvas.drawPath(front, Paint()..color = side);
+
+    final rightArm = RRect.fromRectAndCorners(
+      Rect.fromLTWH(
+        size.width * 0.70,
+        size.height * 0.36,
+        size.width * 0.24,
+        size.height * 0.34,
+      ),
+      topLeft: Radius.circular(size.width * 0.08),
+      topRight: Radius.circular(size.width * 0.14),
+      bottomRight: Radius.circular(size.width * 0.08),
+      bottomLeft: Radius.circular(size.width * 0.04),
+    );
+    canvas.drawRRect(
+      rightArm,
+      Paint()..color = Color.lerp(main, Colors.black, 0.08)!,
+    );
+
+    final outline = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..color = dark.withValues(alpha: 0.42);
+    canvas.drawRRect(back, outline);
+    canvas.drawPath(seatTop, outline);
+    canvas.drawRRect(rightArm, outline);
+
+    final pillow = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.24,
+        size.height * 0.48,
+        size.width * 0.20,
+        size.height * 0.19,
+      ),
+      Radius.circular(size.width * 0.045),
+    );
+    canvas.drawRRect(pillow, Paint()..color = const Color(0xFFFFC466));
+
+    final legPaint = Paint()..color = dark;
+    for (final point in <Offset>[
+      Offset(size.width * 0.30, size.height * 0.86),
+      Offset(size.width * 0.80, size.height * 0.76),
+    ]) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: point,
+            width: size.width * 0.035,
+            height: size.height * 0.12,
+          ),
+          Radius.circular(size.width * 0.02),
+        ),
+        legPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RightFacingSofaPainter oldDelegate) {
+    return oldDelegate.accent != accent || oldDelegate.upgraded != upgraded;
   }
 }
 
@@ -1293,114 +1770,119 @@ class _TinyShelf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final assetPath = item?.assetPath;
-    if (assetPath != null) {
-      return _RoomFurnitureAsset(path: assetPath, width: width, height: height);
-    }
-    final accent = item?.accent ?? CatudyColors.tealDark;
-    return SizedBox(
-      width: 126,
-      height: 132,
-      child: Stack(
-        children: [
-          Positioned(
-            left: 8,
-            right: 16,
-            bottom: 8,
-            child: Container(
-              height: 18,
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-          ),
-          for (var index = 0; index < 3; index++)
-            Positioned(
-              top: 28.0 + (index * 26),
-              left: 8,
-              right: 18,
-              child: Container(
-                height: item == null ? 8 : 10,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: item == null ? 0.34 : 0.50),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          Positioned(
-            left: 14,
-            top: 4,
-            child: Icon(
-              item == null
-                  ? Icons.local_florist_rounded
-                  : Icons.menu_book_rounded,
-              color: accent,
-              size: item == null ? 28 : 34,
-            ),
-          ),
-          Positioned(
-            right: 8,
-            top: 48,
-            child: Icon(Icons.auto_awesome_rounded, color: accent),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RoomFurnitureAsset extends StatelessWidget {
-  const _RoomFurnitureAsset({
-    required this.path,
-    required this.width,
-    required this.height,
-    this.overlay,
-  });
-
-  final String path;
-  final double width;
-  final double height;
-  final Widget? overlay;
-
-  @override
-  Widget build(BuildContext context) {
     return SizedBox(
       width: width,
       height: height,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              path,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.medium,
-              isAntiAlias: true,
-            ),
-          ),
-          ?overlay,
-        ],
+      child: CustomPaint(
+        painter: _BookshelfPainter(
+          accent: item?.accent ?? CatudyColors.tealDark,
+          upgraded: item != null,
+        ),
       ),
     );
   }
 }
 
-class _FurnitureLeg extends StatelessWidget {
-  const _FurnitureLeg({required this.color});
+class _BookshelfPainter extends CustomPainter {
+  const _BookshelfPainter({required this.accent, required this.upgraded});
 
-  final Color color;
+  final Color accent;
+  final bool upgraded;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 10,
-      height: 42,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.64),
-        borderRadius: BorderRadius.circular(8),
+  void paint(Canvas canvas, Size size) {
+    final frontColor = Color.lerp(
+      const Color(0xFF3D817E),
+      accent,
+      upgraded ? 0.42 : 0.20,
+    )!;
+    final sideColor = Color.lerp(frontColor, Colors.black, 0.18)!;
+    final trimColor = Color.lerp(frontColor, Colors.white, 0.18)!;
+
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.08,
+        size.height * 0.88,
+        size.width * 0.78,
+        size.height * 0.10,
       ),
+      Paint()..color = Colors.black.withValues(alpha: 0.10),
     );
+
+    final side = Path()
+      ..moveTo(size.width * 0.76, size.height * 0.12)
+      ..lineTo(size.width * 0.90, size.height * 0.20)
+      ..lineTo(size.width * 0.88, size.height * 0.88)
+      ..lineTo(size.width * 0.74, size.height * 0.80)
+      ..close();
+    canvas.drawPath(side, Paint()..color = sideColor);
+
+    final body = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.06,
+        size.height * 0.08,
+        size.width * 0.72,
+        size.height * 0.76,
+      ),
+      Radius.circular(size.width * 0.12),
+    );
+    canvas.drawRRect(body, Paint()..color = frontColor);
+    canvas.drawRRect(
+      body,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = trimColor.withValues(alpha: 0.48),
+    );
+
+    final shelfPaint = Paint()
+      ..color = Color.lerp(frontColor, Colors.black, 0.24)!
+      ..strokeWidth = size.height * 0.045
+      ..strokeCap = StrokeCap.round;
+    for (final y in <double>[0.31, 0.50, 0.69]) {
+      canvas.drawLine(
+        Offset(size.width * 0.13, size.height * y),
+        Offset(size.width * 0.69, size.height * (y + 0.015)),
+        shelfPaint,
+      );
+    }
+
+    final bookColors = [
+      const Color(0xFFFFA057),
+      const Color(0xFFB38CE3),
+      const Color(0xFFFFDD6E),
+      const Color(0xFF70C9BF),
+      const Color(0xFFEB6F66),
+    ];
+    var bookIndex = 0;
+    for (var row = 0; row < 3; row++) {
+      for (var col = 0; col < 4; col++) {
+        final bookHeight = size.height * (0.12 + ((row + col) % 2) * 0.035);
+        final left = size.width * (0.15 + col * 0.12);
+        final top =
+            size.height * (0.18 + row * 0.19) +
+            (size.height * 0.14 - bookHeight);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(left, top, size.width * 0.055, bookHeight),
+            Radius.circular(size.width * 0.012),
+          ),
+          Paint()..color = bookColors[bookIndex % bookColors.length],
+        );
+        bookIndex++;
+      }
+    }
+
+    canvas.drawCircle(
+      Offset(size.width * 0.56, size.height * 0.17),
+      size.width * 0.085,
+      Paint()..color = const Color(0xFFFFCF62),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _BookshelfPainter oldDelegate) {
+    return oldDelegate.accent != accent || oldDelegate.upgraded != upgraded;
   }
 }
 

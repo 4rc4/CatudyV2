@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 
 import '../../app/catudy_assets.dart';
 import '../../app/theme/catudy_colors.dart';
@@ -45,67 +46,85 @@ class CatudyShell extends StatelessWidget {
     final selectedIndex = _selectedIndex(location);
     final dark = CatudyColors.isDark(context);
 
-    return Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              CatudyColors.paperFor(context),
-              CatudyColors.surfaceFor(context),
-              CatudyColors.surfaceStrongFor(context),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 430),
-              child: child,
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          return;
+        }
+        if (context.canPop()) {
+          context.pop();
+          return;
+        }
+        final target = _backTarget(location);
+        if (target == null) {
+          SystemNavigator.pop();
+          return;
+        }
+        context.go(target);
+      },
+      child: Scaffold(
+        body: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                CatudyColors.paperFor(context),
+                CatudyColors.surfaceFor(context),
+                CatudyColors.surfaceStrongFor(context),
+              ],
             ),
           ),
-        ),
-      ),
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: CatudyColors.teal.withValues(alpha: dark ? 0.22 : 0.16),
-            ),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: (dark ? Colors.black : CatudyColors.violet).withValues(
-                alpha: dark ? 0.28 : 0.10,
-              ),
-              blurRadius: 24,
-              offset: const Offset(0, -8),
-            ),
-          ],
-        ),
-        child: Container(
-          color: CatudyColors.surfaceFor(context).withValues(alpha: 0.96),
-          child: SizedBox(
-            height: 78,
-            child: Center(
+          child: SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 430),
-                child: SizedBox(
-                  height: 72,
-                  child: Row(
-                    children: [
-                      for (var index = 0; index < _items.length; index++)
-                        Expanded(
-                          child: _CatudyNavButton(
-                            item: _items[index],
-                            selected: selectedIndex == index,
-                            isPet: index == 3,
-                            onTap: () => context.go(_paths[index]),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+        bottomNavigationBar: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(
+                color: CatudyColors.teal.withValues(alpha: dark ? 0.22 : 0.16),
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (dark ? Colors.black : CatudyColors.violet).withValues(
+                  alpha: dark ? 0.28 : 0.10,
+                ),
+                blurRadius: 24,
+                offset: const Offset(0, -8),
+              ),
+            ],
+          ),
+          child: Container(
+            color: CatudyColors.surfaceFor(context).withValues(alpha: 0.96),
+            child: SizedBox(
+              height: 78,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 430),
+                  child: SizedBox(
+                    height: 72,
+                    child: Row(
+                      children: [
+                        for (var index = 0; index < _items.length; index++)
+                          Expanded(
+                            child: _CatudyNavButton(
+                              item: _items[index],
+                              selected: selectedIndex == index,
+                              isPet: index == 3,
+                              onTap: () => context.go(_paths[index]),
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -114,6 +133,37 @@ class CatudyShell extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String? _backTarget(String path) {
+    if (path == '/') {
+      return null;
+    }
+    if (path.startsWith('/shop') || path.startsWith('/inventory')) {
+      return '/pet-room';
+    }
+    if (path.startsWith('/settings') || path.startsWith('/public-profile')) {
+      return '/profile';
+    }
+    if (path.startsWith('/manual-entry')) {
+      return '/calendar';
+    }
+    if (path.startsWith('/focus/duration')) {
+      return '/focus/category';
+    }
+    if (path.startsWith('/focus/timer')) {
+      return '/focus/duration';
+    }
+    if (path.startsWith('/focus/result')) {
+      return '/';
+    }
+    if (path.startsWith('/lobby/create') || path.startsWith('/lobby/join')) {
+      return '/lobby';
+    }
+    if (path.startsWith('/lobby/room')) {
+      return '/lobby';
+    }
+    return '/';
   }
 
   int _selectedIndex(String path) {

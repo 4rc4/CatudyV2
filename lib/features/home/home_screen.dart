@@ -134,59 +134,6 @@ class HomeScreen extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: CatudyColors.lavenderSoft.withValues(
-                          alpha: 0.74,
-                        ),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                          color: CatudyColors.violet.withValues(alpha: 0.16),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            store.t('home.focusSuggestion', {
-                              'minutes': recommendation.minutes,
-                              'category': recommendationCategory,
-                            }),
-                            textAlign: TextAlign.center,
-                            style: textTheme.titleLarge?.copyWith(
-                              color: CatudyColors.blueFor(context),
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            recommendation.basedOnHistory
-                                ? store.t('home.focusSuggestionReason', {
-                                    'sessions':
-                                        recommendation.sessionsConsidered,
-                                  })
-                                : store.t('home.focusSuggestionStarter'),
-                            textAlign: TextAlign.center,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: CatudyColors.mutedFor(context),
-                              height: 1.32,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          FilledButton.icon(
-                            onPressed: () {
-                              store.prepareRecommendedFocus();
-                              context.go('/focus/category');
-                            },
-                            icon: const Icon(Icons.auto_awesome_rounded),
-                            label: Text(store.t('home.prepareFocusPlan')),
-                          ),
-                        ],
-                      ),
-                    ),
                     const SizedBox(height: 18),
                     _FocusLaunchButton(
                       onPressed: () => context.go('/focus/category'),
@@ -290,46 +237,9 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              CatudyPanel(
-                color: CatudyColors.lavenderSoft,
-                accentColor: CatudyColors.lavender,
-                child: Row(
-                  children: [
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: CatudyColors.surface,
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Icon(
-                        Icons.local_cafe_rounded,
-                        color: CatudyColors.teal,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            store.t('home.breakTitle'),
-                            style: textTheme.titleMedium?.copyWith(
-                              color: CatudyColors.mutedFor(context),
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          Text(
-                            store.t('home.breakBody'),
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: CatudyColors.mutedFor(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              _FocusSuggestionCard(
+                recommendation: recommendation,
+                category: recommendationCategory,
               ),
             ],
           ),
@@ -392,6 +302,85 @@ class _HomeTodoTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FocusSuggestionCard extends StatelessWidget {
+  const _FocusSuggestionCard({
+    required this.recommendation,
+    required this.category,
+  });
+
+  final FocusRecommendation recommendation;
+  final String category;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = catudyDemoStore;
+    final textTheme = Theme.of(context).textTheme;
+    return CatudyPanel(
+      color: CatudyColors.lavenderSoft,
+      accentColor: CatudyColors.lavender,
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: CatudyColors.surface,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              color: CatudyColors.teal,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  store.t('home.focusSuggestion', {
+                    'minutes': recommendation.minutes,
+                    'category': category,
+                  }),
+                  style: textTheme.titleMedium?.copyWith(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  recommendation.basedOnHistory
+                      ? store.t('home.focusSuggestionReason', {
+                          'sessions': recommendation.sessionsConsidered,
+                        })
+                      : store.t('home.focusSuggestionStarter'),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: CatudyColors.mutedFor(context),
+                    height: 1.28,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      store.prepareRecommendedFocus();
+                      context.go('/focus/category');
+                    },
+                    icon: const Icon(Icons.playlist_add_check_rounded),
+                    label: Text(store.t('home.prepareFocusPlan')),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

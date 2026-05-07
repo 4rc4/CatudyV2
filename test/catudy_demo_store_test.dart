@@ -169,6 +169,38 @@ void main() {
     expect(storage.state?['focusPoints'], 2500);
   });
 
+  test('pet name is chosen and persisted', () async {
+    final storage = _MemoryStorage(null);
+    final store = CatudyDemoStore(storage: storage);
+
+    await store.load();
+
+    expect(store.petNameChosen, isFalse);
+
+    store.updatePetName('Minik');
+
+    expect(store.petDisplayName, 'Minik');
+    expect(store.petNameChosen, isTrue);
+    expect(storage.state?['petName'], 'Minik');
+    expect(storage.state?['petNameChosen'], isTrue);
+  });
+
+  test(
+    'local leaderboard contains only the current profile before online sync',
+    () async {
+      final storage = _MemoryStorage(null);
+      final store = CatudyDemoStore(storage: storage);
+
+      await store.load();
+
+      store.updateProfile(name: 'Arca', avatarId: 'catudy');
+
+      expect(store.leaderboardProfiles, hasLength(1));
+      expect(store.leaderboardProfiles.single.name, 'Arca');
+      expect(store.leaderboardProfiles.single.currentUser, isTrue);
+    },
+  );
+
   test('shop item names follow selected language', () async {
     final store = CatudyDemoStore(storage: _MemoryStorage(null));
 

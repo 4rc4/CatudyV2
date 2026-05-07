@@ -71,15 +71,6 @@ flutter:
     - assets/brand/catudy-logo.png
     - assets/brand/catudy-mascot.png
     - assets/room/
-    - assets/room/generated/
-    - assets/room/generated/roomfit_cloud_nap_bed.png
-    - assets/room/generated/roomfit_focus_rug.png
-    - assets/room/generated/roomfit_glow_lantern.png
-    - assets/room/generated/roomfit_moonlit_study_nook.png
-    - assets/room/generated/roomfit_soft_study_nook.png
-    - assets/room/generated/roomfit_tiny_library_shelf.png
-    - assets/room/generated/roomfit_warm_den_bed.png
-    - assets/room/generated/roomfit_window.png
 
   fonts:
     - family: Baloo 2

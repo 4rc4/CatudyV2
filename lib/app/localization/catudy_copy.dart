@@ -81,7 +81,7 @@ class CatudyCopy {
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
-        'Odak puanlarına göre sıralama. Yakında buradan pet odalarını ziyaret edebileceksin.',
+        'Canlı odak puanı sıralaması. Yakında buradan pet odalarını ziyaret edebileceksin.',
     'leaderboard.you': 'sen',
     'leaderboard.roomSoon': 'Pet odası ziyareti yakında',
     'leaderboard.visitSoon': 'Pet odası yakında ziyaret edilecek',
@@ -169,6 +169,11 @@ class CatudyCopy {
     'pet.roomMaintenanceTitle': 'Oda yenileniyor',
     'pet.roomMaintenanceBody':
         'Bu alan şu an inşaat halinde; bazı eşyalar yerinden oynayabilir.',
+    'pet.nameDialogTitle': 'Petinin ismi ne olsun?',
+    'pet.nameDialogBody':
+        'İstersen önerilerden birini seçebilir ya da kendi ismini yazabilirsin.',
+    'pet.nameField': 'Pet ismi',
+    'pet.nameSave': 'İsmi kaydet',
 
     'shop.title': 'Mağaza',
     'shop.petUnlocks': 'Pet Kilitleri',
@@ -394,7 +399,7 @@ class CatudyCopy {
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
-        'Ranking by focus points. Soon you will be able to visit pet rooms from here.',
+        'Live ranking by focus points. Soon you will be able to visit pet rooms from here.',
     'leaderboard.you': 'you',
     'leaderboard.roomSoon': 'Pet room visits coming soon',
     'leaderboard.visitSoon': 'Pet room visit coming soon',
@@ -483,6 +488,10 @@ class CatudyCopy {
     'pet.roomMaintenanceTitle': 'Room refresh in progress',
     'pet.roomMaintenanceBody':
         'This room is under construction, so a few details may shift for now.',
+    'pet.nameDialogTitle': 'What should your pet be called?',
+    'pet.nameDialogBody': 'Pick a suggestion or type your own pet name.',
+    'pet.nameField': 'Pet name',
+    'pet.nameSave': 'Save name',
 
     'shop.title': 'Shop',
     'shop.petUnlocks': 'Pet Unlocks',
