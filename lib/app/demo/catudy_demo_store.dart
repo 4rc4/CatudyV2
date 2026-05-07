@@ -226,6 +226,38 @@ class LobbyMember {
   final bool? breakVote;
 }
 
+class FocusRecommendation {
+  const FocusRecommendation({
+    required this.categoryId,
+    required this.minutes,
+    required this.basedOnHistory,
+    required this.sessionsConsidered,
+  });
+
+  final String categoryId;
+  final int minutes;
+  final bool basedOnHistory;
+  final int sessionsConsidered;
+}
+
+class LeaderboardProfile {
+  const LeaderboardProfile({
+    required this.name,
+    required this.petId,
+    required this.points,
+    required this.totalMinutes,
+    required this.streakDays,
+    required this.currentUser,
+  });
+
+  final String name;
+  final String petId;
+  final int points;
+  final int totalMinutes;
+  final int streakDays;
+  final bool currentUser;
+}
+
 class CatudyDemoStore extends ChangeNotifier {
   CatudyDemoStore({CatudyLocalStorage storage = const CatudyLocalStorage()})
     : _storage = storage {
@@ -409,6 +441,8 @@ class CatudyDemoStore extends ChangeNotifier {
   FocusRecord? lastResult;
   DateTime selectedCalendarDate = DateTime.now();
   String selectedPetId = 'mochi';
+  String profileAvatarId = 'catudy';
+  String? customProfileImageBase64;
   String? equippedPetItemId = 'violet_collar';
   String? equippedProfileItemId;
 
@@ -507,6 +541,96 @@ class CatudyDemoStore extends ChangeNotifier {
     (item) => item.id == selectedPetId,
     orElse: () => unlockablePets.first,
   );
+
+  FocusRecommendation get focusRecommendation {
+    final records = history
+        .where((item) => !item.manual && item.minutes > 0)
+        .toList();
+    if (records.isEmpty) {
+      return FocusRecommendation(
+        categoryId: selectedCategoryId,
+        minutes: selectedDurationMinutes.clamp(15, 60).toInt(),
+        basedOnHistory: false,
+        sessionsConsidered: 0,
+      );
+    }
+
+    final now = DateTime.now();
+    final categoryScores = <String, double>{};
+    for (final record in records) {
+      final ageDays = now.difference(record.createdAt).inDays.clamp(0, 60);
+      final recency = (60 - ageDays) / 60;
+      categoryScores[record.categoryId] =
+          (categoryScores[record.categoryId] ?? 0) +
+          record.minutes +
+          10 +
+          (recency * 18);
+    }
+    final categoryId = categoryScores.entries
+        .reduce((a, b) => a.value >= b.value ? a : b)
+        .key;
+    final categoryRecords = records
+        .where((item) => item.categoryId == categoryId)
+        .toList();
+    var weightedMinutes = 0.0;
+    var weightTotal = 0.0;
+    for (final record in categoryRecords) {
+      final ageDays = now.difference(record.createdAt).inDays.clamp(0, 60);
+      final recency = (60 - ageDays) / 60;
+      final weight = 1 + recency + (record.minutes >= 25 ? 0.25 : 0);
+      weightedMinutes += record.minutes * weight;
+      weightTotal += weight;
+    }
+    final rawMinutes = weightTotal == 0
+        ? selectedDurationMinutes.toDouble()
+        : weightedMinutes / weightTotal;
+    final rounded = ((rawMinutes / 5).round() * 5).clamp(10, 120).toInt();
+    return FocusRecommendation(
+      categoryId: categoryId,
+      minutes: rounded,
+      basedOnHistory: true,
+      sessionsConsidered: categoryRecords.length,
+    );
+  }
+
+  List<LeaderboardProfile> get leaderboardProfiles {
+    final profiles = <LeaderboardProfile>[
+      LeaderboardProfile(
+        name: displayName,
+        petId: selectedPetId,
+        points: focusPoints,
+        totalMinutes: totalFocusMinutes,
+        streakDays: streakDays,
+        currentUser: true,
+      ),
+      const LeaderboardProfile(
+        name: 'Arda',
+        petId: 'miso',
+        points: 1840,
+        totalMinutes: 920,
+        streakDays: 6,
+        currentUser: false,
+      ),
+      const LeaderboardProfile(
+        name: 'Emre',
+        petId: 'luna',
+        points: 1360,
+        totalMinutes: 720,
+        streakDays: 4,
+        currentUser: false,
+      ),
+      const LeaderboardProfile(
+        name: 'Doganer',
+        petId: 'mochi',
+        points: 980,
+        totalMinutes: 520,
+        streakDays: 3,
+        currentUser: false,
+      ),
+    ];
+    profiles.sort((a, b) => b.points.compareTo(a.points));
+    return profiles;
+  }
 
   FocusCategory get favoriteCategory {
     if (history.isEmpty) {
@@ -696,6 +820,13 @@ class CatudyDemoStore extends ChangeNotifier {
 
   void selectDuration(int minutes) {
     selectedDurationMinutes = minutes;
+    _commit();
+  }
+
+  void prepareRecommendedFocus() {
+    final recommendation = focusRecommendation;
+    selectCategory(recommendation.categoryId);
+    selectedDurationMinutes = recommendation.minutes;
     _commit();
   }
 
@@ -1191,6 +1322,20 @@ class CatudyDemoStore extends ChangeNotifier {
     _commit();
   }
 
+  void updateProfile({
+    required String name,
+    required String avatarId,
+    String? customAvatarBase64,
+  }) {
+    final cleanName = name.trim();
+    if (cleanName.isNotEmpty) {
+      displayName = cleanName;
+    }
+    profileAvatarId = avatarId;
+    customProfileImageBase64 = customAvatarBase64;
+    _commit();
+  }
+
   void updateSettings({
     required String name,
     required String apiUrl,
@@ -1403,6 +1548,8 @@ class CatudyDemoStore extends ChangeNotifier {
     lastResult = null;
     selectedCalendarDate = DateTime.now();
     selectedPetId = 'mochi';
+    profileAvatarId = 'catudy';
+    customProfileImageBase64 = null;
     equippedPetItemId = 'violet_collar';
     equippedProfileItemId = null;
     _restoredCompletedSession = false;
@@ -1481,6 +1628,11 @@ class CatudyDemoStore extends ChangeNotifier {
     if (!unlockedPetIds.contains(selectedPetId)) {
       selectedPetId = 'mochi';
     }
+    profileAvatarId = _readString(json, 'profileAvatarId', 'catudy');
+    customProfileImageBase64 = _readNullableString(
+      json,
+      'customProfileImageBase64',
+    );
     equippedPetItemId = _readNullableString(json, 'equippedPetItemId');
     equippedProfileItemId = _readNullableString(json, 'equippedProfileItemId');
     equippedRoomItemIds
@@ -1556,6 +1708,8 @@ class CatudyDemoStore extends ChangeNotifier {
     'ownedItems': ownedItems.toList(),
     'unlockedPetIds': unlockedPetIds.toList(),
     'selectedPetId': selectedPetId,
+    'profileAvatarId': profileAvatarId,
+    'customProfileImageBase64': customProfileImageBase64,
     'equippedPetItemId': equippedPetItemId,
     'equippedProfileItemId': equippedProfileItemId,
     'equippedRoomItemIds': Map<String, String>.from(equippedRoomItemIds),

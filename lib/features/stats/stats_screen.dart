@@ -54,7 +54,7 @@ class _StatsScreenState extends State<StatsScreen> {
             ),
             const SizedBox(height: 14),
             _FocusChart(
-              data: _chartData(store.history, _range, store.languageCode),
+              data: _chartData(store, _range),
               title: store.t('stats.focusRhythm'),
               store: store,
             ),
@@ -148,71 +148,75 @@ class _StatsScreenState extends State<StatsScreen> {
         .toList();
   }
 
-  List<_ChartPoint> _chartData(
-    List<FocusRecord> records,
-    StatsRange range,
-    String languageCode,
-  ) {
+  List<_ChartPoint> _chartData(CatudyDemoStore store, StatsRange range) {
     final now = DateTime.now();
     if (range == StatsRange.week) {
       return [
         for (var i = 6; i >= 0; i--)
-          _pointForDay(records, now.subtract(Duration(days: i)), languageCode),
+          _pointForDay(store, now.subtract(Duration(days: i))),
       ];
     }
     if (range == StatsRange.month) {
       final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
       return [
         for (var start = 1; start <= daysInMonth; start += 7)
-          _ChartPoint(
-            '$start-${(start + 6).clamp(1, daysInMonth)}',
-            records
-                .where(
-                  (item) =>
-                      item.createdAt.year == now.year &&
-                      item.createdAt.month == now.month &&
-                      item.createdAt.day >= start &&
-                      item.createdAt.day <= (start + 6).clamp(1, daysInMonth),
-                )
-                .fold(0, (sum, item) => sum + item.minutes),
+          _pointForRange(
+            store,
+            label: '$start-${(start + 6).clamp(1, daysInMonth)}',
+            start: DateTime(now.year, now.month, start),
+            end: DateTime(
+              now.year,
+              now.month,
+              (start + 6).clamp(1, daysInMonth),
+              23,
+              59,
+              59,
+            ),
           ),
       ];
     }
     return [
       for (var i = 5; i >= 0; i--)
-        _pointForMonth(
-          records,
-          DateTime(now.year, now.month - i),
-          languageCode,
-        ),
+        _pointForMonth(store, DateTime(now.year, now.month - i)),
     ];
   }
 
-  _ChartPoint _pointForDay(
-    List<FocusRecord> records,
-    DateTime day,
-    String languageCode,
-  ) {
+  _ChartPoint _pointForDay(CatudyDemoStore store, DateTime day) {
     const enLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const labels = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    final records = store.recordsForDay(day);
+    final minutes = records.fold(0, (sum, item) => sum + item.minutes);
     return _ChartPoint(
-      (languageCode == 'en' ? enLabels : labels)[day.weekday - 1],
-      records
-          .where(
-            (item) =>
-                item.createdAt.year == day.year &&
-                item.createdAt.month == day.month &&
-                item.createdAt.day == day.day,
-          )
-          .fold(0, (sum, item) => sum + item.minutes),
+      label: (store.languageCode == 'en' ? enLabels : labels)[day.weekday - 1],
+      minutes: minutes,
+      title: _weekdayName(day, store.languageCode),
+      message: _dayFocusMessage(store, day, records, minutes),
     );
   }
 
-  _ChartPoint _pointForMonth(
-    List<FocusRecord> records,
-    DateTime month,
-    String languageCode,
-  ) {
+  _ChartPoint _pointForRange(
+    CatudyDemoStore store, {
+    required String label,
+    required DateTime start,
+    required DateTime end,
+  }) {
+    final records = store.history
+        .where(
+          (item) =>
+              !item.createdAt.isBefore(start) && !item.createdAt.isAfter(end),
+        )
+        .toList();
+    final minutes = records.fold(0, (sum, item) => sum + item.minutes);
+    final title = store.languageCode == 'en' ? 'Days $label' : '$label. günler';
+    return _ChartPoint(
+      label: label,
+      minutes: minutes,
+      title: title,
+      message: _rangeFocusMessage(store, title, records, minutes),
+    );
+  }
+
+  _ChartPoint _pointForMonth(CatudyDemoStore store, DateTime month) {
     const enLabels = [
       'Jan',
       'Feb',
@@ -241,16 +245,145 @@ class _StatsScreenState extends State<StatsScreen> {
       'Kas',
       'Ara',
     ];
+    final records = store.history
+        .where(
+          (item) =>
+              item.createdAt.year == month.year &&
+              item.createdAt.month == month.month,
+        )
+        .toList();
+    final minutes = records.fold(0, (sum, item) => sum + item.minutes);
+    final title = _monthName(month, store.languageCode);
     return _ChartPoint(
-      (languageCode == 'en' ? enLabels : labels)[month.month - 1],
-      records
-          .where(
-            (item) =>
-                item.createdAt.year == month.year &&
-                item.createdAt.month == month.month,
-          )
-          .fold(0, (sum, item) => sum + item.minutes),
+      label: (store.languageCode == 'en' ? enLabels : labels)[month.month - 1],
+      minutes: minutes,
+      title: title,
+      message: _rangeFocusMessage(store, title, records, minutes),
     );
+  }
+
+  String _dayFocusMessage(
+    CatudyDemoStore store,
+    DateTime day,
+    List<FocusRecord> records,
+    int minutes,
+  ) {
+    final weekday = _weekdayName(day, store.languageCode);
+    if (minutes == 0) {
+      return store.languageCode == 'en'
+          ? 'No focus was recorded on $weekday.'
+          : '$weekday günü kayıtlı odak yok.';
+    }
+    final grouped = _categoryBreakdown(store, records);
+    if (grouped.length == 1) {
+      final entry = grouped.entries.first;
+      return store.languageCode == 'en'
+          ? 'On $weekday, you focused for $minutes minutes in ${entry.key}.'
+          : '$weekday günü ${entry.key} kategorisinde $minutes dakika odaklandın.';
+    }
+    final breakdown = _formatBreakdown(store, grouped);
+    return store.languageCode == 'en'
+        ? 'On $weekday, you focused for $minutes minutes total: $breakdown.'
+        : '$weekday günü toplam $minutes dakika odaklandın: $breakdown.';
+  }
+
+  String _rangeFocusMessage(
+    CatudyDemoStore store,
+    String title,
+    List<FocusRecord> records,
+    int minutes,
+  ) {
+    if (minutes == 0) {
+      return store.languageCode == 'en'
+          ? 'No focus was recorded in this period.'
+          : 'Bu dönemde kayıtlı odak yok.';
+    }
+    final grouped = _categoryBreakdown(store, records);
+    if (grouped.length == 1) {
+      final entry = grouped.entries.first;
+      return store.languageCode == 'en'
+          ? 'In $title, you focused for $minutes minutes in ${entry.key}.'
+          : '$title döneminde ${entry.key} kategorisinde $minutes dakika odaklandın.';
+    }
+    final breakdown = _formatBreakdown(store, grouped);
+    return store.languageCode == 'en'
+        ? 'In $title, you focused for $minutes minutes total: $breakdown.'
+        : '$title döneminde toplam $minutes dakika odaklandın: $breakdown.';
+  }
+
+  Map<String, int> _categoryBreakdown(
+    CatudyDemoStore store,
+    List<FocusRecord> records,
+  ) {
+    final grouped = <String, int>{};
+    for (final record in records) {
+      final name = store.categoryName(record.categoryId);
+      grouped[name] = (grouped[name] ?? 0) + record.minutes;
+    }
+    final entries = grouped.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return Map<String, int>.fromEntries(entries);
+  }
+
+  String _formatBreakdown(CatudyDemoStore store, Map<String, int> grouped) {
+    final suffix = store.languageCode == 'en' ? 'min' : 'dk';
+    return grouped.entries
+        .map((entry) => '${entry.key} ${entry.value}$suffix')
+        .join(', ');
+  }
+
+  String _weekdayName(DateTime day, String languageCode) {
+    const en = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    const tr = [
+      'Pazartesi',
+      'Salı',
+      'Çarşamba',
+      'Perşembe',
+      'Cuma',
+      'Cumartesi',
+      'Pazar',
+    ];
+    return (languageCode == 'en' ? en : tr)[day.weekday - 1];
+  }
+
+  String _monthName(DateTime month, String languageCode) {
+    const en = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const tr = [
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık',
+    ];
+    return (languageCode == 'en' ? en : tr)[month.month - 1];
   }
 
   List<_CategorySlice> _categorySlices(
@@ -787,6 +920,8 @@ class _FocusChart extends StatelessWidget {
                     child: _ChartColumn(
                       label: data[index].label,
                       minutes: data[index].minutes,
+                      title: data[index].title,
+                      message: data[index].message,
                       ratio: data[index].minutes / maxValue,
                       selected: index == data.length - 1,
                       store: store,
@@ -802,16 +937,25 @@ class _FocusChart extends StatelessWidget {
 }
 
 class _ChartPoint {
-  const _ChartPoint(this.label, this.minutes);
+  const _ChartPoint({
+    required this.label,
+    required this.minutes,
+    required this.title,
+    required this.message,
+  });
 
   final String label;
   final int minutes;
+  final String title;
+  final String message;
 }
 
 class _ChartColumn extends StatelessWidget {
   const _ChartColumn({
     required this.label,
     required this.minutes,
+    required this.title,
+    required this.message,
     required this.ratio,
     required this.selected,
     required this.store,
@@ -819,6 +963,8 @@ class _ChartColumn extends StatelessWidget {
 
   final String label;
   final int minutes;
+  final String title;
+  final String message;
   final double ratio;
   final bool selected;
   final CatudyDemoStore store;
@@ -827,10 +973,8 @@ class _ChartColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = selected ? CatudyColors.teal : CatudyColors.violet;
     return CatudyInfoTap(
-      title: store.languageCode == 'en' ? '$label focus' : '$label odağı',
-      message: minutes == 0
-          ? 'Bu zaman diliminde kayıtlı odak yok.'
-          : 'Bu zaman diliminde toplam $minutes dakika odak kaydı var.',
+      title: title,
+      message: message,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Column(

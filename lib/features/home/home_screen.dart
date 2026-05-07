@@ -21,269 +21,320 @@ class HomeScreen extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return StoreBuilder(
-      builder: (context, store) => SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Image.asset(CatudyAssets.logo, width: 46, height: 46),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    store.t('home.greeting'),
-                    style: textTheme.headlineSmall?.copyWith(
-                      color: CatudyColors.blueFor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => showPetIntroTour(context),
-                  tooltip: store.t('pet.showTour'),
-                  style: IconButton.styleFrom(
-                    backgroundColor: CatudyColors.surfaceFor(context),
-                    foregroundColor: CatudyColors.mutedFor(context),
-                  ),
-                  icon: const Icon(Icons.info_rounded),
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  onPressed: () => context.go('/settings'),
-                  tooltip: store.t('pet.settings'),
-                  style: IconButton.styleFrom(
-                    backgroundColor: CatudyColors.surfaceFor(context),
-                    foregroundColor: CatudyColors.mutedFor(context),
-                  ),
-                  icon: const Icon(Icons.settings_rounded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            CatudyPanel(
-              padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-              color: CatudyColors.cream,
-              accentColor: CatudyColors.teal,
-              child: Row(
+      builder: (context, store) {
+        final recommendation = store.focusRecommendation;
+        final recommendationCategory = store.categoryName(
+          recommendation.categoryId,
+        );
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
+          child: Column(
+            children: [
+              Row(
                 children: [
-                  const FloatingMascot(width: 72, height: 72),
+                  Image.asset(CatudyAssets.logo, width: 46, height: 46),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Wrap(
-                      spacing: 10,
-                      runSpacing: 6,
-                      children: [
-                        _PetStatusChip(
-                          icon: Icons.sentiment_satisfied_rounded,
-                          label:
-                              '${store.t('home.happiness')}: ${store.petMood > 70 ? store.t('home.good') : store.t('home.normal')}',
-                          infoTitle: store.t('home.happiness'),
-                          infoMessage:
-                              'Mochi odak seansları ve sevdiği eşyalarla daha mutlu olur. Mutluluk yüksekken oda daha canlı hissettirir.',
-                        ),
-                        _PetStatusChip(
-                          icon: Icons.local_cafe_rounded,
-                          label:
-                              '${store.t('home.hunger')}: ${store.petHunger < 35 ? store.t('home.full') : store.t('home.hungry')}',
-                          infoTitle: store.t('home.hunger'),
-                          infoMessage:
-                              'Açlık zamanla yükselir. Düzenli odak ve bakım petin dengesini korur.',
-                        ),
-                      ],
+                    child: Text(
+                      store.t('home.greeting'),
+                      style: textTheme.headlineSmall?.copyWith(
+                        color: CatudyColors.blueFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
-                  FilledButton(
-                    onPressed: () => context.go('/pet-room'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: CatudyColors.violet,
-                      minimumSize: const Size(0, 40),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                  IconButton(
+                    onPressed: () => context.go('/leaderboard'),
+                    tooltip: store.t('leaderboard.title'),
+                    style: IconButton.styleFrom(
+                      backgroundColor: CatudyColors.surfaceFor(context),
+                      foregroundColor: CatudyColors.mutedFor(context),
                     ),
-                    child: Text(store.t('home.petButton')),
+                    icon: const Icon(Icons.emoji_events_rounded),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    onPressed: () => showPetIntroTour(context),
+                    tooltip: store.t('pet.showTour'),
+                    style: IconButton.styleFrom(
+                      backgroundColor: CatudyColors.surfaceFor(context),
+                      foregroundColor: CatudyColors.mutedFor(context),
+                    ),
+                    icon: const Icon(Icons.info_rounded),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    onPressed: () => context.go('/settings'),
+                    tooltip: store.t('pet.settings'),
+                    style: IconButton.styleFrom(
+                      backgroundColor: CatudyColors.surfaceFor(context),
+                      foregroundColor: CatudyColors.mutedFor(context),
+                    ),
+                    icon: const Icon(Icons.settings_rounded),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 18),
-            CatudyPanel(
-              padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-              accentColor: CatudyColors.teal,
-              child: Column(
+              const SizedBox(height: 12),
+              CatudyPanel(
+                padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+                color: CatudyColors.cream,
+                accentColor: CatudyColors.teal,
+                child: Row(
+                  children: [
+                    const FloatingMascot(width: 72, height: 72),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 6,
+                        children: [
+                          _PetStatusChip(
+                            icon: Icons.sentiment_satisfied_rounded,
+                            label:
+                                '${store.t('home.happiness')}: ${store.petMood > 70 ? store.t('home.good') : store.t('home.normal')}',
+                            infoTitle: store.t('home.happiness'),
+                            infoMessage:
+                                'Mochi odak seansları ve sevdiği eşyalarla daha mutlu olur. Mutluluk yüksekken oda daha canlı hissettirir.',
+                          ),
+                          _PetStatusChip(
+                            icon: Icons.local_cafe_rounded,
+                            label:
+                                '${store.t('home.hunger')}: ${store.petHunger < 35 ? store.t('home.full') : store.t('home.hungry')}',
+                            infoTitle: store.t('home.hunger'),
+                            infoMessage:
+                                'Açlık zamanla yükselir. Düzenli odak ve bakım petin dengesini korur.',
+                          ),
+                        ],
+                      ),
+                    ),
+                    FilledButton(
+                      onPressed: () => context.go('/pet-room'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: CatudyColors.violet,
+                        minimumSize: const Size(0, 40),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      child: Text(store.t('home.petButton')),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              CatudyPanel(
+                padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+                accentColor: CatudyColors.teal,
+                child: Column(
+                  children: [
+                    const _SparkleDivider(),
+                    Text(
+                      store.t('home.focusTime'),
+                      textAlign: TextAlign.center,
+                      style: textTheme.headlineMedium?.copyWith(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: CatudyColors.lavenderSoft.withValues(
+                          alpha: 0.74,
+                        ),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: CatudyColors.violet.withValues(alpha: 0.16),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            store.t('home.focusSuggestion', {
+                              'minutes': recommendation.minutes,
+                              'category': recommendationCategory,
+                            }),
+                            textAlign: TextAlign.center,
+                            style: textTheme.titleLarge?.copyWith(
+                              color: CatudyColors.blueFor(context),
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            recommendation.basedOnHistory
+                                ? store.t('home.focusSuggestionReason', {
+                                    'sessions':
+                                        recommendation.sessionsConsidered,
+                                  })
+                                : store.t('home.focusSuggestionStarter'),
+                            textAlign: TextAlign.center,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: CatudyColors.mutedFor(context),
+                              height: 1.32,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          FilledButton.icon(
+                            onPressed: () {
+                              store.prepareRecommendedFocus();
+                              context.go('/focus/category');
+                            },
+                            icon: const Icon(Icons.auto_awesome_rounded),
+                            label: Text(store.t('home.prepareFocusPlan')),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    _FocusLaunchButton(
+                      onPressed: () => context.go('/focus/category'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
                 children: [
-                  const _SparkleDivider(),
-                  Text(
-                    store.t('home.focusTime'),
-                    textAlign: TextAlign.center,
-                    style: textTheme.headlineMedium?.copyWith(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w900,
+                  Expanded(
+                    child: _ActionButton(
+                      label: store.t('home.createLobby'),
+                      icon: Icons.home_rounded,
+                      color: CatudyColors.violet,
+                      onPressed: () => context.go('/lobby/create'),
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.hourglass_bottom_rounded,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ActionButton(
+                      label: store.t('home.joinLobby'),
+                      icon: Icons.groups_rounded,
+                      color: CatudyColors.teal,
+                      onPressed: () => context.go('/lobby/join'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              CatudyPanel(
+                accentColor: CatudyColors.teal,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      store.t('home.todayReminders'),
+                      style: textTheme.titleLarge?.copyWith(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (store.todosForDay(DateTime.now()).isEmpty)
+                      Text(
+                        store.t('home.noTodayReminders'),
+                        style: TextStyle(color: CatudyColors.mutedFor(context)),
+                      )
+                    else
+                      for (final todo in store.todosForDay(DateTime.now()))
+                        _HomeTodoTile(todo: todo),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              CatudyPanel(
+                accentColor: CatudyColors.violet,
+                child: Column(
+                  children: [
+                    Text(
+                      store.t('home.todaySummary'),
+                      style: textTheme.titleLarge?.copyWith(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _SummaryText(
+                          label: store.t('home.focus'),
+                          value:
+                              '${store.todayMinutes}${store.t('common.minutesShort')}',
+                          info:
+                              'Bugün tamamlanan gerçek ve manuel odak kayıtlarının toplam süresi.',
+                        ),
+                        _SummaryText(
+                          label: store.t('home.streak'),
+                          icon: Icons.local_fire_department_rounded,
+                          value:
+                              '${store.streakDays}${store.t('common.daysShort')}',
+                          info:
+                              'Art arda odak yapılan günleri gösterir. Seri ilerledikçe motivasyon takibi kolaylaşır.',
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 22),
+                    Text(
+                      store.history.isEmpty
+                          ? store.t('home.noSessions')
+                          : store.t('home.lastSession', {
+                              'minutes': store.history.first.minutes,
+                            }),
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              CatudyPanel(
+                color: CatudyColors.lavenderSoft,
+                accentColor: CatudyColors.lavender,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: CatudyColors.surface,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Icon(
+                        Icons.local_cafe_rounded,
                         color: CatudyColors.teal,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${store.selectedDurationMinutes} ${store.t('common.minutes')}',
-                        style: textTheme.titleLarge?.copyWith(
-                          color: CatudyColors.mutedFor(context),
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  _FocusLaunchButton(
-                    onPressed: () => context.go('/focus/category'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionButton(
-                    label: store.t('home.createLobby'),
-                    icon: Icons.home_rounded,
-                    color: CatudyColors.violet,
-                    onPressed: () => context.go('/lobby/create'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionButton(
-                    label: store.t('home.joinLobby'),
-                    icon: Icons.groups_rounded,
-                    color: CatudyColors.teal,
-                    onPressed: () => context.go('/lobby/join'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            CatudyPanel(
-              accentColor: CatudyColors.teal,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    store.t('home.todayReminders'),
-                    style: textTheme.titleLarge?.copyWith(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w900,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  if (store.todosForDay(DateTime.now()).isEmpty)
-                    Text(
-                      store.t('home.noTodayReminders'),
-                      style: TextStyle(color: CatudyColors.mutedFor(context)),
-                    )
-                  else
-                    for (final todo in store.todosForDay(DateTime.now()))
-                      _HomeTodoTile(todo: todo),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            CatudyPanel(
-              accentColor: CatudyColors.violet,
-              child: Column(
-                children: [
-                  Text(
-                    store.t('home.todaySummary'),
-                    style: textTheme.titleLarge?.copyWith(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _SummaryText(
-                        label: store.t('home.focus'),
-                        value:
-                            '${store.todayMinutes}${store.t('common.minutesShort')}',
-                        info:
-                            'Bugün tamamlanan gerçek ve manuel odak kayıtlarının toplam süresi.',
-                      ),
-                      _SummaryText(
-                        label: store.t('home.streak'),
-                        icon: Icons.local_fire_department_rounded,
-                        value:
-                            '${store.streakDays}${store.t('common.daysShort')}',
-                        info:
-                            'Art arda odak yapılan günleri gösterir. Seri ilerledikçe motivasyon takibi kolaylaşır.',
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 22),
-                  Text(
-                    store.history.isEmpty
-                        ? store.t('home.noSessions')
-                        : store.t('home.lastSession', {
-                            'minutes': store.history.first.minutes,
-                          }),
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            CatudyPanel(
-              color: CatudyColors.lavenderSoft,
-              accentColor: CatudyColors.lavender,
-              child: Row(
-                children: [
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: CatudyColors.surface,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Icon(
-                      Icons.local_cafe_rounded,
-                      color: CatudyColors.teal,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          store.t('home.breakTitle'),
-                          style: textTheme.titleMedium?.copyWith(
-                            color: CatudyColors.mutedFor(context),
-                            fontWeight: FontWeight.w900,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            store.t('home.breakTitle'),
+                            style: textTheme.titleMedium?.copyWith(
+                              color: CatudyColors.mutedFor(context),
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
-                        ),
-                        Text(
-                          store.t('home.breakBody'),
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: CatudyColors.mutedFor(context),
+                          Text(
+                            store.t('home.breakBody'),
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: CatudyColors.mutedFor(context),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

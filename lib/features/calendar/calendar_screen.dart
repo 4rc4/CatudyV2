@@ -464,7 +464,7 @@ class _MonthGrid extends StatelessWidget {
               color: selected
                   ? CatudyColors.coral.withValues(alpha: 0.20)
                   : minutes > 0
-                  ? CatudyColors.lavenderSoft
+                  ? CatudyColors.violet.withValues(alpha: 0.42)
                   : CatudyColors.surface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
@@ -472,6 +472,8 @@ class _MonthGrid extends StatelessWidget {
                     ? CatudyColors.coral
                     : today
                     ? CatudyColors.violet
+                    : minutes > 0
+                    ? CatudyColors.violet.withValues(alpha: 0.48)
                     : CatudyColors.line,
               ),
             ),

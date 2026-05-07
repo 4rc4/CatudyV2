@@ -72,6 +72,19 @@ class CatudyCopy {
     'home.normal': 'Normal',
     'home.full': 'Tok',
     'home.hungry': 'Aç',
+    'home.focusSuggestion': '{category} için {minutes} dakika çalışabilirsin.',
+    'home.focusSuggestionReason':
+        'Önceki {sessions} seansına göre bu ritim daha verimli görünüyor.',
+    'home.focusSuggestionStarter':
+        'İlk öneri için dengeli bir başlangıç süresi seçildi.',
+    'home.prepareFocusPlan': 'Planı Hazırla',
+
+    'leaderboard.title': 'Leaderboard',
+    'leaderboard.body':
+        'Odak puanlarına göre sıralama. Yakında buradan pet odalarını ziyaret edebileceksin.',
+    'leaderboard.you': 'sen',
+    'leaderboard.roomSoon': 'Pet odası ziyareti yakında',
+    'leaderboard.visitSoon': 'Pet odası yakında ziyaret edilecek',
 
     'calendar.title': 'Takvim',
     'calendar.manualAdd': 'Manuel Ekle',
@@ -219,6 +232,11 @@ class CatudyCopy {
     'profile.dailyFocus': 'Günlük odak',
     'profile.edit': 'Profili Düzenle',
     'profile.share': 'Profili Paylaş',
+    'profile.editTitle': 'Profili Düzenle',
+    'profile.chooseAvatar': 'Profil resmi seç',
+    'profile.uploadAvatar': 'Özel resim yükle',
+    'profile.saveProfile': 'Profili kaydet',
+    'profile.name': 'İsim',
     'profile.publicTitle': 'Herkese Açık Profil',
     'profile.publicBody':
         'Herkese açık görünüm özel ayarları, token bilgisini ve sync metadatasını göstermez.',
@@ -367,6 +385,19 @@ class CatudyCopy {
     'home.normal': 'Normal',
     'home.full': 'Full',
     'home.hungry': 'Hungry',
+    'home.focusSuggestion': 'You can study {category} for {minutes} minutes.',
+    'home.focusSuggestionReason':
+        'Based on your last {sessions} sessions, this rhythm looks more efficient.',
+    'home.focusSuggestionStarter':
+        'A balanced starter duration was selected for the first recommendation.',
+    'home.prepareFocusPlan': 'Prepare Plan',
+
+    'leaderboard.title': 'Leaderboard',
+    'leaderboard.body':
+        'Ranking by focus points. Soon you will be able to visit pet rooms from here.',
+    'leaderboard.you': 'you',
+    'leaderboard.roomSoon': 'Pet room visits coming soon',
+    'leaderboard.visitSoon': 'Pet room visit coming soon',
 
     'calendar.title': 'Calendar',
     'calendar.manualAdd': 'Add Manual',
@@ -515,6 +546,11 @@ class CatudyCopy {
     'profile.dailyFocus': 'Daily focus',
     'profile.edit': 'Edit Profile',
     'profile.share': 'Share Profile',
+    'profile.editTitle': 'Edit Profile',
+    'profile.chooseAvatar': 'Choose profile picture',
+    'profile.uploadAvatar': 'Upload custom picture',
+    'profile.saveProfile': 'Save profile',
+    'profile.name': 'Name',
     'profile.publicTitle': 'Public Profile',
     'profile.publicBody':
         'The public view does not show private settings, token data, or sync metadata.',

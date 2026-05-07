@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
@@ -36,21 +40,7 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       Stack(
                         children: [
-                          Container(
-                            width: 108,
-                            height: 108,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: CatudyColors.surface,
-                              borderRadius: BorderRadius.circular(34),
-                              border: Border.all(
-                                color: CatudyColors.teal.withValues(
-                                  alpha: 0.18,
-                                ),
-                              ),
-                            ),
-                            child: Image.asset(CatudyAssets.logo),
-                          ),
+                          _ProfileAvatar(store: store, size: 108),
                           Positioned(
                             right: 0,
                             bottom: 0,
@@ -59,7 +49,7 @@ class ProfileScreen extends StatelessWidget {
                               backgroundColor: CatudyColors.surface,
                               child: IconButton(
                                 padding: EdgeInsets.zero,
-                                onPressed: () => context.go('/settings'),
+                                onPressed: () => _editProfile(context, store),
                                 icon: const Icon(
                                   Icons.edit_rounded,
                                   size: 18,
@@ -146,6 +136,7 @@ class ProfileScreen extends StatelessWidget {
                       Expanded(
                         child: _ProfileMetric(
                           icon: Icons.local_fire_department_rounded,
+                          iconColor: CatudyColors.yellow,
                           label: store.t('stats.streak'),
                           value:
                               '${store.streakDays}${store.t('common.daysShort')}',
@@ -210,7 +201,7 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => context.go('/settings'),
+                    onPressed: () => _editProfile(context, store),
                     icon: const Icon(Icons.edit_rounded),
                     label: Text(store.t('profile.edit')),
                   ),
@@ -231,6 +222,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _editProfile(BuildContext context, CatudyDemoStore store) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => _ProfileEditDialog(store: store),
+    );
+  }
+
   String _formatMinutes(int minutes, CatudyDemoStore store) {
     final hours = minutes ~/ 60;
     final rest = minutes % 60;
@@ -241,18 +239,271 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
+class _ProfileAvatar extends StatelessWidget {
+  const _ProfileAvatar({
+    required this.size,
+    this.store,
+    this.avatarId,
+    this.customAvatarBase64,
+  });
+
+  final CatudyDemoStore? store;
+  final String? avatarId;
+  final String? customAvatarBase64;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveId = avatarId ?? store?.profileAvatarId ?? 'catudy';
+    final effectiveCustom =
+        customAvatarBase64 ?? store?.customProfileImageBase64;
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(effectiveId == 'custom' ? 0 : size * 0.13),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: CatudyColors.surface,
+        borderRadius: BorderRadius.circular(size * 0.31),
+        border: Border.all(color: CatudyColors.teal.withValues(alpha: 0.18)),
+      ),
+      child: _avatarChild(effectiveId, effectiveCustom),
+    );
+  }
+
+  Widget _avatarChild(String id, String? customBase64) {
+    if (id == 'custom') {
+      final bytes = _decodeAvatar(customBase64);
+      if (bytes != null) {
+        return Image.memory(bytes, fit: BoxFit.cover);
+      }
+    }
+    if (id == 'mochi') {
+      return Image.asset(CatudyAssets.mascot, fit: BoxFit.contain);
+    }
+    if (id == 'study') {
+      return const Icon(Icons.menu_book_rounded, color: CatudyColors.violet);
+    }
+    if (id == 'star') {
+      return const Icon(Icons.star_rounded, color: CatudyColors.yellow);
+    }
+    return Image.asset(CatudyAssets.logo, fit: BoxFit.contain);
+  }
+}
+
+class _ProfileEditDialog extends StatefulWidget {
+  const _ProfileEditDialog({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  State<_ProfileEditDialog> createState() => _ProfileEditDialogState();
+}
+
+class _ProfileEditDialogState extends State<_ProfileEditDialog> {
+  late final TextEditingController _nameController;
+  late String _avatarId;
+  String? _customAvatarBase64;
+  bool _pickingImage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.store.displayName);
+    _avatarId = widget.store.profileAvatarId;
+    _customAvatarBase64 = widget.store.customProfileImageBase64;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = widget.store;
+    return AlertDialog(
+      title: Text(store.t('profile.editTitle')),
+      content: SizedBox(
+        width: 360,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _nameController,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(labelText: store.t('profile.name')),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                store.t('profile.chooseAvatar'),
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final id in const ['catudy', 'mochi', 'study', 'star'])
+                    _ProfileAvatarOption(
+                      avatarId: id,
+                      selected: _avatarId == id,
+                      onTap: () => setState(() => _avatarId = id),
+                    ),
+                  if (_customAvatarBase64 != null)
+                    _ProfileAvatarOption(
+                      avatarId: 'custom',
+                      customAvatarBase64: _customAvatarBase64,
+                      selected: _avatarId == 'custom',
+                      onTap: () => setState(() => _avatarId = 'custom'),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _pickingImage ? null : _pickCustomImage,
+                icon: _pickingImage
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add_photo_alternate_rounded),
+                label: Text(store.t('profile.uploadAvatar')),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(store.t('common.cancel')),
+        ),
+        FilledButton(
+          onPressed: _save,
+          child: Text(store.t('profile.saveProfile')),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickCustomImage() async {
+    setState(() => _pickingImage = true);
+    try {
+      final image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        imageQuality: 80,
+      );
+      if (image == null) {
+        return;
+      }
+      final bytes = await image.readAsBytes();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _customAvatarBase64 = base64Encode(bytes);
+        _avatarId = 'custom';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _pickingImage = false);
+      }
+    }
+  }
+
+  void _save() {
+    widget.store.updateProfile(
+      name: _nameController.text,
+      avatarId: _avatarId,
+      customAvatarBase64: _customAvatarBase64,
+    );
+    Navigator.of(context).pop();
+  }
+}
+
+class _ProfileAvatarOption extends StatelessWidget {
+  const _ProfileAvatarOption({
+    required this.avatarId,
+    required this.selected,
+    required this.onTap,
+    this.customAvatarBase64,
+  });
+
+  final String avatarId;
+  final String? customAvatarBase64;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Stack(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: selected ? CatudyColors.teal : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: _ProfileAvatar(
+              avatarId: avatarId,
+              customAvatarBase64: customAvatarBase64,
+              size: 58,
+            ),
+          ),
+          if (selected)
+            const Positioned(
+              right: 0,
+              bottom: 0,
+              child: CircleAvatar(
+                radius: 10,
+                backgroundColor: CatudyColors.teal,
+                child: Icon(Icons.check_rounded, size: 14, color: Colors.white),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+Uint8List? _decodeAvatar(String? base64Value) {
+  if (base64Value == null || base64Value.isEmpty) {
+    return null;
+  }
+  try {
+    return base64Decode(base64Value);
+  } catch (_) {
+    return null;
+  }
+}
+
 class _ProfileMetric extends StatelessWidget {
   const _ProfileMetric({
     required this.icon,
     required this.label,
     required this.value,
     required this.info,
+    this.iconColor,
   });
 
   final IconData icon;
   final String label;
   final String value;
   final String info;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -261,7 +512,7 @@ class _ProfileMetric extends StatelessWidget {
       message: info,
       child: Column(
         children: [
-          Icon(icon, color: CatudyColors.teal, size: 28),
+          Icon(icon, color: iconColor ?? CatudyColors.teal, size: 28),
           const SizedBox(height: 6),
           Text(
             label,
