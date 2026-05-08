@@ -224,6 +224,59 @@ void main() {
       'A cushioned low study corner made for Mochi.',
     );
   });
+
+  test('default category names follow selected language', () async {
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+    await store.load();
+
+    expect(store.categories.map((item) => item.name), [
+      'Ders',
+      'İş',
+      'Okuma',
+      'Matematik',
+    ]);
+
+    store.addCategory('Physics', CatudyColors.coral);
+    store.updateSettings(
+      name: store.displayName,
+      apiUrl: store.apiBaseUrl,
+      dnd: store.dndReminder,
+      petNotifications: store.notifications,
+      language: 'en',
+      themeMode: store.themeModeCode,
+    );
+
+    expect(store.categories.map((item) => item.name), [
+      'Study',
+      'Work',
+      'Reading',
+      'Math',
+      'Physics',
+    ]);
+  });
+
+  test('persisted default category names localize on restore', () async {
+    final storage = _MemoryStorage({
+      'categories': [
+        {
+          'id': 'study',
+          'name': 'Study',
+          'color': CatudyColors.violet.toARGB32(),
+        },
+        {'id': 'work', 'name': 'Work', 'color': CatudyColors.teal.toARGB32()},
+      ],
+      'languageCode': 'tr',
+      'history': [],
+      'selectedCategoryId': 'study',
+      'ownedItems': ['violet_collar'],
+    });
+    final store = CatudyDemoStore(storage: storage);
+
+    await store.load();
+
+    expect(store.categories.map((item) => item.name), ['Ders', 'İş']);
+  });
 }
 
 class _MemoryStorage extends CatudyLocalStorage {

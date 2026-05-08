@@ -30,6 +30,10 @@ class FocusCategory {
   final String name;
   final Color color;
 
+  FocusCategory copyWith({String? name}) {
+    return FocusCategory(id: id, name: name ?? this.name, color: color);
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
@@ -356,7 +360,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'common',
       accent: CatudyColors.teal,
       icon: Icons.auto_stories_rounded,
-      assetPath: 'assets/room/soft_study_nook_v2.png',
+      assetPath: 'assets/room/corner_study_desk_v1.png',
     ),
     const ShopItem(
       id: 'moonlit_study_nook',
@@ -367,7 +371,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'rare',
       accent: CatudyColors.violet,
       icon: Icons.lightbulb_rounded,
-      assetPath: 'assets/room/moonlit_study_nook_v2.png',
+      assetPath: 'assets/room/corner_study_desk_moonlit_v1.png',
     ),
     const ShopItem(
       id: 'cloud_nap_bed',
@@ -378,7 +382,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'common',
       accent: CatudyColors.lavender,
       icon: Icons.bed_rounded,
-      assetPath: 'assets/room/cloud_nap_bed_v2.png',
+      assetPath: 'assets/room/corner_cat_bed_v1.png',
     ),
     const ShopItem(
       id: 'warm_den_bed',
@@ -389,7 +393,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'rare',
       accent: CatudyColors.coral,
       icon: Icons.weekend_rounded,
-      assetPath: 'assets/room/warm_den_bed_v2.png',
+      assetPath: 'assets/room/corner_cat_bed_warm_v1.png',
     ),
     const ShopItem(
       id: 'glow_lantern',
@@ -400,7 +404,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'common',
       accent: CatudyColors.yellow,
       icon: Icons.emoji_objects_rounded,
-      assetPath: 'assets/room/glow_lantern_v2.png',
+      assetPath: 'assets/room/corner_right_shelf_lights_v1.png',
     ),
     const ShopItem(
       id: 'tiny_library_shelf',
@@ -411,7 +415,7 @@ class CatudyDemoStore extends ChangeNotifier {
       rarity: 'rare',
       accent: CatudyColors.tealDark,
       icon: Icons.menu_book_rounded,
-      assetPath: 'assets/room/tiny_library_shelf_v2.png',
+      assetPath: 'assets/room/corner_bookcase_v1.png',
     ),
   ];
 
@@ -1410,7 +1414,12 @@ class CatudyDemoStore extends ChangeNotifier {
     apiBaseUrl = apiUrl.trim().isEmpty ? apiBaseUrl : apiUrl.trim();
     dndReminder = dnd;
     notifications = petNotifications;
-    languageCode = language == 'en' ? 'en' : 'tr';
+    final nextLanguageCode = language == 'en' ? 'en' : 'tr';
+    final languageChanged = nextLanguageCode != languageCode;
+    languageCode = nextLanguageCode;
+    if (languageChanged) {
+      _localizeDefaultCategories();
+    }
     themeModeCode = switch (themeMode) {
       'light' => 'light',
       'dark' => 'dark',
@@ -1589,9 +1598,10 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   void _applyDefaults() {
+    languageCode = 'tr';
     categories
       ..clear()
-      ..addAll(_defaultCategories());
+      ..addAll(_defaultCategories(languageCode));
     history
       ..clear()
       ..addAll(_defaultHistory());
@@ -1623,7 +1633,6 @@ class CatudyDemoStore extends ChangeNotifier {
     dndReminder = true;
     notifications = true;
     introTourSeen = false;
-    languageCode = 'tr';
     themeModeCode = 'system';
     currentUserReady = false;
     lobbyStarted = false;
@@ -1650,11 +1659,14 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   void _restoreFromJson(Map<String, dynamic> json) {
+    languageCode = _readString(json, 'languageCode', 'tr') == 'en'
+        ? 'en'
+        : 'tr';
     categories
       ..clear()
       ..addAll(_readMapList(json['categories']).map(FocusCategory.fromJson));
     if (categories.isEmpty) {
-      categories.addAll(_defaultCategories());
+      categories.addAll(_defaultCategories(languageCode));
     }
 
     history
@@ -1683,9 +1695,7 @@ class CatudyDemoStore extends ChangeNotifier {
     dndReminder = _readBool(json, 'dndReminder', true);
     notifications = _readBool(json, 'notifications', true);
     introTourSeen = _readBool(json, 'introTourSeen', false);
-    languageCode = _readString(json, 'languageCode', 'tr') == 'en'
-        ? 'en'
-        : 'tr';
+    _localizeDefaultCategories();
     themeModeCode = switch (_readString(json, 'themeModeCode', 'system')) {
       'light' => 'light',
       'dark' => 'dark',
@@ -1836,14 +1846,89 @@ class CatudyDemoStore extends ChangeNotifier {
       orElse: () => categories.first,
     );
   }
+
+  void _localizeDefaultCategories() {
+    for (var index = 0; index < categories.length; index += 1) {
+      final category = categories[index];
+      if (!_isDefaultCategoryName(category.id, category.name)) {
+        continue;
+      }
+      categories[index] = category.copyWith(
+        name: _defaultCategoryName(category.id, languageCode),
+      );
+    }
+  }
 }
 
-List<FocusCategory> _defaultCategories() => const [
-  FocusCategory(id: 'study', name: 'Study', color: CatudyColors.violet),
-  FocusCategory(id: 'work', name: 'Work', color: CatudyColors.teal),
-  FocusCategory(id: 'read', name: 'Reading', color: CatudyColors.lavender),
-  FocusCategory(id: 'math', name: 'Math', color: CatudyColors.tealDark),
+List<FocusCategory> _defaultCategories(String languageCode) => [
+  for (final item in _defaultCategorySpecs)
+    FocusCategory(
+      id: item.id,
+      name: item.name(languageCode),
+      color: item.color,
+    ),
 ];
+
+String _defaultCategoryName(String id, String languageCode) {
+  for (final item in _defaultCategorySpecs) {
+    if (item.id == id) {
+      return item.name(languageCode);
+    }
+  }
+  return id;
+}
+
+bool _isDefaultCategoryName(String id, String name) {
+  for (final item in _defaultCategorySpecs) {
+    if (item.id == id) {
+      return item.enName == name || item.trName == name;
+    }
+  }
+  return false;
+}
+
+const _defaultCategorySpecs = [
+  _DefaultCategorySpec(
+    id: 'study',
+    trName: 'Ders',
+    enName: 'Study',
+    color: CatudyColors.violet,
+  ),
+  _DefaultCategorySpec(
+    id: 'work',
+    trName: 'İş',
+    enName: 'Work',
+    color: CatudyColors.teal,
+  ),
+  _DefaultCategorySpec(
+    id: 'read',
+    trName: 'Okuma',
+    enName: 'Reading',
+    color: CatudyColors.lavender,
+  ),
+  _DefaultCategorySpec(
+    id: 'math',
+    trName: 'Matematik',
+    enName: 'Math',
+    color: CatudyColors.tealDark,
+  ),
+];
+
+class _DefaultCategorySpec {
+  const _DefaultCategorySpec({
+    required this.id,
+    required this.trName,
+    required this.enName,
+    required this.color,
+  });
+
+  final String id;
+  final String trName;
+  final String enName;
+  final Color color;
+
+  String name(String languageCode) => languageCode == 'en' ? enName : trName;
+}
 
 List<FocusRecord> _defaultHistory() => [];
 

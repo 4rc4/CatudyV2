@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -281,34 +283,54 @@ class _RoomScene extends StatelessWidget {
           final roomHeight = constraints.maxHeight.isFinite
               ? constraints.maxHeight
               : 760.0;
-          final wallBottom = roomHeight * 0.56;
           final controlsReserve = (roomHeight * 0.25)
               .clamp(188.0, 220.0)
               .toDouble();
-          final sceneBottom = roomHeight - controlsReserve;
-          final floorTop = wallBottom + 8;
-          final floorItemBottom = sceneBottom - 12;
           final horizontalInset = (roomWidth * 0.06)
               .clamp(18.0, 28.0)
               .toDouble();
-          final shelfWidth = (roomWidth * 0.24).clamp(92.0, 118.0).toDouble();
-          final shelfHeight = shelfWidth * 1.34;
-          final windowWidth = (roomWidth * 0.38).clamp(148.0, 178.0).toDouble();
-          final windowHeight = windowWidth * 1.36;
-          final sofaWidth = (roomWidth * 0.43).clamp(158.0, 190.0).toDouble();
-          final sofaHeight = sofaWidth * 0.68;
-          final bedWidth = (roomWidth * 0.28).clamp(106.0, 132.0).toDouble();
-          final bedHeight = bedWidth * 0.62;
-          final studyWidth = (roomWidth * 0.40).clamp(150.0, 188.0).toDouble();
-          final studyHeight = studyWidth * 0.86;
-          final rugHeight = (roomHeight * 0.17).clamp(118.0, 146.0).toDouble();
-          final rugInset = (roomWidth * 0.13).clamp(42.0, 58.0).toDouble();
-          final petSize = (roomWidth * (studying ? 0.28 : 0.30))
-              .clamp(104.0, 136.0)
+          final window = _RoomSlotGeometry(
+            left: (roomWidth - (roomWidth * 0.40).clamp(150.0, 188.0)) / 2,
+            top: (roomHeight * 0.145).clamp(104.0, 140.0).toDouble(),
+            width: (roomWidth * 0.40).clamp(150.0, 188.0).toDouble(),
+            aspectRatio: 330 / 440,
+          );
+          final bookcase = _RoomSlotGeometry(
+            left: roomWidth * 0.055,
+            top: (roomHeight * 0.235).clamp(158.0, 196.0).toDouble(),
+            width: (roomWidth * 0.29).clamp(112.0, 148.0).toDouble(),
+            aspectRatio: 270 / 520,
+          );
+          final wallShelf = _RoomSlotGeometry(
+            left: roomWidth * 0.66,
+            top: (roomHeight * 0.205).clamp(142.0, 182.0).toDouble(),
+            width: (roomWidth * 0.38).clamp(150.0, 196.0).toDouble(),
+            aspectRatio: 340 / 230,
+          );
+          final studyDesk = _RoomSlotGeometry(
+            left: roomWidth * 0.58,
+            bottom: controlsReserve + 92,
+            width: (roomWidth * 0.49).clamp(188.0, 238.0).toDouble(),
+            aspectRatio: 420 / 360,
+          );
+          final catBed = _RoomSlotGeometry(
+            left: -roomWidth * 0.025,
+            bottom: controlsReserve + 86,
+            width: (roomWidth * 0.43).clamp(166.0, 212.0).toDouble(),
+            aspectRatio: 360 / 300,
+          );
+          final rug = _RoomSlotGeometry(
+            left: (roomWidth * 0.10).clamp(30.0, 46.0).toDouble(),
+            right: (roomWidth * 0.10).clamp(30.0, 46.0).toDouble(),
+            bottom: controlsReserve + 38,
+            height: (roomHeight * 0.18).clamp(122.0, 154.0).toDouble(),
+          );
+          final petSize = (roomWidth * (studying ? 0.25 : 0.27))
+              .clamp(96.0, 122.0)
               .toDouble();
           final petBoxWidth = petSize * (studying ? 1.32 : 1.18);
           final petBoxHeight = petSize * (studying ? 1.05 : 1.14);
-          final petCenterX = roomWidth * (studying ? 0.54 : 0.50);
+          final petCenterX = roomWidth * (studying ? 0.53 : 0.50);
           final maxPetLeft = (roomWidth - petBoxWidth - 24).clamp(
             24.0,
             roomWidth,
@@ -316,74 +338,51 @@ class _RoomScene extends StatelessWidget {
           final petLeft = (petCenterX - petBoxWidth / 2)
               .clamp(24.0, maxPetLeft)
               .toDouble();
-          final petBottom = (controlsReserve + 56)
-              .clamp(232.0, 278.0)
+          final petBottom = (controlsReserve + 58)
+              .clamp(226.0, 276.0)
               .toDouble();
           final speechBottom = (petBottom + petBoxHeight - 8)
               .clamp(roomHeight * 0.43, roomHeight * 0.62)
               .toDouble();
-          double floorTopFor(double itemHeight, double extraLift) {
-            final maxTop = floorItemBottom - itemHeight;
-            if (maxTop <= floorTop) {
-              return maxTop
-                  .clamp(roomHeight * 0.32, floorItemBottom)
-                  .toDouble();
-            }
-            return (maxTop - extraLift).clamp(floorTop, maxTop).toDouble();
-          }
 
           return Stack(
             fit: StackFit.expand,
             children: [
               const Positioned.fill(child: _RoomBackground()),
-              Positioned(
-                left: roomWidth * 0.08,
-                top: (roomHeight * 0.24).clamp(150.0, 178.0).toDouble(),
+              window.positioned(
+                child: _RoomWindow(
+                  width: window.resolvedWidth,
+                  height: window.resolvedHeight,
+                ),
+              ),
+              bookcase.positioned(
                 child: _TinyShelf(
                   item: shelfItem,
-                  width: shelfWidth,
-                  height: shelfHeight,
+                  width: bookcase.resolvedWidth,
+                  height: bookcase.resolvedHeight,
                 ),
               ),
-              Positioned(
-                left: (roomWidth - windowWidth) / 2,
-                top: (roomHeight * 0.17).clamp(122.0, 150.0).toDouble(),
-                child: _RoomWindow(width: windowWidth, height: windowHeight),
-              ),
-              Positioned(
-                left: roomWidth * 0.005,
-                top: floorTopFor(sofaHeight, 12),
-                child: _CozySofa(
+              wallShelf.positioned(
+                child: _RoomLamp(
                   item: decorItem,
-                  width: sofaWidth,
-                  height: sofaHeight,
+                  width: wallShelf.resolvedWidth,
+                  height: wallShelf.resolvedHeight,
                 ),
               ),
-              Positioned(
-                right: roomWidth * 0.30,
-                top: floorTopFor(bedHeight, 0),
+              rug.positioned(child: const _PerspectiveRug()),
+              catBed.positioned(
                 child: _PetBed(
                   item: bedItem,
-                  width: bedWidth,
-                  height: bedHeight,
+                  width: catBed.resolvedWidth,
+                  height: catBed.resolvedHeight,
                 ),
               ),
-              Positioned(
-                right: roomWidth * 0.02,
-                top: floorTopFor(studyHeight, 4),
+              studyDesk.positioned(
                 child: _StudyDesk(
                   item: studyItem,
-                  studying: studying,
-                  width: studyWidth,
-                  height: studyHeight,
+                  width: studyDesk.resolvedWidth,
+                  height: studyDesk.resolvedHeight,
                 ),
-              ),
-              Positioned(
-                left: rugInset,
-                right: rugInset,
-                bottom: (controlsReserve + 38).clamp(220.0, 262.0).toDouble(),
-                height: rugHeight,
-                child: _PerspectiveRug(item: bedItem),
               ),
               Positioned(
                 left: petLeft,
@@ -505,12 +504,85 @@ class _RoomScene extends StatelessWidget {
   }
 }
 
+class _RoomSlotGeometry {
+  const _RoomSlotGeometry({
+    this.left,
+    this.right,
+    this.top,
+    this.bottom,
+    this.width,
+    this.height,
+    this.aspectRatio,
+  }) : assert(width != null || (left != null && right != null));
+
+  final double? left;
+  final double? right;
+  final double? top;
+  final double? bottom;
+  final double? width;
+  final double? height;
+  final double? aspectRatio;
+
+  double get resolvedWidth => width!;
+
+  double get resolvedHeight {
+    if (height != null) {
+      return height!;
+    }
+    return resolvedWidth / aspectRatio!;
+  }
+
+  Widget positioned({required Widget child}) {
+    return Positioned(
+      left: left,
+      right: right,
+      top: top,
+      bottom: bottom,
+      width: width,
+      height: height ?? (width != null ? resolvedHeight : null),
+      child: child,
+    );
+  }
+}
+
 class _RoomBackground extends StatelessWidget {
   const _RoomBackground();
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(painter: const _RoomPerspectivePainter());
+    return Image.asset(
+      'assets/room/corner_room_background_v1.png',
+      fit: BoxFit.cover,
+      alignment: Alignment.topCenter,
+      filterQuality: FilterQuality.high,
+      isAntiAlias: true,
+    );
+  }
+}
+
+class _RoomLayerAsset extends StatelessWidget {
+  const _RoomLayerAsset({
+    required this.path,
+    required this.width,
+    required this.height,
+  });
+
+  final String path;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Image.asset(
+        path,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        isAntiAlias: true,
+      ),
+    );
   }
 }
 
@@ -994,14 +1066,14 @@ class _CarePanel extends StatelessWidget {
 }
 
 class _PerspectiveRug extends StatelessWidget {
-  const _PerspectiveRug({required this.item});
-
-  final ShopItem? item;
+  const _PerspectiveRug();
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _RugPainter(accent: item?.accent ?? const Color(0xFF9DC581)),
+    return const _RoomLayerAsset(
+      path: 'assets/room/corner_round_rug_v1.png',
+      width: double.infinity,
+      height: double.infinity,
     );
   }
 }
@@ -1059,10 +1131,10 @@ class _RoomWindow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return _RoomLayerAsset(
+      path: 'assets/room/corner_window_v1.png',
       width: width,
       height: height,
-      child: const CustomPaint(painter: _RoomWindowPainter()),
     );
   }
 }
@@ -1318,28 +1390,20 @@ class _StudyMotionState extends State<_StudyMotion>
 class _StudyDesk extends StatelessWidget {
   const _StudyDesk({
     required this.item,
-    required this.studying,
     required this.width,
     required this.height,
   });
 
   final ShopItem? item;
-  final bool studying;
   final double width;
   final double height;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return _RoomLayerAsset(
+      path: item?.assetPath ?? 'assets/room/corner_study_desk_v1.png',
       width: width,
       height: height,
-      child: CustomPaint(
-        painter: _StudyDeskPainter(
-          accent: item?.accent ?? const Color(0xFFB66453),
-          upgraded: item != null,
-          studying: studying,
-        ),
-      ),
     );
   }
 }
@@ -1552,15 +1616,10 @@ class _PetBed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return _RoomLayerAsset(
+      path: item?.assetPath ?? 'assets/room/corner_cat_bed_v1.png',
       width: width,
       height: height,
-      child: CustomPaint(
-        painter: _PetCushionPainter(
-          accent: item?.accent ?? CatudyColors.lavender,
-          upgraded: item != null,
-        ),
-      ),
     );
   }
 }
@@ -1616,7 +1675,23 @@ class _PetCushionPainter extends CustomPainter {
 }
 
 class _CozySofa extends StatelessWidget {
-  const _CozySofa({
+  const _CozySofa({required this.width, required this.height});
+
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RoomLayerAsset(
+      path: 'assets/room/corner_cat_bed_v1.png',
+      width: width,
+      height: height,
+    );
+  }
+}
+
+class _RoomLamp extends StatelessWidget {
+  const _RoomLamp({
     required this.item,
     required this.width,
     required this.height,
@@ -1628,15 +1703,10 @@ class _CozySofa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return _RoomLayerAsset(
+      path: item?.assetPath ?? 'assets/room/corner_right_shelf_lights_v1.png',
       width: width,
       height: height,
-      child: CustomPaint(
-        painter: _RightFacingSofaPainter(
-          accent: item?.accent ?? const Color(0xFF9A78B9),
-          upgraded: item != null,
-        ),
-      ),
     );
   }
 }
@@ -1770,15 +1840,10 @@ class _TinyShelf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return _RoomLayerAsset(
+      path: item?.assetPath ?? 'assets/room/corner_bookcase_v1.png',
       width: width,
       height: height,
-      child: CustomPaint(
-        painter: _BookshelfPainter(
-          accent: item?.accent ?? CatudyColors.tealDark,
-          upgraded: item != null,
-        ),
-      ),
     );
   }
 }
