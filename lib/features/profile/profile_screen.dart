@@ -209,7 +209,10 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () => context.go('/public-profile'),
+                    onPressed: () {
+                      store.clearVisitedProfile();
+                      context.go('/public-profile');
+                    },
                     icon: const Icon(Icons.share_rounded),
                     label: Text(store.t('profile.share')),
                   ),

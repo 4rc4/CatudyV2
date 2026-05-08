@@ -1,7 +1,13 @@
+import 'dart:async';
+
 import 'package:catudy_app/app/demo/catudy_demo_store.dart';
+import 'package:catudy_app/app/online/catudy_auth_service.dart';
+import 'package:catudy_app/app/online/catudy_leaderboard_service.dart';
 import 'package:catudy_app/app/storage/catudy_local_storage.dart';
 import 'package:catudy_app/app/theme/catudy_colors.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
   test(
@@ -185,6 +191,57 @@ void main() {
     expect(storage.state?['petNameChosen'], isTrue);
   });
 
+  test('selected focus task is completed with the session', () async {
+    final storage = _MemoryStorage(null);
+    final store = CatudyDemoStore(storage: storage);
+
+    await store.load();
+
+    final todo = store.addTodoReminder(
+      date: DateTime.now(),
+      time: const TimeOfDay(hour: 9, minute: 0),
+      title: 'Read chapter',
+    )!;
+    store.selectTodoForFocus(todo.id);
+    store.activeSession = ActiveFocusSession(
+      categoryId: 'study',
+      durationMinutes: 25,
+      startedAt: DateTime.now().subtract(const Duration(minutes: 25)),
+      lobbyMode: false,
+      todoId: todo.id,
+    );
+
+    final record = store.completeFocus();
+
+    expect(record.todoId, todo.id);
+    expect(store.todos.single.done, isTrue);
+    expect(store.selectedFocusTodo, isNull);
+    expect(storage.state?['todos'].single['done'], isTrue);
+  });
+
+  test('friends can be added and visited from social profiles', () async {
+    final storage = _MemoryStorage(null);
+    final store = CatudyDemoStore(storage: storage);
+
+    await store.load();
+
+    final friend = store.socialProfiles.firstWhere(
+      (profile) => !profile.currentUser,
+    );
+
+    store.toggleFriend(friend.userId);
+    store.visitProfile(friend.userId);
+
+    expect(store.friendUserIds.contains(friend.userId), isTrue);
+    expect(store.friendProfiles.single.userId, friend.userId);
+    expect(store.visitedProfile?.name, friend.name);
+    expect(storage.state?['friendUserIds'], contains(friend.userId));
+
+    store.toggleFriend(friend.userId);
+
+    expect(store.friendUserIds.contains(friend.userId), isFalse);
+  });
+
   test(
     'local leaderboard contains only the current profile before online sync',
     () async {
@@ -200,6 +257,68 @@ void main() {
       expect(store.leaderboardProfiles.single.currentUser, isTrue);
     },
   );
+
+  test('leaderboard sync does not create a profile before auth', () async {
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+    final leaderboard = _FakeLeaderboardService();
+
+    await store.load();
+
+    store.attachLeaderboardService(leaderboard);
+    store.updateProfile(name: 'Arca', avatarId: 'catudy');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(leaderboard.upsertCalls, 0);
+    expect(store.isAuthenticated, isFalse);
+  });
+
+  test(
+    'restored anonymous session is discarded without guest marker',
+    () async {
+      final store = CatudyDemoStore(storage: _MemoryStorage(null));
+      final auth = _FakeAuthService(
+        const CatudyAuthSession(
+          userId: 'anonymous-user',
+          email: null,
+          displayName: 'Guest Cat',
+          provider: 'anonymous',
+          anonymous: true,
+        ),
+      );
+
+      await store.load();
+
+      store.attachAuthService(auth);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(auth.signOutCalls, 1);
+      expect(store.isAuthenticated, isFalse);
+    },
+  );
+
+  test('restored anonymous session is kept with guest marker', () async {
+    final store = CatudyDemoStore(
+      storage: _MemoryStorage({'explicitGuestUserId': 'anonymous-user'}),
+    );
+    final auth = _FakeAuthService(
+      const CatudyAuthSession(
+        userId: 'anonymous-user',
+        email: null,
+        displayName: 'Guest Cat',
+        provider: 'anonymous',
+        anonymous: true,
+      ),
+    );
+
+    await store.load();
+
+    store.attachAuthService(auth);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(auth.signOutCalls, 0);
+    expect(store.isAuthenticated, isTrue);
+    expect(store.authProvider, 'guest');
+  });
 
   test('shop item names follow selected language', () async {
     final store = CatudyDemoStore(storage: _MemoryStorage(null));
@@ -291,4 +410,55 @@ class _MemoryStorage extends CatudyLocalStorage {
   Future<void> writeState(Map<String, dynamic> state) async {
     this.state = Map<String, dynamic>.from(state);
   }
+}
+
+class _FakeLeaderboardService extends CatudyLeaderboardService {
+  _FakeLeaderboardService() : super(_testSupabaseClient());
+
+  int upsertCalls = 0;
+
+  @override
+  String? get currentUserId => null;
+
+  @override
+  Stream<List<CatudyOnlineLeaderboardProfile>> watchTopProfiles() {
+    return const Stream.empty();
+  }
+
+  @override
+  Future<String?> upsertCurrentProfile({
+    required String displayName,
+    required String petId,
+    required int points,
+    required int totalMinutes,
+    required int streakDays,
+  }) async {
+    upsertCalls++;
+    return 'test-user';
+  }
+}
+
+class _FakeAuthService extends CatudyAuthService {
+  _FakeAuthService(this._session) : super(_testSupabaseClient());
+
+  final _controller = StreamController<CatudyAuthSession?>.broadcast();
+  CatudyAuthSession? _session;
+  int signOutCalls = 0;
+
+  @override
+  CatudyAuthSession? get currentSession => _session;
+
+  @override
+  Stream<CatudyAuthSession?> get authStateChanges => _controller.stream;
+
+  @override
+  Future<void> signOut() async {
+    signOutCalls++;
+    _session = null;
+    _controller.add(null);
+  }
+}
+
+SupabaseClient _testSupabaseClient() {
+  return SupabaseClient('http://127.0.0.1:54321', 'test-anon-key');
 }

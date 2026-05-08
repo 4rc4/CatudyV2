@@ -21,6 +21,12 @@ Future<void> main() async {
     catudyDemoStore.todos,
     languageCode: catudyDemoStore.languageCode,
   );
+  await CatudyNotificationService.instance.scheduleDailyGoalReminder(
+    hour: catudyDemoStore.dailyGoalReminderHour,
+    minute: catudyDemoStore.dailyGoalReminderMinute,
+    languageCode: catudyDemoStore.languageCode,
+    enabled: catudyDemoStore.notifications,
+  );
   runApp(const ProviderScope(child: CatudyApp()));
 }
 

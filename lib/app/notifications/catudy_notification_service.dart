@@ -79,6 +79,45 @@ class CatudyNotificationService {
     }
   }
 
+  Future<void> scheduleDailyGoalReminder({
+    required int hour,
+    required int minute,
+    required String languageCode,
+    required bool enabled,
+  }) async {
+    await initialize();
+    const id = 900001;
+    await _plugin.cancel(id: id);
+    if (!enabled) {
+      return;
+    }
+    var next = DateTime.now();
+    next = DateTime(next.year, next.month, next.day, hour, minute);
+    if (!next.isAfter(DateTime.now())) {
+      next = next.add(const Duration(days: 1));
+    }
+    await _plugin.zonedSchedule(
+      id: id,
+      title: languageCode == 'en' ? 'Daily focus target' : 'Günlük odak hedefi',
+      body: languageCode == 'en'
+          ? 'Check your remaining focus minutes for today.'
+          : 'Bugün kalan odak dakikalarını kontrol et.',
+      scheduledDate: tz.TZDateTime.from(next, tz.local),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'catudy_goals',
+          'Catudy Goals',
+          channelDescription: 'Daily focus target reminders from Catudy',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
   Future<void> cancelReminder(CalendarTodo todo) async {
     await initialize();
     await _plugin.cancel(id: _notificationId(todo));

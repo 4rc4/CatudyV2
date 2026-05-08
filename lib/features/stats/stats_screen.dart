@@ -59,6 +59,8 @@ class _StatsScreenState extends State<StatsScreen> {
               store: store,
             ),
             const SizedBox(height: 14),
+            _InsightPanel(store: store, records: records),
+            const SizedBox(height: 14),
             CatudyPanel(
               accentColor: CatudyColors.teal,
               child: Column(
@@ -491,6 +493,124 @@ class _StatsHero extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InsightPanel extends StatelessWidget {
+  const _InsightPanel({required this.store, required this.records});
+
+  final CatudyDemoStore store;
+  final List<FocusRecord> records;
+
+  @override
+  Widget build(BuildContext context) {
+    final sessions = records.where((item) => !item.manual).toList();
+    final total = records.fold(0, (sum, item) => sum + item.minutes);
+    final average = sessions.isEmpty ? 0 : (total / sessions.length).round();
+    final bestHour = _bestHour(records);
+    final goal = store.todayGoalProgress;
+    return CatudyPanel(
+      color: CatudyColors.lavenderSoft,
+      accentColor: CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            store.t('stats.insights'),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _InsightChip(
+                icon: Icons.av_timer_rounded,
+                label: store.t('stats.averageSession'),
+                value: '$average${store.t('common.minutesShort')}',
+              ),
+              _InsightChip(
+                icon: Icons.schedule_rounded,
+                label: store.t('stats.bestHour'),
+                value: bestHour == null
+                    ? '-'
+                    : '${bestHour.toString().padLeft(2, '0')}:00',
+              ),
+              _InsightChip(
+                icon: Icons.track_changes_rounded,
+                label: store.t('stats.todayGoal'),
+                value: '${(goal.ratio * 100).round()}%',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  int? _bestHour(List<FocusRecord> records) {
+    if (records.isEmpty) {
+      return null;
+    }
+    final totals = <int, int>{};
+    for (final record in records) {
+      totals[record.createdAt.hour] =
+          (totals[record.createdAt.hour] ?? 0) + record.minutes;
+    }
+    return totals.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+  }
+}
+
+class _InsightChip extends StatelessWidget {
+  const _InsightChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 118,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: CatudyColors.violet),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+            ),
+          ),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
           ),
         ],
       ),

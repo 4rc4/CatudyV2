@@ -34,6 +34,7 @@ class CatudyCopy {
 
     'auth.title': 'Giriş',
     'auth.subtitle': 'Catudy hesabına gir, lobileri ve ilerlemeyi eşitle.',
+    'auth.displayName': 'Görünen ad',
     'auth.email': 'E-posta',
     'auth.password': 'Şifre',
     'auth.signIn': 'E-posta ile giriş',
@@ -43,6 +44,7 @@ class CatudyCopy {
     'auth.google': 'Google ile devam et',
     'auth.apple': 'Apple ile devam et',
     'auth.guest': 'Misafir olarak devam et',
+    'auth.displayNameRequired': 'Kayıt olmak için görünen ad gir.',
     'auth.offlineUnavailable':
         'Online giriş için Supabase bağlantısı gerekiyor.',
 
@@ -50,6 +52,7 @@ class CatudyCopy {
     'nav.stats': 'İstatistik',
     'nav.calendar': 'Takvim',
     'nav.pet': 'Pet',
+    'nav.social': 'Sosyal',
     'nav.profile': 'Profil',
 
     'home.greeting': 'İyi günler!',
@@ -78,6 +81,22 @@ class CatudyCopy {
     'home.focusSuggestionStarter':
         'İlk öneri için dengeli bir başlangıç süresi seçildi.',
     'home.prepareFocusPlan': 'Planı Hazırla',
+    'home.dailyGoal': 'Günlük hedef',
+    'home.dailyGoalProgress': '{done}/{goal} dk tamamlandı. Kalan: {left} dk.',
+    'home.editDailyGoal': 'Günlük hedefi düzenle',
+    'home.goalMinutes': 'Hedef dakika',
+
+    'achievements.title': 'Başarımlar',
+
+    'social.title': 'Sosyal',
+    'social.challengeProgress':
+        '{done}/{goal} dk tamamlandı. Kalan {left} dk. Katılımcı: {people}',
+    'social.focusBoard': 'Odak panosu',
+    'social.friends': 'Arkadaşlar',
+    'social.noFriends': 'Henüz arkadaş eklenmedi.',
+    'social.addFriend': 'Arkadaş ekle',
+    'social.removeFriend': 'Arkadaştan çıkar',
+    'social.visitProfile': 'Profili ziyaret et',
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
@@ -124,6 +143,10 @@ class CatudyCopy {
     'stats.total': 'toplam',
     'stats.manualNote':
         'Manuel kayıtlar raporda görünür, ancak altın ve leaderboard kredisi vermez.',
+    'stats.insights': 'İçgörüler',
+    'stats.averageSession': 'Ortalama seans',
+    'stats.bestHour': 'En verimli saat',
+    'stats.todayGoal': 'Bugünkü hedef',
 
     'focus.categoryTitle': 'Kategori Seç',
     'focus.addCategoryClose': 'Kategori eklemeyi kapat',
@@ -138,6 +161,10 @@ class CatudyCopy {
     'focus.customDuration': 'Özel süre',
     'focus.customMinutes': 'Dakika',
     'focus.selectedDuration': 'Seçili süre: {minutes} dakika',
+    'focus.taskTitle': 'Odak görevi',
+    'focus.noOpenTasks': 'Yaklaşan açık görev yok.',
+    'focus.selectTask': 'Görev seç',
+    'focus.noTaskSelected': 'Görevsiz odak',
     'focus.startTimer': 'Timer başlat',
     'focus.start': 'Odak başlat',
     'focus.timerTitle': 'Odak Timer',
@@ -352,6 +379,7 @@ class CatudyCopy {
 
     'auth.title': 'Sign in',
     'auth.subtitle': 'Sign in to Catudy and sync lobbies and progress.',
+    'auth.displayName': 'Display name',
     'auth.email': 'Email',
     'auth.password': 'Password',
     'auth.signIn': 'Sign in with email',
@@ -361,6 +389,7 @@ class CatudyCopy {
     'auth.google': 'Continue with Google',
     'auth.apple': 'Continue with Apple',
     'auth.guest': 'Continue as guest',
+    'auth.displayNameRequired': 'Enter a display name to create an account.',
     'auth.offlineUnavailable':
         'Supabase connection is required for online auth.',
 
@@ -368,6 +397,7 @@ class CatudyCopy {
     'nav.stats': 'Stats',
     'nav.calendar': 'Calendar',
     'nav.pet': 'Pet',
+    'nav.social': 'Social',
     'nav.profile': 'Profile',
 
     'home.greeting': 'Have a good day!',
@@ -396,6 +426,23 @@ class CatudyCopy {
     'home.focusSuggestionStarter':
         'A balanced starter duration was selected for the first recommendation.',
     'home.prepareFocusPlan': 'Prepare Plan',
+    'home.dailyGoal': 'Daily target',
+    'home.dailyGoalProgress':
+        '{done}/{goal} min completed. Remaining: {left} min.',
+    'home.editDailyGoal': 'Edit daily target',
+    'home.goalMinutes': 'Target minutes',
+
+    'achievements.title': 'Achievements',
+
+    'social.title': 'Social',
+    'social.challengeProgress':
+        '{done}/{goal} min completed. {left} min left. People: {people}',
+    'social.focusBoard': 'Focus board',
+    'social.friends': 'Friends',
+    'social.noFriends': 'No friends added yet.',
+    'social.addFriend': 'Add friend',
+    'social.removeFriend': 'Remove friend',
+    'social.visitProfile': 'Visit profile',
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
@@ -443,6 +490,10 @@ class CatudyCopy {
     'stats.total': 'total',
     'stats.manualNote':
         'Manual records appear in reports, but do not give gold or leaderboard credit.',
+    'stats.insights': 'Insights',
+    'stats.averageSession': 'Average session',
+    'stats.bestHour': 'Best hour',
+    'stats.todayGoal': "Today's target",
 
     'focus.categoryTitle': 'Choose Category',
     'focus.addCategoryClose': 'Close category form',
@@ -457,6 +508,10 @@ class CatudyCopy {
     'focus.customDuration': 'Custom duration',
     'focus.customMinutes': 'Minutes',
     'focus.selectedDuration': 'Selected duration: {minutes} minutes',
+    'focus.taskTitle': 'Focus task',
+    'focus.noOpenTasks': 'No upcoming open tasks.',
+    'focus.selectTask': 'Select task',
+    'focus.noTaskSelected': 'Focus without a task',
     'focus.startTimer': 'Start timer',
     'focus.start': 'Start focus',
     'focus.timerTitle': 'Focus Timer',

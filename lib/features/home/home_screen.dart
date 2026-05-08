@@ -7,7 +7,6 @@ import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/theme/catudy_colors.dart';
-import '../../features/onboarding/pet_intro_tour.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/floating_mascot.dart';
@@ -54,13 +53,13 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   IconButton(
-                    onPressed: () => showPetIntroTour(context),
-                    tooltip: store.t('pet.showTour'),
+                    onPressed: () => context.go('/social'),
+                    tooltip: store.t('social.title'),
                     style: IconButton.styleFrom(
                       backgroundColor: CatudyColors.surfaceFor(context),
                       foregroundColor: CatudyColors.mutedFor(context),
                     ),
-                    icon: const Icon(Icons.info_rounded),
+                    icon: const Icon(Icons.groups_rounded),
                   ),
                   const SizedBox(width: 4),
                   IconButton(
@@ -75,6 +74,8 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
+              _DailyGoalPanel(store: store),
+              const SizedBox(height: 18),
               CatudyPanel(
                 padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
                 color: CatudyColors.cream,
@@ -241,10 +242,165 @@ class HomeScreen extends StatelessWidget {
                 recommendation: recommendation,
                 category: recommendationCategory,
               ),
+              const SizedBox(height: 14),
+              _AchievementPreview(store: store),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _DailyGoalPanel extends StatelessWidget {
+  const _DailyGoalPanel({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = store.todayGoalProgress;
+    return CatudyPanel(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      color: CatudyColors.cream,
+      accentColor: CatudyColors.teal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.track_changes_rounded, color: CatudyColors.teal),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  store.t('home.dailyGoal'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => _editGoal(context),
+                icon: const Icon(Icons.edit_rounded),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(
+            value: progress.ratio,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(999),
+            backgroundColor: CatudyColors.surfaceFor(context),
+            color: progress.completed ? CatudyColors.teal : CatudyColors.violet,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            store.t('home.dailyGoalProgress', {
+              'done': progress.completedMinutes,
+              'goal': progress.goalMinutes,
+              'left': progress.remainingMinutes,
+            }),
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editGoal(BuildContext context) async {
+    final controller = TextEditingController(text: '${store.dailyGoalMinutes}');
+    final minutes = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(store.t('home.editDailyGoal')),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: store.t('home.goalMinutes'),
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(store.t('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () =>
+                Navigator.of(context).pop(int.tryParse(controller.text)),
+            child: Text(store.t('common.save')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (minutes != null) {
+      store.updateDailyGoal(minutes);
+    }
+  }
+}
+
+class _AchievementPreview extends StatelessWidget {
+  const _AchievementPreview({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final achievements = store.achievements.take(3).toList();
+    return CatudyPanel(
+      accentColor: CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            store.t('achievements.title'),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (final achievement in achievements)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 9),
+              child: Row(
+                children: [
+                  Icon(
+                    achievement.unlocked
+                        ? Icons.verified_rounded
+                        : achievement.icon,
+                    color: achievement.unlocked
+                        ? CatudyColors.teal
+                        : CatudyColors.violet,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      achievement.title,
+                      style: TextStyle(
+                        color: CatudyColors.blueFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${achievement.progress.clamp(0, achievement.target)}/${achievement.target}',
+                    style: TextStyle(
+                      color: CatudyColors.mutedFor(context),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

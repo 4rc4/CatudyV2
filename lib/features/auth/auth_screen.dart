@@ -17,12 +17,14 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  final _displayNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _signUpMode = false;
 
   @override
   void dispose() {
+    _displayNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -57,6 +59,18 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
+                  if (_signUpMode) ...[
+                    TextField(
+                      controller: _displayNameController,
+                      textCapitalization: TextCapitalization.words,
+                      autofillHints: const [AutofillHints.name],
+                      decoration: InputDecoration(
+                        labelText: store.t('auth.displayName'),
+                        prefixIcon: const Icon(Icons.person_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -154,6 +168,7 @@ class _AuthScreenState extends State<AuthScreen> {
       return store.signUpWithEmail(
         email: _emailController.text,
         password: _passwordController.text,
+        displayName: _displayNameController.text,
       );
     }
     return store.signInWithEmail(

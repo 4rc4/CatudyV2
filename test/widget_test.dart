@@ -22,6 +22,16 @@ void main() {
     expect(find.text('Profile'), findsNothing);
   });
 
+  testWidgets('renders social friends and visit actions', (tester) async {
+    await _pumpCatudy(tester, initialLocation: '/social');
+
+    expect(find.text('Sosyal'), findsOneWidget);
+    expect(find.text('Arkadaşlar'), findsOneWidget);
+    expect(find.text('Odak panosu'), findsOneWidget);
+    expect(find.byIcon(Icons.person_add_alt_1_rounded), findsWidgets);
+    expect(find.byIcon(Icons.visibility_rounded), findsWidgets);
+  });
+
   testWidgets('renders Stats range controls', (tester) async {
     await _pumpCatudy(tester, initialLocation: '/stats');
 

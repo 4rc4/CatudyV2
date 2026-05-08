@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/demo/catudy_demo_store.dart';
+import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/screen_scaffold.dart';
@@ -183,9 +182,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 OutlinedButton.icon(
                   onPressed: store.authBusy
                       ? null
-                      : () {
+                      : () async {
                           if (store.isAuthenticated) {
-                            unawaited(store.signOut());
+                            await store.signOut();
+                            if (context.mounted) {
+                              context.go('/auth');
+                            }
                           } else {
                             context.go('/auth');
                           }
@@ -248,6 +250,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       petNotifications: _notifications,
       language: language ?? _language,
       themeMode: themeMode ?? _themeMode,
+    );
+    CatudyNotificationService.instance.scheduleDailyGoalReminder(
+      hour: store.dailyGoalReminderHour,
+      minute: store.dailyGoalReminderMinute,
+      languageCode: store.languageCode,
+      enabled: store.notifications,
     );
   }
 }

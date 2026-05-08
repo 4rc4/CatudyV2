@@ -11,61 +11,66 @@ class PublicProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StoreBuilder(
-      builder: (context, store) => ScreenScaffold(
-        title: store.t('profile.publicTitle'),
-        showBack: true,
-        fallbackBackPath: '/profile',
-        children: [
-          CatudyPanel(
-            color: CatudyColors.lavenderSoft,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  store.displayName,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: CatudyColors.blue,
-                    fontWeight: FontWeight.w900,
+      builder: (context, store) {
+        final visited = store.visitedProfile;
+        final name = visited?.name ?? store.displayName;
+        final points = visited?.points ?? store.focusPoints;
+        final weekMinutes = visited?.totalMinutes ?? store.weeklyMinutes;
+        final streak = visited?.streakDays ?? store.streakDays;
+        return ScreenScaffold(
+          title: store.t('profile.publicTitle'),
+          showBack: true,
+          fallbackBackPath: visited == null ? '/profile' : '/social',
+          children: [
+            CatudyPanel(
+              color: CatudyColors.lavenderSoft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: CatudyColors.blue,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  store.t('profile.publicBody'),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: CatudyColors.muted,
-                    height: 1.45,
+                  const SizedBox(height: 10),
+                  Text(
+                    store.t('profile.publicBody'),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: CatudyColors.muted,
+                      height: 1.45,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    Chip(
-                      label: Text(
-                        store.t('profile.thisWeek', {
-                          'minutes': store.weeklyMinutes,
-                        }),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      Chip(
+                        label: Text(
+                          store.t('profile.thisWeek', {'minutes': weekMinutes}),
+                        ),
                       ),
-                    ),
-                    Chip(
-                      label: Text(
-                        '${store.focusPoints} ${store.t('common.points')}',
+                      Chip(label: Text('$points ${store.t('common.points')}')),
+                      Chip(
+                        label: Text('$streak${store.t('common.daysShort')}'),
                       ),
-                    ),
-                    Chip(
-                      label: Text(
-                        store.t('profile.favorite', {
-                          'category': store.favoriteCategory.name,
-                        }),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                      if (visited == null)
+                        Chip(
+                          label: Text(
+                            store.t('profile.favorite', {
+                              'category': store.favoriteCategory.name,
+                            }),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 }

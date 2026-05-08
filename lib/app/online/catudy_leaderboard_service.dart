@@ -58,14 +58,17 @@ class CatudyLeaderboardService {
         });
   }
 
-  Future<String> upsertCurrentProfile({
+  Future<String?> upsertCurrentProfile({
     required String displayName,
     required String petId,
     required int points,
     required int totalMinutes,
     required int streakDays,
   }) async {
-    final userId = await _ensureAnonymousUser(displayName);
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      return null;
+    }
     await _client.from('catudy_leaderboard').upsert({
       'user_id': userId,
       'display_name': displayName.trim().isEmpty
@@ -78,25 +81,6 @@ class CatudyLeaderboardService {
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     }, onConflict: 'user_id');
     return userId;
-  }
-
-  Future<String> _ensureAnonymousUser(String displayName) async {
-    final current = _client.auth.currentUser;
-    if (current != null) {
-      return current.id;
-    }
-    await _client.auth.signInAnonymously(
-      data: {
-        'display_name': displayName.trim().isEmpty
-            ? 'Guest Cat'
-            : displayName.trim(),
-      },
-    );
-    final user = _client.auth.currentUser;
-    if (user == null) {
-      throw StateError('Supabase anonymous sign-in did not return a user.');
-    }
-    return user.id;
   }
 }
 

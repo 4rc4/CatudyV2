@@ -49,6 +49,7 @@ class FocusRecord {
     required this.manual,
     required this.note,
     required this.gold,
+    this.todoId,
   });
 
   factory FocusRecord.fromJson(Map<String, dynamic> json) {
@@ -59,6 +60,7 @@ class FocusRecord {
       manual: _readBool(json, 'manual', false),
       note: _readString(json, 'note', 'Focus session'),
       gold: _readInt(json, 'gold', 0),
+      todoId: _readNullableString(json, 'todoId'),
     );
   }
 
@@ -68,6 +70,7 @@ class FocusRecord {
   final bool manual;
   final String note;
   final int gold;
+  final String? todoId;
 
   Map<String, dynamic> toJson() => {
     'categoryId': categoryId,
@@ -76,6 +79,7 @@ class FocusRecord {
     'manual': manual,
     'note': note,
     'gold': gold,
+    'todoId': todoId,
   };
 }
 
@@ -141,6 +145,7 @@ class ActiveFocusSession {
     required this.durationMinutes,
     required this.startedAt,
     required this.lobbyMode,
+    this.todoId,
   });
 
   factory ActiveFocusSession.fromJson(Map<String, dynamic> json) {
@@ -149,6 +154,7 @@ class ActiveFocusSession {
       durationMinutes: _readInt(json, 'durationMinutes', 25),
       startedAt: _readDate(json, 'startedAt', DateTime.now()),
       lobbyMode: _readBool(json, 'lobbyMode', false),
+      todoId: _readNullableString(json, 'todoId'),
     );
   }
 
@@ -156,6 +162,7 @@ class ActiveFocusSession {
   final int durationMinutes;
   final DateTime startedAt;
   final bool lobbyMode;
+  final String? todoId;
 
   DateTime get plannedEndAt =>
       startedAt.add(Duration(minutes: durationMinutes));
@@ -165,7 +172,69 @@ class ActiveFocusSession {
     'durationMinutes': durationMinutes,
     'startedAt': startedAt.toIso8601String(),
     'lobbyMode': lobbyMode,
+    'todoId': todoId,
   };
+}
+
+class DailyGoalProgress {
+  const DailyGoalProgress({
+    required this.goalMinutes,
+    required this.completedMinutes,
+  });
+
+  final int goalMinutes;
+  final int completedMinutes;
+
+  int get remainingMinutes => (goalMinutes - completedMinutes).clamp(0, 10000);
+
+  double get ratio =>
+      goalMinutes <= 0 ? 0 : (completedMinutes / goalMinutes).clamp(0.0, 1.0);
+
+  bool get completed => goalMinutes > 0 && completedMinutes >= goalMinutes;
+}
+
+class CatudyAchievement {
+  const CatudyAchievement({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.progress,
+    required this.target,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final IconData icon;
+  final int progress;
+  final int target;
+
+  bool get unlocked => progress >= target;
+  double get ratio => target <= 0 ? 1 : (progress / target).clamp(0.0, 1.0);
+}
+
+class SocialChallenge {
+  const SocialChallenge({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.targetMinutes,
+    required this.currentMinutes,
+    required this.participants,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final int targetMinutes;
+  final int currentMinutes;
+  final int participants;
+
+  int get remainingMinutes => (targetMinutes - currentMinutes).clamp(0, 10000);
+  double get ratio =>
+      targetMinutes <= 0 ? 0 : (currentMinutes / targetMinutes).clamp(0.0, 1.0);
+  bool get completed => currentMinutes >= targetMinutes;
 }
 
 class UnlockablePet {
@@ -286,11 +355,14 @@ class CatudyDemoStore extends ChangeNotifier {
   List<LobbyMember>? _onlineLobbyMembers;
   List<LeaderboardProfile>? _onlineLeaderboardProfiles;
   Timer? _leaderboardSyncTimer;
+  String? _explicitGuestUserId;
+  bool _explicitGuestSignInPending = false;
 
   final categories = <FocusCategory>[];
   final durations = <int>[15, 25, 40, 60];
   final history = <FocusRecord>[];
   final todos = <CalendarTodo>[];
+  final friendUserIds = <String>{};
   final ownedItems = <String>{};
   final equippedRoomItemIds = <String, String>{};
   final unlockedPetIds = <String>{};
@@ -440,6 +512,11 @@ class CatudyDemoStore extends ChangeNotifier {
   bool introTourSeen = false;
   String languageCode = 'tr';
   String themeModeCode = 'system';
+  int dailyGoalMinutes = 90;
+  int dailyGoalReminderHour = 18;
+  int dailyGoalReminderMinute = 0;
+  String? selectedTodoId;
+  String? visitedProfileUserId;
   bool currentUserReady = false;
   bool lobbyStarted = false;
   bool lobbyBusy = false;
@@ -479,6 +556,11 @@ class CatudyDemoStore extends ChangeNotifier {
   int get weeklyMinutes => minutesInRange(
     DateTime.now().subtract(const Duration(days: 6)),
     DateTime.now(),
+  );
+
+  DailyGoalProgress get todayGoalProgress => DailyGoalProgress(
+    goalMinutes: dailyGoalMinutes,
+    completedMinutes: todayMinutes,
   );
 
   int get totalFocusMinutes =>
@@ -623,6 +705,156 @@ class CatudyDemoStore extends ChangeNotifier {
     );
   }
 
+  CalendarTodo? get selectedFocusTodo {
+    final id = selectedTodoId;
+    if (id == null) {
+      return null;
+    }
+    for (final todo in todos) {
+      if (todo.id == id && !todo.done) {
+        return todo;
+      }
+    }
+    return null;
+  }
+
+  List<CalendarTodo> get openFocusTasks {
+    final now = DateTime.now();
+    final horizon = now.add(const Duration(days: 7));
+    final items = todos
+        .where(
+          (item) =>
+              !item.done &&
+              !item.scheduledAt.isBefore(
+                DateTime(now.year, now.month, now.day),
+              ) &&
+              !item.scheduledAt.isAfter(horizon),
+        )
+        .toList();
+    items.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
+    return items;
+  }
+
+  List<CatudyAchievement> get achievements {
+    final nonManual = history.where((item) => !item.manual).toList();
+    final categoryCounts = <String, int>{};
+    for (final record in nonManual) {
+      categoryCounts[record.categoryId] =
+          (categoryCounts[record.categoryId] ?? 0) + 1;
+    }
+    final maxCategorySessions = categoryCounts.values.fold(
+      0,
+      (max, value) => value > max ? value : max,
+    );
+    final completedTasks = todos.where((item) => item.done).length;
+    return [
+      CatudyAchievement(
+        id: 'first_focus',
+        title: languageCode == 'en' ? 'First focus' : 'İlk odak',
+        description: languageCode == 'en'
+            ? 'Complete your first real focus session.'
+            : 'İlk gerçek odak seansını tamamla.',
+        icon: Icons.flag_rounded,
+        progress: nonManual.length,
+        target: 1,
+      ),
+      CatudyAchievement(
+        id: 'daily_goal',
+        title: languageCode == 'en' ? 'Daily target' : 'Günlük hedef',
+        description: languageCode == 'en'
+            ? 'Reach your daily focus target once.'
+            : 'Günlük odak hedefini bir kez tamamla.',
+        icon: Icons.track_changes_rounded,
+        progress: todayGoalProgress.completed ? 1 : 0,
+        target: 1,
+      ),
+      CatudyAchievement(
+        id: 'five_category_sessions',
+        title: languageCode == 'en' ? 'Category rhythm' : 'Kategori ritmi',
+        description: languageCode == 'en'
+            ? 'Complete 5 sessions in any one category.'
+            : 'Herhangi bir kategoride 5 seans tamamla.',
+        icon: Icons.category_rounded,
+        progress: maxCategorySessions,
+        target: 5,
+      ),
+      CatudyAchievement(
+        id: 'seven_day_streak',
+        title: languageCode == 'en' ? '7-day streak' : '7 gün seri',
+        description: languageCode == 'en'
+            ? 'Keep your focus streak for 7 days.'
+            : 'Odak serini 7 güne taşıyan rozeti aç.',
+        icon: Icons.local_fire_department_rounded,
+        progress: streakDays,
+        target: 7,
+      ),
+      CatudyAchievement(
+        id: 'ten_hours',
+        title: languageCode == 'en' ? '10 focus hours' : '10 saat odak',
+        description: languageCode == 'en'
+            ? 'Record 600 total focus minutes.'
+            : 'Toplam 600 odak dakikasi kaydet.',
+        icon: Icons.timer_rounded,
+        progress: totalFocusMinutes,
+        target: 600,
+      ),
+      CatudyAchievement(
+        id: 'task_finisher',
+        title: languageCode == 'en' ? 'Task finisher' : 'Görev bitirici',
+        description: languageCode == 'en'
+            ? 'Complete 5 planned tasks.'
+            : '5 planlı görevi tamamla.',
+        icon: Icons.task_alt_rounded,
+        progress: completedTasks,
+        target: 5,
+      ),
+    ];
+  }
+
+  List<CatudyAchievement> get unlockedAchievements =>
+      achievements.where((item) => item.unlocked).toList();
+
+  SocialChallenge get weeklySocialChallenge => SocialChallenge(
+    id: 'weekly_300',
+    title: languageCode == 'en' ? 'Weekly focus crew' : 'Haftalık odak ekibi',
+    description: languageCode == 'en'
+        ? 'Reach 300 minutes this week and compare progress with the board.'
+        : 'Bu hafta 300 dakikaya ulaş ve ilerlemeyi sıralama ile karşılaştır.',
+    targetMinutes: 300,
+    currentMinutes: weeklyMinutes,
+    participants: socialProfiles.length.clamp(1, 99).toInt(),
+  );
+
+  List<LeaderboardProfile> get friendProfiles {
+    final friends = socialProfiles
+        .where((profile) => friendUserIds.contains(profile.userId))
+        .toList();
+    friends.sort((a, b) => b.points.compareTo(a.points));
+    return friends;
+  }
+
+  List<LeaderboardProfile> get socialProfiles {
+    final profiles = [...leaderboardProfiles];
+    if (profiles.length <= 1) {
+      profiles.addAll(_demoSocialProfiles());
+    }
+    profiles.sort((a, b) => b.points.compareTo(a.points));
+    return profiles;
+  }
+
+  LeaderboardProfile? get visitedProfile {
+    final userId = visitedProfileUserId;
+    if (userId == null) {
+      return null;
+    }
+    for (final profile in socialProfiles) {
+      if (profile.userId == userId) {
+        return profile;
+      }
+    }
+    return null;
+  }
+
   List<LeaderboardProfile> get leaderboardProfiles {
     final currentId = _currentLeaderboardUserId;
     final online = _onlineLeaderboardProfiles;
@@ -647,8 +879,7 @@ class CatudyDemoStore extends ChangeNotifier {
     return profiles;
   }
 
-  String get _currentLeaderboardUserId =>
-      authUserId ?? _leaderboardService?.currentUserId ?? 'local';
+  String get _currentLeaderboardUserId => authUserId ?? 'local';
 
   LeaderboardProfile _localLeaderboardProfile(String userId) {
     return LeaderboardProfile(
@@ -660,6 +891,29 @@ class CatudyDemoStore extends ChangeNotifier {
       streakDays: streakDays,
       currentUser: true,
     );
+  }
+
+  List<LeaderboardProfile> _demoSocialProfiles() {
+    return [
+      LeaderboardProfile(
+        userId: 'demo-ada',
+        name: languageCode == 'en' ? 'Ada' : 'Ada',
+        petId: 'miso',
+        points: 1280,
+        totalMinutes: 840,
+        streakDays: 6,
+        currentUser: false,
+      ),
+      LeaderboardProfile(
+        userId: 'demo-deniz',
+        name: languageCode == 'en' ? 'Deniz' : 'Deniz',
+        petId: 'luna',
+        points: 940,
+        totalMinutes: 610,
+        streakDays: 4,
+        currentUser: false,
+      ),
+    ];
   }
 
   FocusCategory get favoriteCategory {
@@ -722,14 +976,31 @@ class CatudyDemoStore extends ChangeNotifier {
 
   void attachAuthService(CatudyAuthService service) {
     _authService = service;
-    _applyAuthSession(service.currentSession);
+    final session = service.currentSession;
+    if (_shouldDiscardAnonymousSession(session)) {
+      unawaited(service.signOut().catchError((Object _) {}));
+      _applyAuthSession(null);
+    } else {
+      _applyAuthSession(session);
+    }
     unawaited(_authSubscription?.cancel());
     _authSubscription = service.authStateChanges.listen((session) {
-      _applyAuthSession(session);
+      if (_shouldDiscardAnonymousSession(session)) {
+        unawaited(service.signOut().catchError((Object _) {}));
+        _applyAuthSession(null);
+      } else {
+        _applyAuthSession(session);
+      }
       _commit();
     }, onError: _setAuthError);
     notifyListeners();
     unawaited(_save());
+  }
+
+  bool _shouldDiscardAnonymousSession(CatudyAuthSession? session) {
+    return session?.anonymous == true &&
+        !_explicitGuestSignInPending &&
+        _explicitGuestUserId != session?.userId;
   }
 
   void attachLobbyService(CatudySupabaseLobbyService service) {
@@ -849,6 +1120,46 @@ class CatudyDemoStore extends ChangeNotifier {
       return;
     }
     todos[index] = todos[index].copyWith(done: !todos[index].done);
+    if (todos[index].done && selectedTodoId == id) {
+      selectedTodoId = null;
+    }
+    _commit();
+  }
+
+  void selectTodoForFocus(String? id) {
+    if (id == null) {
+      selectedTodoId = null;
+      _commit();
+      return;
+    }
+    selectedTodoId = todos.any((item) => item.id == id && !item.done)
+        ? id
+        : null;
+    _commit();
+  }
+
+  void toggleFriend(String userId) {
+    if (userId == _currentLeaderboardUserId) {
+      return;
+    }
+    if (friendUserIds.contains(userId)) {
+      friendUserIds.remove(userId);
+    } else {
+      friendUserIds.add(userId);
+    }
+    _commit();
+  }
+
+  void visitProfile(String userId) {
+    visitedProfileUserId = userId;
+    _commit();
+  }
+
+  void clearVisitedProfile() {
+    if (visitedProfileUserId == null) {
+      return;
+    }
+    visitedProfileUserId = null;
     _commit();
   }
 
@@ -882,6 +1193,11 @@ class CatudyDemoStore extends ChangeNotifier {
     _commit();
   }
 
+  void updateDailyGoal(int minutes) {
+    dailyGoalMinutes = minutes.clamp(15, 720).toInt();
+    _commit();
+  }
+
   void prepareRecommendedFocus() {
     final recommendation = focusRecommendation;
     selectCategory(recommendation.categoryId);
@@ -890,13 +1206,16 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   void startFocus({bool lobbyMode = false}) {
+    final focusTodo = selectedFocusTodo;
     activeSession = ActiveFocusSession(
       categoryId: selectedCategoryId,
       durationMinutes: selectedDurationMinutes,
       startedAt: DateTime.now(),
       lobbyMode: lobbyMode,
+      todoId: focusTodo?.id,
     );
     lastResult = null;
+    selectedTodoId = focusTodo?.id;
     localBreakVote = null;
     _restoredCompletedSession = false;
     if (lobbyMode) {
@@ -996,7 +1315,10 @@ class CatudyDemoStore extends ChangeNotifier {
       _commit();
       return;
     }
-    await _runAuthAction(() => service.signInAsGuest(displayName));
+    await _runAuthAction(
+      () => service.signInAsGuest(displayName),
+      explicitGuest: true,
+    );
   }
 
   Future<void> signInWithEmail({
@@ -1017,6 +1339,7 @@ class CatudyDemoStore extends ChangeNotifier {
   Future<void> signUpWithEmail({
     required String email,
     required String password,
+    required String displayName,
   }) async {
     final service = _authService;
     if (service == null) {
@@ -1024,13 +1347,26 @@ class CatudyDemoStore extends ChangeNotifier {
       _commit();
       return;
     }
-    await _runAuthAction(
-      () => service.signUpWithEmail(
+    final cleanName = displayName.trim();
+    if (cleanName.isEmpty) {
+      authError = t('auth.displayNameRequired');
+      _commit();
+      return;
+    }
+    await _runAuthAction(() async {
+      final session = await service.signUpWithEmail(
         email: email,
         password: password,
-        displayName: displayName,
-      ),
-    );
+        displayName: cleanName,
+      );
+      return CatudyAuthSession(
+        userId: session.userId,
+        email: session.email,
+        displayName: cleanName,
+        provider: session.provider,
+        anonymous: session.anonymous,
+      );
+    });
   }
 
   Future<void> signInWithGoogle() async {
@@ -1063,6 +1399,7 @@ class CatudyDemoStore extends ChangeNotifier {
     _commit();
     try {
       await service.signOut();
+      _explicitGuestUserId = null;
       _applyAuthSession(null);
     } catch (error) {
       _setAuthError(error);
@@ -1306,17 +1643,30 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   Future<void> _runAuthAction(
-    Future<CatudyAuthSession> Function() action,
-  ) async {
+    Future<CatudyAuthSession> Function() action, {
+    bool explicitGuest = false,
+  }) async {
     authBusy = true;
     authError = null;
+    if (explicitGuest) {
+      _explicitGuestSignInPending = true;
+    }
     _commit();
     try {
       final session = await action();
+      if (session.anonymous && explicitGuest) {
+        _explicitGuestUserId = session.userId;
+      } else if (!session.anonymous) {
+        _explicitGuestUserId = null;
+      }
       _applyAuthSession(session);
     } catch (error) {
       _setAuthError(error);
       return;
+    } finally {
+      if (explicitGuest) {
+        _explicitGuestSignInPending = false;
+      }
     }
     authBusy = false;
     _commit();
@@ -1342,8 +1692,19 @@ class CatudyDemoStore extends ChangeNotifier {
     authProvider = session?.anonymous == true ? 'guest' : session?.provider;
     authError = null;
     authBusy = false;
-    if (session != null && session.displayName.trim().isNotEmpty) {
-      displayName = session.displayName.trim();
+    if (session != null && !session.anonymous) {
+      _explicitGuestUserId = null;
+    }
+    final sessionName = session?.displayName.trim();
+    if (sessionName != null && sessionName.isNotEmpty) {
+      final keepLocalName =
+          session?.anonymous != true &&
+          sessionName == 'Guest Cat' &&
+          displayName.trim().isNotEmpty &&
+          displayName.trim() != 'Guest Cat';
+      if (!keepLocalName) {
+        displayName = sessionName;
+      }
     }
   }
 
@@ -1352,6 +1713,21 @@ class CatudyDemoStore extends ChangeNotifier {
     authError = '$error';
     notifyListeners();
     unawaited(_save());
+  }
+
+  void _syncAuthDisplayName() {
+    final service = _authService;
+    if (service == null || authUserId == null) {
+      return;
+    }
+    unawaited(
+      service.updateDisplayName(displayName).then(_applyAuthSession).catchError(
+        (Object error) {
+          _setAuthError(error);
+          return null;
+        },
+      ),
+    );
   }
 
   void submitBreakVote(bool approved) {
@@ -1387,12 +1763,17 @@ class CatudyDemoStore extends ChangeNotifier {
     String? customAvatarBase64,
   }) {
     final cleanName = name.trim();
+    final syncDisplayName =
+        cleanName.isNotEmpty && cleanName != displayName && isAuthenticated;
     if (cleanName.isNotEmpty) {
       displayName = cleanName;
     }
     profileAvatarId = avatarId;
     customProfileImageBase64 = customAvatarBase64;
     _commit();
+    if (syncDisplayName) {
+      _syncAuthDisplayName();
+    }
   }
 
   void updatePetName(String name) {
@@ -1410,7 +1791,10 @@ class CatudyDemoStore extends ChangeNotifier {
     String? language,
     String? themeMode,
   }) {
-    displayName = name.trim().isEmpty ? displayName : name.trim();
+    final cleanName = name.trim();
+    final syncDisplayName =
+        cleanName.isNotEmpty && cleanName != displayName && isAuthenticated;
+    displayName = cleanName.isEmpty ? displayName : cleanName;
     apiBaseUrl = apiUrl.trim().isEmpty ? apiBaseUrl : apiUrl.trim();
     dndReminder = dnd;
     notifications = petNotifications;
@@ -1426,6 +1810,9 @@ class CatudyDemoStore extends ChangeNotifier {
       _ => 'system',
     };
     _commit();
+    if (syncDisplayName) {
+      _syncAuthDisplayName();
+    }
   }
 
   void loadDemoWallet() {
@@ -1500,11 +1887,11 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   void _scheduleLeaderboardSync({bool immediate = false}) {
+    _leaderboardSyncTimer?.cancel();
     final service = _leaderboardService;
-    if (service == null) {
+    if (service == null || authUserId == null) {
       return;
     }
-    _leaderboardSyncTimer?.cancel();
     _leaderboardSyncTimer = Timer(
       immediate ? Duration.zero : const Duration(seconds: 2),
       () {
@@ -1520,7 +1907,7 @@ class CatudyDemoStore extends ChangeNotifier {
               .catchError((Object _) {
                 _onlineLeaderboardProfiles = null;
                 notifyListeners();
-                return '';
+                return null;
               }),
         );
       },
@@ -1564,8 +1951,16 @@ class CatudyDemoStore extends ChangeNotifier {
                 : 'Early focus session')
           : (session.lobbyMode ? 'Lobby focus session' : 'Focus session'),
       gold: reward,
+      todoId: session.todoId,
     );
     history.insert(0, record);
+    final todoId = session.todoId;
+    if (todoId != null) {
+      final index = todos.indexWhere((item) => item.id == todoId);
+      if (index != -1) {
+        todos[index] = todos[index].copyWith(done: true);
+      }
+    }
     gold += reward;
     focusPoints += reward;
     streakDays = streakDays < 1 ? 1 : streakDays;
@@ -1574,6 +1969,7 @@ class CatudyDemoStore extends ChangeNotifier {
     petEnergy = (petEnergy - 6).clamp(0, 100);
     _unlockEligiblePets();
     activeSession = null;
+    selectedTodoId = null;
     lobbyStarted = false;
     currentUserReady = false;
     lastResult = record;
@@ -1606,6 +2002,7 @@ class CatudyDemoStore extends ChangeNotifier {
       ..clear()
       ..addAll(_defaultHistory());
     todos.clear();
+    friendUserIds.clear();
     ownedItems
       ..clear()
       ..add('violet_collar');
@@ -1628,12 +2025,19 @@ class CatudyDemoStore extends ChangeNotifier {
     authEmail = null;
     authProvider = null;
     authError = null;
+    _explicitGuestUserId = null;
+    _explicitGuestSignInPending = false;
     apiBaseUrl = 'http://127.0.0.1:5099';
     offlineMode = true;
     dndReminder = true;
     notifications = true;
     introTourSeen = false;
     themeModeCode = 'system';
+    dailyGoalMinutes = 90;
+    dailyGoalReminderHour = 18;
+    dailyGoalReminderMinute = 0;
+    selectedTodoId = null;
+    visitedProfileUserId = null;
     currentUserReady = false;
     lobbyStarted = false;
     lobbyBusy = false;
@@ -1675,6 +2079,9 @@ class CatudyDemoStore extends ChangeNotifier {
     todos
       ..clear()
       ..addAll(_readMapList(json['todos']).map(CalendarTodo.fromJson));
+    friendUserIds
+      ..clear()
+      ..addAll(_readStringList(json['friendUserIds']));
 
     selectedCategoryId = _readString(json, 'selectedCategoryId', 'study');
     if (!categories.any((item) => item.id == selectedCategoryId)) {
@@ -1688,6 +2095,11 @@ class CatudyDemoStore extends ChangeNotifier {
     petHunger = _readInt(json, 'petHunger', 20).clamp(0, 100);
     petEnergy = _readInt(json, 'petEnergy', 75).clamp(0, 100);
     displayName = _readString(json, 'displayName', 'Guest Cat');
+    final explicitGuestUserId = json['explicitGuestUserId'];
+    _explicitGuestUserId =
+        explicitGuestUserId is String && explicitGuestUserId.isNotEmpty
+        ? explicitGuestUserId
+        : null;
     authBusy = false;
     authError = null;
     apiBaseUrl = _readString(json, 'apiBaseUrl', 'http://127.0.0.1:5099');
@@ -1695,6 +2107,26 @@ class CatudyDemoStore extends ChangeNotifier {
     dndReminder = _readBool(json, 'dndReminder', true);
     notifications = _readBool(json, 'notifications', true);
     introTourSeen = _readBool(json, 'introTourSeen', false);
+    dailyGoalMinutes = _readInt(
+      json,
+      'dailyGoalMinutes',
+      90,
+    ).clamp(15, 720).toInt();
+    dailyGoalReminderHour = _readInt(
+      json,
+      'dailyGoalReminderHour',
+      18,
+    ).clamp(0, 23).toInt();
+    dailyGoalReminderMinute = _readInt(
+      json,
+      'dailyGoalReminderMinute',
+      0,
+    ).clamp(0, 59).toInt();
+    selectedTodoId = _readNullableString(json, 'selectedTodoId');
+    if (!todos.any((item) => item.id == selectedTodoId && !item.done)) {
+      selectedTodoId = null;
+    }
+    visitedProfileUserId = _readNullableString(json, 'visitedProfileUserId');
     _localizeDefaultCategories();
     themeModeCode = switch (_readString(json, 'themeModeCode', 'system')) {
       'light' => 'light',
@@ -1792,6 +2224,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'categories': categories.map((item) => item.toJson()).toList(),
     'history': history.map((item) => item.toJson()).toList(),
     'todos': todos.map((item) => item.toJson()).toList(),
+    'friendUserIds': friendUserIds.toList(),
     'selectedCategoryId': selectedCategoryId,
     'selectedDurationMinutes': selectedDurationMinutes,
     'gold': gold,
@@ -1801,6 +2234,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'petHunger': petHunger,
     'petEnergy': petEnergy,
     'displayName': displayName,
+    'explicitGuestUserId': _explicitGuestUserId,
     'apiBaseUrl': apiBaseUrl,
     'offlineMode': offlineMode,
     'dndReminder': dndReminder,
@@ -1808,6 +2242,11 @@ class CatudyDemoStore extends ChangeNotifier {
     'introTourSeen': introTourSeen,
     'languageCode': languageCode,
     'themeModeCode': themeModeCode,
+    'dailyGoalMinutes': dailyGoalMinutes,
+    'dailyGoalReminderHour': dailyGoalReminderHour,
+    'dailyGoalReminderMinute': dailyGoalReminderMinute,
+    'selectedTodoId': selectedTodoId,
+    'visitedProfileUserId': visitedProfileUserId,
     'currentUserReady': currentUserReady,
     'lobbyStarted': lobbyStarted,
     'selectedCalendarDate': selectedCalendarDate.toIso8601String(),

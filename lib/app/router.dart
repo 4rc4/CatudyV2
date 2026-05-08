@@ -18,6 +18,7 @@ import '../features/settings/settings_screen.dart';
 import '../features/shell/catudy_shell.dart';
 import '../features/shop/inventory_screen.dart';
 import '../features/shop/shop_screen.dart';
+import '../features/social/social_screen.dart';
 import '../features/stats/stats_screen.dart';
 
 class CatudyRouter {
@@ -59,6 +60,11 @@ class CatudyRouter {
             path: '/leaderboard',
             pageBuilder: (context, state) =>
                 _animatedPage(state, const LeaderboardScreen()),
+          ),
+          GoRoute(
+            path: '/social',
+            pageBuilder: (context, state) =>
+                _animatedPage(state, const SocialScreen()),
           ),
           GoRoute(
             path: '/pet-room',

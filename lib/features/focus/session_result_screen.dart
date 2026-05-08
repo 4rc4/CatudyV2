@@ -103,6 +103,51 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
               ),
             ),
             const SizedBox(height: 14),
+            CatudyPanel(
+              accentColor: CatudyColors.teal,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    store.t('achievements.title'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: CatudyColors.mutedFor(context),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  for (final achievement in store.achievements.take(3))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            achievement.unlocked
+                                ? Icons.verified_rounded
+                                : achievement.icon,
+                            color: achievement.unlocked
+                                ? CatudyColors.teal
+                                : CatudyColors.violet,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              achievement.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${achievement.progress.clamp(0, achievement.target)}/${achievement.target}',
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
             FilledButton.icon(
               onPressed: () => context.go('/stats'),
               icon: const Icon(Icons.query_stats_rounded),

@@ -96,6 +96,17 @@ class CatudyAuthService {
     return CatudyAuthSession.fromUser(user);
   }
 
+  Future<CatudyAuthSession> updateDisplayName(String displayName) async {
+    final response = await _client.auth.updateUser(
+      UserAttributes(data: {'display_name': _cleanName(displayName)}),
+    );
+    final user = response.user;
+    if (user == null) {
+      throw StateError('Display name update did not return a user.');
+    }
+    return CatudyAuthSession.fromUser(user);
+  }
+
   Future<void> signInWithGoogle() {
     return _signInWithOAuth(OAuthProvider.google);
   }

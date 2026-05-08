@@ -63,6 +63,52 @@ class _DurationScreenState extends State<DurationScreen> {
             ),
           ),
           const SizedBox(height: 14),
+          CatudyPanel(
+            accentColor: CatudyColors.teal,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  store.t('focus.taskTitle'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (store.openFocusTasks.isEmpty)
+                  Text(
+                    store.t('focus.noOpenTasks'),
+                    style: TextStyle(color: CatudyColors.mutedFor(context)),
+                  )
+                else
+                  DropdownButtonFormField<String?>(
+                    initialValue: store.selectedFocusTodo?.id,
+                    decoration: InputDecoration(
+                      labelText: store.t('focus.selectTask'),
+                      border: const OutlineInputBorder(),
+                    ),
+                    items: [
+                      DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text(store.t('focus.noTaskSelected')),
+                      ),
+                      for (final todo in store.openFocusTasks)
+                        DropdownMenuItem<String?>(
+                          value: todo.id,
+                          child: Text(
+                            todo.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: store.selectTodoForFocus,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
