@@ -42,7 +42,7 @@ class _PetIntroTourOverlayState extends State<_PetIntroTourOverlay> {
       route: '/',
       title: 'Burası ana ekran',
       message:
-          'Bugünün odak süresini, serini, planlı hatırlatmalarını ve petinin kısa durumunu buradan takip edersin.',
+          'Bugünün odak süresini, serini, hatırlatmalarını ve petinin kısa durumunu buradan takip edersin.',
       alignment: Alignment.topCenter,
       arrowAlignment: Alignment.topCenter,
       icon: Icons.home_rounded,
@@ -60,7 +60,7 @@ class _PetIntroTourOverlayState extends State<_PetIntroTourOverlay> {
       route: '/calendar',
       title: 'Takvim',
       message:
-          'Şimdi takvim ekranındayız. Geçmiş günlere manuel kayıt ekleyebilir, bugün ve gelecek günler için kendi metninle planlı hatırlatma oluşturabilirsin.',
+          'Şimdi takvim ekranındayız. Geçmiş günlere manuel kayıt ekleyebilir, bugün ve gelecek günler için kendi metninle hatırlatma oluşturabilirsin.',
       alignment: Alignment.center,
       arrowAlignment: Alignment.center,
       icon: Icons.calendar_month_rounded,

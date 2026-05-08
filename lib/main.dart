@@ -8,6 +8,7 @@ import 'app/notifications/catudy_notification_service.dart';
 import 'app/online/catudy_auth_service.dart';
 import 'app/online/catudy_leaderboard_service.dart';
 import 'app/online/catudy_lobby_service.dart';
+import 'app/online/catudy_social_service.dart';
 
 const _supabaseUrl = String.fromEnvironment('CATUDY_SUPABASE_URL');
 const _supabaseAnonKey = String.fromEnvironment('CATUDY_SUPABASE_ANON_KEY');
@@ -44,6 +45,9 @@ Future<void> _initializeOnlineLobby() async {
     );
     catudyDemoStore.attachLeaderboardService(
       CatudyLeaderboardService(Supabase.instance.client),
+    );
+    catudyDemoStore.attachSocialService(
+      CatudySocialService(Supabase.instance.client),
     );
   } catch (error) {
     debugPrint('Catudy Supabase initialization failed: $error');

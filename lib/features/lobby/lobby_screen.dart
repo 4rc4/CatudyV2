@@ -339,7 +339,9 @@ class _LobbyStatusPanel extends StatelessWidget {
                   child: Text(
                     store.t('lobby.code', {'code': code}),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: CatudyColors.blue,
+                      color: CatudyColors.isDark(context)
+                          ? CatudyColors.yellow
+                          : CatudyColors.tealDark,
                       fontWeight: FontWeight.w900,
                     ),
                   ),

@@ -59,7 +59,7 @@ class CatudyNotificationService {
         android: AndroidNotificationDetails(
           'catudy_reminders',
           'Catudy Reminders',
-          channelDescription: 'Planned study reminders from Catudy',
+          channelDescription: 'Study reminders from Catudy',
           importance: Importance.high,
           priority: Priority.high,
         ),

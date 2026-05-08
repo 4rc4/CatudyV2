@@ -6,6 +6,7 @@ import '../localization/catudy_copy.dart';
 import '../online/catudy_auth_service.dart';
 import '../online/catudy_leaderboard_service.dart';
 import '../online/catudy_lobby_service.dart';
+import '../online/catudy_social_service.dart';
 import '../storage/catudy_local_storage.dart';
 import '../theme/catudy_colors.dart';
 
@@ -100,7 +101,7 @@ class CalendarTodo {
         'id',
         DateTime.now().microsecondsSinceEpoch.toString(),
       ),
-      title: _readString(json, 'title', 'Planlı hatırlatma'),
+      title: _readString(json, 'title', 'Hatırlatma'),
       date: _readDate(json, 'date', DateTime.now()),
       hour: _readInt(json, 'hour', 9).clamp(0, 23),
       minute: _readInt(json, 'minute', 0).clamp(0, 59),
@@ -237,6 +238,51 @@ class SocialChallenge {
   bool get completed => currentMinutes >= targetMinutes;
 }
 
+enum FriendAddResult { added, alreadyFriend, self, notFound, empty }
+
+enum FriendRequestActionResult {
+  sent,
+  alreadyFriend,
+  alreadyPending,
+  self,
+  notFound,
+  empty,
+}
+
+class FriendRequest {
+  const FriendRequest({
+    required this.id,
+    required this.fromUserId,
+    required this.toUserId,
+    required this.createdAt,
+  });
+
+  factory FriendRequest.fromJson(Map<String, dynamic> json) {
+    return FriendRequest(
+      id: _readString(
+        json,
+        'id',
+        DateTime.now().microsecondsSinceEpoch.toString(),
+      ),
+      fromUserId: _readString(json, 'fromUserId', ''),
+      toUserId: _readString(json, 'toUserId', ''),
+      createdAt: _readDate(json, 'createdAt', DateTime.now()),
+    );
+  }
+
+  final String id;
+  final String fromUserId;
+  final String toUserId;
+  final DateTime createdAt;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'fromUserId': fromUserId,
+    'toUserId': toUserId,
+    'createdAt': createdAt.toIso8601String(),
+  };
+}
+
 class UnlockablePet {
   const UnlockablePet({
     required this.id,
@@ -344,11 +390,15 @@ class CatudyDemoStore extends ChangeNotifier {
   CatudyAuthService? _authService;
   CatudySupabaseLobbyService? _lobbyService;
   CatudyLeaderboardService? _leaderboardService;
+  CatudySocialService? _socialService;
   StreamSubscription<CatudyAuthSession?>? _authSubscription;
   StreamSubscription<CatudyOnlineLobby>? _onlineLobbySubscription;
   StreamSubscription<List<CatudyOnlineLobbyMember>>? _onlineMembersSubscription;
   StreamSubscription<List<CatudyOnlineLeaderboardProfile>>?
   _leaderboardSubscription;
+  StreamSubscription<List<CatudyOnlineFriendRequest>>?
+  _friendRequestsSubscription;
+  StreamSubscription<List<String>>? _friendsSubscription;
   Future<void>? _loadFuture;
   bool _loaded = false;
   bool _restoredCompletedSession = false;
@@ -363,6 +413,7 @@ class CatudyDemoStore extends ChangeNotifier {
   final history = <FocusRecord>[];
   final todos = <CalendarTodo>[];
   final friendUserIds = <String>{};
+  final friendRequests = <FriendRequest>[];
   final ownedItems = <String>{};
   final equippedRoomItemIds = <String, String>{};
   final unlockedPetIds = <String>{};
@@ -517,6 +568,7 @@ class CatudyDemoStore extends ChangeNotifier {
   int dailyGoalReminderMinute = 0;
   String? selectedTodoId;
   String? visitedProfileUserId;
+  String? visitedRoomUserId;
   bool currentUserReady = false;
   bool lobbyStarted = false;
   bool lobbyBusy = false;
@@ -833,6 +885,24 @@ class CatudyDemoStore extends ChangeNotifier {
     return friends;
   }
 
+  List<FriendRequest> get incomingFriendRequests {
+    final currentId = _currentLeaderboardUserId;
+    final requests = friendRequests
+        .where((request) => request.toUserId == currentId)
+        .toList();
+    requests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return requests;
+  }
+
+  List<FriendRequest> get outgoingFriendRequests {
+    final currentId = _currentLeaderboardUserId;
+    final requests = friendRequests
+        .where((request) => request.fromUserId == currentId)
+        .toList();
+    requests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return requests;
+  }
+
   List<LeaderboardProfile> get socialProfiles {
     final profiles = [...leaderboardProfiles];
     if (profiles.length <= 1) {
@@ -844,6 +914,19 @@ class CatudyDemoStore extends ChangeNotifier {
 
   LeaderboardProfile? get visitedProfile {
     final userId = visitedProfileUserId;
+    if (userId == null) {
+      return null;
+    }
+    for (final profile in socialProfiles) {
+      if (profile.userId == userId) {
+        return profile;
+      }
+    }
+    return null;
+  }
+
+  LeaderboardProfile? get visitedRoomProfile {
+    final userId = visitedRoomUserId;
     if (userId == null) {
       return null;
     }
@@ -916,6 +999,15 @@ class CatudyDemoStore extends ChangeNotifier {
     ];
   }
 
+  LeaderboardProfile? profileByUserId(String userId) {
+    for (final profile in socialProfiles) {
+      if (profile.userId == userId) {
+        return profile;
+      }
+    }
+    return null;
+  }
+
   FocusCategory get favoriteCategory {
     if (history.isEmpty) {
       return selectedCategory;
@@ -983,6 +1075,7 @@ class CatudyDemoStore extends ChangeNotifier {
     } else {
       _applyAuthSession(session);
     }
+    _watchSocialState();
     unawaited(_authSubscription?.cancel());
     _authSubscription = service.authStateChanges.listen((session) {
       if (_shouldDiscardAnonymousSession(session)) {
@@ -992,6 +1085,7 @@ class CatudyDemoStore extends ChangeNotifier {
         _applyAuthSession(session);
       }
       _commit();
+      _watchSocialState();
     }, onError: _setAuthError);
     notifyListeners();
     unawaited(_save());
@@ -1037,6 +1131,43 @@ class CatudyDemoStore extends ChangeNotifier {
       },
     );
     _scheduleLeaderboardSync(immediate: true);
+  }
+
+  void attachSocialService(CatudySocialService service) {
+    _socialService = service;
+    _watchSocialState();
+  }
+
+  void _watchSocialState() {
+    final service = _socialService;
+    if (service == null || authUserId == null) {
+      return;
+    }
+    unawaited(_friendRequestsSubscription?.cancel());
+    unawaited(_friendsSubscription?.cancel());
+    _friendRequestsSubscription = service.watchPendingRequests().listen((
+      requests,
+    ) {
+      friendRequests
+        ..clear()
+        ..addAll(
+          requests.map(
+            (request) => FriendRequest(
+              id: request.id,
+              fromUserId: request.fromUserId,
+              toUserId: request.toUserId,
+              createdAt: request.createdAt,
+            ),
+          ),
+        );
+      notifyListeners();
+    }, onError: (_) {});
+    _friendsSubscription = service.watchFriendIds().listen((ids) {
+      friendUserIds
+        ..clear()
+        ..addAll(ids);
+      notifyListeners();
+    }, onError: (_) {});
   }
 
   String? consumeInitialRestoreRoute() {
@@ -1144,14 +1275,185 @@ class CatudyDemoStore extends ChangeNotifier {
     }
     if (friendUserIds.contains(userId)) {
       friendUserIds.remove(userId);
+      final service = _socialService;
+      if (service != null && authUserId != null) {
+        unawaited(service.removeFriend(userId).catchError((Object _) {}));
+      }
     } else {
       friendUserIds.add(userId);
     }
     _commit();
   }
 
+  void sendDemoIncomingFriendRequest(String fromUserId) {
+    final currentId = _currentLeaderboardUserId;
+    if (fromUserId == currentId ||
+        friendUserIds.contains(fromUserId) ||
+        friendRequests.any(
+          (request) =>
+              request.fromUserId == fromUserId && request.toUserId == currentId,
+        )) {
+      return;
+    }
+    friendRequests.add(
+      FriendRequest(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        fromUserId: fromUserId,
+        toUserId: currentId,
+        createdAt: DateTime.now(),
+      ),
+    );
+    _commit();
+  }
+
+  FriendRequestActionResult sendFriendRequestByQuery(String query) {
+    final clean = query.trim().toLowerCase();
+    if (clean.isEmpty) {
+      return FriendRequestActionResult.empty;
+    }
+    final match = _findSocialProfile(clean);
+    if (match == null) {
+      return FriendRequestActionResult.notFound;
+    }
+    return sendFriendRequest(match.userId);
+  }
+
+  FriendRequestActionResult sendFriendRequest(String userId) {
+    final currentId = _currentLeaderboardUserId;
+    final match = profileByUserId(userId);
+    if (match == null) {
+      return FriendRequestActionResult.notFound;
+    }
+    if (userId == currentId || match.currentUser) {
+      return FriendRequestActionResult.self;
+    }
+    if (friendUserIds.contains(userId)) {
+      return FriendRequestActionResult.alreadyFriend;
+    }
+    if (friendRequests.any(
+      (request) =>
+          (request.fromUserId == currentId && request.toUserId == userId) ||
+          (request.fromUserId == userId && request.toUserId == currentId),
+    )) {
+      return FriendRequestActionResult.alreadyPending;
+    }
+    friendRequests.add(
+      FriendRequest(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        fromUserId: currentId,
+        toUserId: userId,
+        createdAt: DateTime.now(),
+      ),
+    );
+    final service = _socialService;
+    if (service != null && authUserId != null) {
+      unawaited(service.sendFriendRequest(userId).catchError((Object _) {}));
+    }
+    _commit();
+    return FriendRequestActionResult.sent;
+  }
+
+  void acceptFriendRequest(String requestId) {
+    final index = friendRequests.indexWhere(
+      (request) => request.id == requestId,
+    );
+    if (index == -1) {
+      return;
+    }
+    final request = friendRequests.removeAt(index);
+    final currentId = _currentLeaderboardUserId;
+    if (request.toUserId == currentId) {
+      friendUserIds.add(request.fromUserId);
+      final service = _socialService;
+      if (service != null && authUserId != null) {
+        unawaited(
+          service.acceptFriendRequest(requestId).catchError((Object _) {}),
+        );
+      }
+    }
+    _commit();
+  }
+
+  void rejectFriendRequest(String requestId) {
+    friendRequests.removeWhere((request) => request.id == requestId);
+    final service = _socialService;
+    if (service != null && authUserId != null) {
+      unawaited(
+        service.rejectFriendRequest(requestId).catchError((Object _) {}),
+      );
+    }
+    _commit();
+  }
+
+  FriendAddResult addFriendByQuery(String query) {
+    final clean = query.trim().toLowerCase();
+    if (clean.isEmpty) {
+      return FriendAddResult.empty;
+    }
+
+    LeaderboardProfile? match;
+    for (final profile in socialProfiles) {
+      final userId = profile.userId.toLowerCase();
+      final name = profile.name.toLowerCase();
+      if (userId == clean || name == clean) {
+        match = profile;
+        break;
+      }
+    }
+    match ??= socialProfiles.cast<LeaderboardProfile?>().firstWhere((profile) {
+      if (profile == null) {
+        return false;
+      }
+      return profile.userId.toLowerCase().contains(clean) ||
+          profile.name.toLowerCase().contains(clean);
+    }, orElse: () => null);
+
+    if (match == null) {
+      return FriendAddResult.notFound;
+    }
+    if (match.userId == _currentLeaderboardUserId || match.currentUser) {
+      return FriendAddResult.self;
+    }
+    if (friendUserIds.contains(match.userId)) {
+      return FriendAddResult.alreadyFriend;
+    }
+    friendUserIds.add(match.userId);
+    _commit();
+    return FriendAddResult.added;
+  }
+
+  LeaderboardProfile? _findSocialProfile(String cleanQuery) {
+    for (final profile in socialProfiles) {
+      final userId = profile.userId.toLowerCase();
+      final name = profile.name.toLowerCase();
+      if (userId == cleanQuery || name == cleanQuery) {
+        return profile;
+      }
+    }
+    for (final profile in socialProfiles) {
+      if (profile.userId.toLowerCase().contains(cleanQuery) ||
+          profile.name.toLowerCase().contains(cleanQuery)) {
+        return profile;
+      }
+    }
+    return null;
+  }
+
   void visitProfile(String userId) {
     visitedProfileUserId = userId;
+    _commit();
+  }
+
+  void visitPetRoom(String userId) {
+    visitedRoomUserId = userId;
+    _commit();
+  }
+
+  void clearVisitedRoom() {
+    if (visitedRoomUserId == null) {
+      return;
+    }
+    visitedRoomUserId = null;
     _commit();
   }
 
@@ -2003,6 +2305,7 @@ class CatudyDemoStore extends ChangeNotifier {
       ..addAll(_defaultHistory());
     todos.clear();
     friendUserIds.clear();
+    friendRequests.clear();
     ownedItems
       ..clear()
       ..add('violet_collar');
@@ -2038,6 +2341,7 @@ class CatudyDemoStore extends ChangeNotifier {
     dailyGoalReminderMinute = 0;
     selectedTodoId = null;
     visitedProfileUserId = null;
+    visitedRoomUserId = null;
     currentUserReady = false;
     lobbyStarted = false;
     lobbyBusy = false;
@@ -2082,6 +2386,11 @@ class CatudyDemoStore extends ChangeNotifier {
     friendUserIds
       ..clear()
       ..addAll(_readStringList(json['friendUserIds']));
+    friendRequests
+      ..clear()
+      ..addAll(
+        _readMapList(json['friendRequests']).map(FriendRequest.fromJson),
+      );
 
     selectedCategoryId = _readString(json, 'selectedCategoryId', 'study');
     if (!categories.any((item) => item.id == selectedCategoryId)) {
@@ -2127,6 +2436,7 @@ class CatudyDemoStore extends ChangeNotifier {
       selectedTodoId = null;
     }
     visitedProfileUserId = _readNullableString(json, 'visitedProfileUserId');
+    visitedRoomUserId = _readNullableString(json, 'visitedRoomUserId');
     _localizeDefaultCategories();
     themeModeCode = switch (_readString(json, 'themeModeCode', 'system')) {
       'light' => 'light',
@@ -2225,6 +2535,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'history': history.map((item) => item.toJson()).toList(),
     'todos': todos.map((item) => item.toJson()).toList(),
     'friendUserIds': friendUserIds.toList(),
+    'friendRequests': friendRequests.map((item) => item.toJson()).toList(),
     'selectedCategoryId': selectedCategoryId,
     'selectedDurationMinutes': selectedDurationMinutes,
     'gold': gold,
@@ -2247,6 +2558,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'dailyGoalReminderMinute': dailyGoalReminderMinute,
     'selectedTodoId': selectedTodoId,
     'visitedProfileUserId': visitedProfileUserId,
+    'visitedRoomUserId': visitedRoomUserId,
     'currentUserReady': currentUserReady,
     'lobbyStarted': lobbyStarted,
     'selectedCalendarDate': selectedCalendarDate.toIso8601String(),

@@ -26,9 +26,12 @@ void main() {
     await _pumpCatudy(tester, initialLocation: '/social');
 
     expect(find.text('Sosyal'), findsOneWidget);
+    expect(find.text('Arkadaş ara'), findsOneWidget);
+    expect(find.text('Kullanıcı adı veya ID'), findsOneWidget);
     expect(find.text('Arkadaşlar'), findsOneWidget);
     expect(find.text('Odak panosu'), findsOneWidget);
-    expect(find.byIcon(Icons.person_add_alt_1_rounded), findsWidgets);
+    expect(find.byIcon(Icons.send_rounded), findsWidgets);
+    expect(find.byIcon(Icons.meeting_room_rounded), findsWidgets);
     expect(find.byIcon(Icons.visibility_rounded), findsWidgets);
   });
 
@@ -60,7 +63,7 @@ void main() {
 
     expect(find.text('Takvim'), findsOneWidget);
     expect(find.text('Manuel Ekle'), findsOneWidget);
-    expect(find.text('Planlı Hatırlatma'), findsOneWidget);
+    expect(find.text('Hatırlatma'), findsOneWidget);
     expect(find.text('Pzt'), findsOneWidget);
   });
 

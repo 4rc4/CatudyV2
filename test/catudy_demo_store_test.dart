@@ -240,6 +240,34 @@ void main() {
     store.toggleFriend(friend.userId);
 
     expect(store.friendUserIds.contains(friend.userId), isFalse);
+
+    expect(store.addFriendByQuery('Ada'), FriendAddResult.added);
+    expect(store.friendUserIds.contains('demo-ada'), isTrue);
+    expect(store.addFriendByQuery('Ada'), FriendAddResult.alreadyFriend);
+    expect(store.addFriendByQuery('Guest Cat'), FriendAddResult.self);
+    expect(store.addFriendByQuery('unknown-user'), FriendAddResult.notFound);
+
+    store.friendUserIds.clear();
+
+    expect(
+      store.sendFriendRequestByQuery('Ada'),
+      FriendRequestActionResult.sent,
+    );
+    expect(store.outgoingFriendRequests.single.toUserId, 'demo-ada');
+    expect(
+      store.sendFriendRequestByQuery('Ada'),
+      FriendRequestActionResult.alreadyPending,
+    );
+
+    store.rejectFriendRequest(store.outgoingFriendRequests.single.id);
+    store.sendDemoIncomingFriendRequest('demo-ada');
+    expect(store.incomingFriendRequests.single.fromUserId, 'demo-ada');
+
+    store.acceptFriendRequest(store.incomingFriendRequests.single.id);
+    expect(store.friendUserIds.contains('demo-ada'), isTrue);
+
+    store.visitPetRoom('demo-ada');
+    expect(store.visitedRoomProfile?.userId, 'demo-ada');
   });
 
   test(

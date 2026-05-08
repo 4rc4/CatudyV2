@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
@@ -209,10 +210,7 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () {
-                      store.clearVisitedProfile();
-                      context.go('/public-profile');
-                    },
+                    onPressed: () => _shareProfile(context, store),
                     icon: const Icon(Icons.share_rounded),
                     label: Text(store.t('profile.share')),
                   ),
@@ -229,6 +227,26 @@ class ProfileScreen extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => _ProfileEditDialog(store: store),
+    );
+  }
+
+  Future<void> _shareProfile(
+    BuildContext context,
+    CatudyDemoStore store,
+  ) async {
+    store.clearVisitedProfile();
+    final origin = Uri.base.origin;
+    final link = Uri.parse(
+      '$origin/#/public-profile?user=${Uri.encodeComponent(store.authUserId ?? 'local')}',
+    );
+    await SharePlus.instance.share(
+      ShareParams(
+        text: store.t('profile.shareText', {
+          'name': store.displayName,
+          'link': link,
+        }),
+        subject: store.t('profile.shareSubject', {'name': store.displayName}),
+      ),
     );
   }
 
@@ -642,7 +660,10 @@ class _PetPreviewCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () => context.go('/pet-room'),
+              onPressed: () {
+                store.clearVisitedRoom();
+                context.go('/pet-room');
+              },
               icon: const Icon(Icons.chevron_right_rounded),
               label: Text(catudyDemoStore.t('profile.petRoom')),
             ),

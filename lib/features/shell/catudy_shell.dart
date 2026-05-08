@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/catudy_assets.dart';
+import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -120,7 +121,12 @@ class CatudyShell extends StatelessWidget {
                               item: _items[index],
                               selected: selectedIndex == index,
                               isPet: index == 3,
-                              onTap: () => context.go(_paths[index]),
+                              onTap: () {
+                                if (index == 3) {
+                                  catudyDemoStore.clearVisitedRoom();
+                                }
+                                context.go(_paths[index]);
+                              },
                             ),
                           ),
                       ],

@@ -78,7 +78,10 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
   Widget build(BuildContext context) {
     return StoreBuilder(
       builder: (context, store) {
-        _schedulePetNameDialog(context, store);
+        final visited = store.visitedRoomProfile;
+        if (visited == null) {
+          _schedulePetNameDialog(context, store);
+        }
         final equippedItem = store.equippedPetItemId == null
             ? null
             : store.shopItemById(store.equippedPetItemId!);
@@ -95,7 +98,9 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
 
         return SizedBox.expand(
           child: _RoomScene(
-            petName: store.petDisplayName,
+            petName: visited == null
+                ? store.petDisplayName
+                : store.t('pet.roomName', {'pet': visited.name}),
             equipped: equipped,
             dialogue: dialogue,
             showGreeting: _showGreeting,
@@ -111,10 +116,12 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             shelfItem: shelfItem,
             maintenanceTitle: store.t('pet.roomMaintenanceTitle'),
             maintenanceBody: store.t('pet.roomMaintenanceBody'),
+            visiting: visited != null,
             onSettings: () => context.go('/settings'),
             onInfo: () => showPetIntroTour(context),
             onShop: () => context.go('/shop'),
             onInventory: () => context.go('/inventory'),
+            onReturnHome: store.clearVisitedRoom,
           ),
         );
       },
@@ -245,10 +252,12 @@ class _RoomScene extends StatelessWidget {
     required this.shelfItem,
     required this.maintenanceTitle,
     required this.maintenanceBody,
+    required this.visiting,
     required this.onSettings,
     required this.onInfo,
     required this.onShop,
     required this.onInventory,
+    required this.onReturnHome,
   });
 
   final String petName;
@@ -267,10 +276,12 @@ class _RoomScene extends StatelessWidget {
   final ShopItem? shelfItem;
   final String maintenanceTitle;
   final String maintenanceBody;
+  final bool visiting;
   final VoidCallback onSettings;
   final VoidCallback onInfo;
   final VoidCallback onShop;
   final VoidCallback onInventory;
+  final VoidCallback onReturnHome;
 
   @override
   Widget build(BuildContext context) {
@@ -441,58 +452,69 @@ class _RoomScene extends StatelessWidget {
                       equipped: equipped,
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 42,
-                            child: FilledButton.icon(
-                              onPressed: onShop,
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size(0, 42),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
+                    if (visiting)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 42,
+                        child: FilledButton.icon(
+                          onPressed: onReturnHome,
+                          icon: const Icon(Icons.home_rounded, size: 19),
+                          label: Text(catudyDemoStore.t('pet.returnMyRoom')),
+                        ),
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 42,
+                              child: FilledButton.icon(
+                                onPressed: onShop,
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(0, 42),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
-                                textStyle: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w900,
+                                icon: const Icon(
+                                  Icons.storefront_rounded,
+                                  size: 19,
                                 ),
+                                label: Text(catudyDemoStore.t('pet.shop')),
                               ),
-                              icon: const Icon(
-                                Icons.storefront_rounded,
-                                size: 19,
-                              ),
-                              label: Text(catudyDemoStore.t('pet.shop')),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: SizedBox(
-                            height: 42,
-                            child: FilledButton.icon(
-                              onPressed: onInventory,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: CatudyColors.tealDark,
-                                minimumSize: const Size(0, 42),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 42,
+                              child: FilledButton.icon(
+                                onPressed: onInventory,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: CatudyColors.tealDark,
+                                  minimumSize: const Size(0, 42),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
-                                textStyle: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w900,
+                                icon: const Icon(
+                                  Icons.inventory_2_rounded,
+                                  size: 19,
                                 ),
+                                label: Text(catudyDemoStore.t('pet.inventory')),
                               ),
-                              icon: const Icon(
-                                Icons.inventory_2_rounded,
-                                size: 19,
-                              ),
-                              label: Text(catudyDemoStore.t('pet.inventory')),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ),
               ),
