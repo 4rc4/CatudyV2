@@ -1307,24 +1307,17 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   FriendRequestActionResult sendFriendRequestByQuery(String query) {
-    final clean = query.trim().toLowerCase();
+    final clean = query.trim();
     if (clean.isEmpty) {
       return FriendRequestActionResult.empty;
     }
-    final match = _findSocialProfile(clean);
-    if (match == null) {
-      return FriendRequestActionResult.notFound;
-    }
-    return sendFriendRequest(match.userId);
+    return sendFriendRequest(clean);
   }
 
   FriendRequestActionResult sendFriendRequest(String userId) {
     final currentId = _currentLeaderboardUserId;
     final match = profileByUserId(userId);
-    if (match == null) {
-      return FriendRequestActionResult.notFound;
-    }
-    if (userId == currentId || match.currentUser) {
+    if (userId == currentId || match?.currentUser == true) {
       return FriendRequestActionResult.self;
     }
     if (friendUserIds.contains(userId)) {
@@ -1386,27 +1379,18 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   FriendAddResult addFriendByQuery(String query) {
-    final clean = query.trim().toLowerCase();
+    final clean = query.trim();
     if (clean.isEmpty) {
       return FriendAddResult.empty;
     }
 
     LeaderboardProfile? match;
     for (final profile in socialProfiles) {
-      final userId = profile.userId.toLowerCase();
-      final name = profile.name.toLowerCase();
-      if (userId == clean || name == clean) {
+      if (profile.userId == clean) {
         match = profile;
         break;
       }
     }
-    match ??= socialProfiles.cast<LeaderboardProfile?>().firstWhere((profile) {
-      if (profile == null) {
-        return false;
-      }
-      return profile.userId.toLowerCase().contains(clean) ||
-          profile.name.toLowerCase().contains(clean);
-    }, orElse: () => null);
 
     if (match == null) {
       return FriendAddResult.notFound;
@@ -1420,23 +1404,6 @@ class CatudyDemoStore extends ChangeNotifier {
     friendUserIds.add(match.userId);
     _commit();
     return FriendAddResult.added;
-  }
-
-  LeaderboardProfile? _findSocialProfile(String cleanQuery) {
-    for (final profile in socialProfiles) {
-      final userId = profile.userId.toLowerCase();
-      final name = profile.name.toLowerCase();
-      if (userId == cleanQuery || name == cleanQuery) {
-        return profile;
-      }
-    }
-    for (final profile in socialProfiles) {
-      if (profile.userId.toLowerCase().contains(cleanQuery) ||
-          profile.name.toLowerCase().contains(cleanQuery)) {
-        return profile;
-      }
-    }
-    return null;
   }
 
   void visitProfile(String userId) {

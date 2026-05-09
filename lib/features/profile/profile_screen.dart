@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
@@ -235,19 +235,43 @@ class ProfileScreen extends StatelessWidget {
     CatudyDemoStore store,
   ) async {
     store.clearVisitedProfile();
-    final origin = Uri.base.origin;
-    final link = Uri.parse(
-      '$origin/#/public-profile?user=${Uri.encodeComponent(store.authUserId ?? 'local')}',
-    );
-    await SharePlus.instance.share(
-      ShareParams(
-        text: store.t('profile.shareText', {
-          'name': store.displayName,
-          'link': link,
-        }),
-        subject: store.t('profile.shareSubject', {'name': store.displayName}),
-      ),
-    );
+    final link = _profileShareLink(store);
+    final text = store.t('profile.shareText', {
+      'name': store.displayName,
+      'link': link,
+    });
+    try {
+      final renderObject = context.findRenderObject();
+      final box = renderObject is RenderBox ? renderObject : null;
+      await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          title: store.t('profile.share'),
+          subject: store.t('profile.shareSubject', {'name': store.displayName}),
+          sharePositionOrigin: box != null && box.hasSize
+              ? box.localToGlobal(Offset.zero) & box.size
+              : null,
+        ),
+      );
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(store.t('profile.shareCopied'))));
+      }
+    }
+  }
+
+  String _profileShareLink(CatudyDemoStore store) {
+    final userId = Uri.encodeComponent(store.authUserId ?? 'local');
+    final base = Uri.base;
+    if ((base.scheme == 'http' || base.scheme == 'https') &&
+        base.host.isNotEmpty) {
+      final port = base.hasPort ? ':${base.port}' : '';
+      return '${base.scheme}://${base.host}$port/#/public-profile?user=$userId';
+    }
+    return 'https://catudy.app/#/public-profile?user=$userId';
   }
 
   String _formatMinutes(int minutes, CatudyDemoStore store) {

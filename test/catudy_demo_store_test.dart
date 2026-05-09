@@ -241,21 +241,22 @@ void main() {
 
     expect(store.friendUserIds.contains(friend.userId), isFalse);
 
-    expect(store.addFriendByQuery('Ada'), FriendAddResult.added);
+    expect(store.addFriendByQuery('Ada'), FriendAddResult.notFound);
+    expect(store.addFriendByQuery('demo-ada'), FriendAddResult.added);
     expect(store.friendUserIds.contains('demo-ada'), isTrue);
-    expect(store.addFriendByQuery('Ada'), FriendAddResult.alreadyFriend);
-    expect(store.addFriendByQuery('Guest Cat'), FriendAddResult.self);
+    expect(store.addFriendByQuery('demo-ada'), FriendAddResult.alreadyFriend);
+    expect(store.addFriendByQuery('local'), FriendAddResult.self);
     expect(store.addFriendByQuery('unknown-user'), FriendAddResult.notFound);
 
     store.friendUserIds.clear();
 
     expect(
-      store.sendFriendRequestByQuery('Ada'),
+      store.sendFriendRequestByQuery('demo-ada'),
       FriendRequestActionResult.sent,
     );
     expect(store.outgoingFriendRequests.single.toUserId, 'demo-ada');
     expect(
-      store.sendFriendRequestByQuery('Ada'),
+      store.sendFriendRequestByQuery('demo-ada'),
       FriendRequestActionResult.alreadyPending,
     );
 

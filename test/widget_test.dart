@@ -26,13 +26,13 @@ void main() {
     await _pumpCatudy(tester, initialLocation: '/social');
 
     expect(find.text('Sosyal'), findsOneWidget);
-    expect(find.text('Arkadaş ara'), findsOneWidget);
-    expect(find.text('Kullanıcı adı veya ID'), findsOneWidget);
+    expect(find.text('ID ile arkadaş ekle'), findsOneWidget);
+    expect(find.text('Kullanıcı ID'), findsOneWidget);
     expect(find.text('Arkadaşlar'), findsOneWidget);
-    expect(find.text('Odak panosu'), findsOneWidget);
-    expect(find.byIcon(Icons.send_rounded), findsWidgets);
-    expect(find.byIcon(Icons.meeting_room_rounded), findsWidgets);
-    expect(find.byIcon(Icons.visibility_rounded), findsWidgets);
+    expect(find.text('Odak panosu'), findsNothing);
+    expect(find.byIcon(Icons.meeting_room_rounded), findsNothing);
+    expect(find.byIcon(Icons.visibility_rounded), findsNothing);
+    expect(find.byIcon(Icons.send_rounded), findsOneWidget);
   });
 
   testWidgets('renders Stats range controls', (tester) async {

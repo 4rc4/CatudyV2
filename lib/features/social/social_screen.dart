@@ -34,7 +34,6 @@ class _SocialScreenState extends State<SocialScreen> {
     return StoreBuilder(
       builder: (context, store) {
         final challenge = store.weeklySocialChallenge;
-        final profiles = store.socialProfiles.take(5).toList();
         final friends = store.friendProfiles;
         return ScreenScaffold(
           title: store.t('social.title'),
@@ -124,17 +123,26 @@ class _SocialScreenState extends State<SocialScreen> {
                             labelText: store.t('social.friendSearchLabel'),
                             hintText: store.t('social.friendSearchHint'),
                             border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.search_rounded),
+                            prefixIcon: const Icon(Icons.badge_rounded),
                           ),
                           onSubmitted: (_) =>
                               _sendFriendRequest(context, store),
                         ),
                       ),
                       const SizedBox(width: 10),
-                      IconButton.filled(
-                        tooltip: store.t('social.sendFriendRequest'),
-                        onPressed: () => _sendFriendRequest(context, store),
-                        icon: const Icon(Icons.send_rounded),
+                      SizedBox(
+                        height: 56,
+                        child: FilledButton.icon(
+                          onPressed: () => _sendFriendRequest(context, store),
+                          icon: const Icon(Icons.send_rounded),
+                          label: Text(store.t('social.requestButton')),
+                          style: FilledButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -184,36 +192,7 @@ class _SocialScreenState extends State<SocialScreen> {
                     )
                   else
                     for (var index = 0; index < friends.length; index++)
-                      _SocialProfileRow(
-                        rank: index + 1,
-                        profile: friends[index],
-                        store: store,
-                        compact: true,
-                      ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            CatudyPanel(
-              accentColor: CatudyColors.violet,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    store.t('social.focusBoard'),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  for (var index = 0; index < profiles.length; index++)
-                    _SocialProfileRow(
-                      rank: index + 1,
-                      profile: profiles[index],
-                      store: store,
-                      compact: false,
-                    ),
+                      _SocialProfileRow(profile: friends[index], store: store),
                 ],
               ),
             ),
@@ -351,17 +330,10 @@ class _FriendRequestRow extends StatelessWidget {
 }
 
 class _SocialProfileRow extends StatelessWidget {
-  const _SocialProfileRow({
-    required this.rank,
-    required this.profile,
-    required this.store,
-    required this.compact,
-  });
+  const _SocialProfileRow({required this.profile, required this.store});
 
-  final int rank;
   final LeaderboardProfile profile;
   final CatudyDemoStore store;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -377,16 +349,8 @@ class _SocialProfileRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 34,
-            child: Text(
-              '#$rank',
-              style: TextStyle(
-                color: CatudyColors.mutedFor(context),
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
+          Icon(Icons.person_rounded, color: CatudyColors.teal),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               profile.currentUser
@@ -400,37 +364,14 @@ class _SocialProfileRow extends StatelessWidget {
               ),
             ),
           ),
-          if (!compact && !profile.currentUser) ...[
-            IconButton(
-              tooltip: store.friendUserIds.contains(profile.userId)
-                  ? store.t('social.removeFriend')
-                  : store.t('social.sendFriendRequest'),
-              onPressed: () {
-                if (store.friendUserIds.contains(profile.userId)) {
-                  store.toggleFriend(profile.userId);
-                  return;
-                }
-                final result = store.sendFriendRequest(profile.userId);
-                final messageKey = switch (result) {
-                  FriendRequestActionResult.sent => 'social.friendRequestSent',
-                  FriendRequestActionResult.alreadyFriend =>
-                    'social.friendAlreadyAdded',
-                  FriendRequestActionResult.alreadyPending =>
-                    'social.friendRequestPending',
-                  FriendRequestActionResult.self => 'social.friendSelf',
-                  FriendRequestActionResult.notFound => 'social.friendNotFound',
-                  FriendRequestActionResult.empty => 'social.friendEmpty',
-                };
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(store.t(messageKey))));
-              },
-              icon: Icon(
-                store.friendUserIds.contains(profile.userId)
-                    ? Icons.person_remove_rounded
-                    : Icons.send_rounded,
-              ),
+          Text(
+            '${profile.totalMinutes}${store.t('common.minutesShort')}',
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w800,
             ),
+          ),
+          if (!profile.currentUser)
             IconButton(
               tooltip: store.t('social.visitPetRoom'),
               onPressed: () {
@@ -439,6 +380,7 @@ class _SocialProfileRow extends StatelessWidget {
               },
               icon: const Icon(Icons.meeting_room_rounded),
             ),
+          if (!profile.currentUser)
             IconButton(
               tooltip: store.t('social.visitProfile'),
               onPressed: () {
@@ -447,33 +389,6 @@ class _SocialProfileRow extends StatelessWidget {
               },
               icon: const Icon(Icons.visibility_rounded),
             ),
-          ] else ...[
-            Text(
-              '${profile.totalMinutes}${store.t('common.minutesShort')}',
-              style: TextStyle(
-                color: CatudyColors.mutedFor(context),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            if (!profile.currentUser)
-              IconButton(
-                tooltip: store.t('social.visitPetRoom'),
-                onPressed: () {
-                  store.visitPetRoom(profile.userId);
-                  context.go('/pet-room');
-                },
-                icon: const Icon(Icons.meeting_room_rounded),
-              ),
-            if (!profile.currentUser)
-              IconButton(
-                tooltip: store.t('social.visitProfile'),
-                onPressed: () {
-                  store.visitProfile(profile.userId);
-                  context.go('/public-profile');
-                },
-                icon: const Icon(Icons.visibility_rounded),
-              ),
-          ],
         ],
       ),
     );
