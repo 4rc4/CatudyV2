@@ -133,8 +133,10 @@ class CatudyRouter {
           ),
           GoRoute(
             path: '/public-profile',
-            pageBuilder: (context, state) =>
-                _animatedPage(state, const PublicProfileScreen()),
+            pageBuilder: (context, state) => _animatedPage(
+              state,
+              PublicProfileScreen(userId: state.uri.queryParameters['user']),
+            ),
           ),
           GoRoute(
             path: '/settings',

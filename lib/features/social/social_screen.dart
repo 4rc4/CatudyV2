@@ -210,6 +210,7 @@ class _SocialScreenState extends State<SocialScreen> {
       FriendRequestActionResult.alreadyPending => 'social.friendRequestPending',
       FriendRequestActionResult.self => 'social.friendSelf',
       FriendRequestActionResult.notFound => 'social.friendNotFound',
+      FriendRequestActionResult.blocked => 'social.friendBlocked',
       FriendRequestActionResult.empty => 'social.friendEmpty',
     };
     if (result == FriendRequestActionResult.sent) {
@@ -315,7 +316,7 @@ class _FriendRequestRow extends StatelessWidget {
               onPressed: () => store.acceptFriendRequest(request.id),
               icon: const Icon(Icons.check_rounded),
             ),
-          ] else
+          ] else ...[
             Text(
               store.t('social.pending'),
               style: TextStyle(
@@ -323,11 +324,24 @@ class _FriendRequestRow extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
+            IconButton(
+              tooltip: store.t('social.cancelRequest'),
+              onPressed: () {
+                store.cancelFriendRequest(request.id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(store.t('social.requestCancelled'))),
+                );
+              },
+              icon: const Icon(Icons.cancel_schedule_send_rounded),
+            ),
+          ],
         ],
       ),
     );
   }
 }
+
+enum _SocialAction { remove, block, report }
 
 class _SocialProfileRow extends StatelessWidget {
   const _SocialProfileRow({required this.profile, required this.store});
@@ -388,6 +402,42 @@ class _SocialProfileRow extends StatelessWidget {
                 context.go('/public-profile');
               },
               icon: const Icon(Icons.visibility_rounded),
+            ),
+          if (!profile.currentUser)
+            PopupMenuButton<_SocialAction>(
+              tooltip: store.t('social.moreActions'),
+              onSelected: (action) {
+                final messageKey = switch (action) {
+                  _SocialAction.remove => 'social.friendRemoved',
+                  _SocialAction.block => 'social.userBlocked',
+                  _SocialAction.report => 'social.userReported',
+                };
+                switch (action) {
+                  case _SocialAction.remove:
+                    store.removeFriend(profile.userId);
+                  case _SocialAction.block:
+                    store.blockUser(profile.userId);
+                  case _SocialAction.report:
+                    store.reportUser(profile.userId);
+                }
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(store.t(messageKey))));
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: _SocialAction.remove,
+                  child: Text(store.t('social.removeFriendAction')),
+                ),
+                PopupMenuItem(
+                  value: _SocialAction.block,
+                  child: Text(store.t('social.blockUser')),
+                ),
+                PopupMenuItem(
+                  value: _SocialAction.report,
+                  child: Text(store.t('social.reportUser')),
+                ),
+              ],
             ),
         ],
       ),

@@ -118,6 +118,56 @@ class CatudyNotificationService {
     );
   }
 
+  Future<void> showFriendRequestNotification({
+    required String name,
+    required String languageCode,
+  }) async {
+    await initialize();
+    await _plugin.show(
+      id: 910001,
+      title: languageCode == 'en'
+          ? 'New friend request'
+          : 'Yeni arkadaşlık isteği',
+      body: languageCode == 'en'
+          ? '$name sent you a friend request.'
+          : '$name sana arkadaşlık isteği gönderdi.',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'catudy_social',
+          'Catudy Social',
+          channelDescription: 'Social updates from Catudy',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
+  Future<void> showLobbyInviteNotification({
+    required String code,
+    required String languageCode,
+  }) async {
+    await initialize();
+    await _plugin.show(
+      id: 910002,
+      title: languageCode == 'en' ? 'Lobby invite ready' : 'Lobi daveti hazır',
+      body: languageCode == 'en'
+          ? 'Share lobby code $code with a friend.'
+          : '$code lobi kodunu bir arkadaşınla paylaş.',
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'catudy_social',
+          'Catudy Social',
+          channelDescription: 'Social updates from Catudy',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   Future<void> cancelReminder(CalendarTodo todo) async {
     await initialize();
     await _plugin.cancel(id: _notificationId(todo));

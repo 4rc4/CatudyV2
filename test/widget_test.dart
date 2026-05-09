@@ -125,6 +125,7 @@ Future<void> _pumpCatudy(
     language: 'tr',
     themeMode: 'system',
   );
+  catudyDemoStore.markIntroTourSeen();
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump(const Duration(milliseconds: 16));
   await tester.pumpWidget(

@@ -159,6 +159,45 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
+            CatudyPanel(
+              accentColor: CatudyColors.violet,
+              child: Row(
+                children: [
+                  const Icon(Icons.badge_rounded, color: CatudyColors.violet),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          store.t('profile.myId'),
+                          style: TextStyle(
+                            color: CatudyColors.mutedFor(context),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        SelectableText(
+                          store.publicUserId,
+                          style: TextStyle(
+                            color: CatudyColors.blueFor(context),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  FilledButton.tonalIcon(
+                    onPressed: () => _copyUserId(context, store),
+                    icon: const Icon(Icons.copy_rounded),
+                    label: Text(store.t('profile.copyId')),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _ProfileInsightsCard(store: store),
+            const SizedBox(height: 14),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -230,6 +269,15 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _copyUserId(BuildContext context, CatudyDemoStore store) async {
+    await Clipboard.setData(ClipboardData(text: store.publicUserId));
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(store.t('profile.idCopied'))));
+    }
+  }
+
   Future<void> _shareProfile(
     BuildContext context,
     CatudyDemoStore store,
@@ -265,13 +313,42 @@ class ProfileScreen extends StatelessWidget {
 
   String _profileShareLink(CatudyDemoStore store) {
     final userId = Uri.encodeComponent(store.authUserId ?? 'local');
+    final configuredBase = _shareOriginFromText(store.profileShareBaseUrl);
+    if (configuredBase != null) {
+      return '$configuredBase/#/public-profile?user=$userId';
+    }
     final base = Uri.base;
     if ((base.scheme == 'http' || base.scheme == 'https') &&
         base.host.isNotEmpty) {
       final port = base.hasPort ? ':${base.port}' : '';
       return '${base.scheme}://${base.host}$port/#/public-profile?user=$userId';
     }
-    return 'https://catudy.app/#/public-profile?user=$userId';
+    return 'catudy:///public-profile?user=$userId';
+  }
+
+  String? _shareOriginFromText(String value) {
+    final clean = value.trim();
+    if (clean.isEmpty) {
+      return null;
+    }
+    final uri = Uri.tryParse(clean.contains('://') ? clean : 'https://$clean');
+    if (uri == null ||
+        (uri.scheme != 'http' && uri.scheme != 'https') ||
+        uri.host.isEmpty) {
+      return null;
+    }
+    final path = uri.path == '/'
+        ? ''
+        : uri.path.endsWith('/') && uri.path.length > 1
+        ? uri.path.substring(0, uri.path.length - 1)
+        : uri.path;
+    return Uri(
+      scheme: uri.scheme,
+      userInfo: uri.userInfo,
+      host: uri.host,
+      port: uri.hasPort ? uri.port : null,
+      path: path,
+    ).toString();
   }
 
   String _formatMinutes(int minutes, CatudyDemoStore store) {
@@ -643,6 +720,164 @@ class _EquippedItemsCard extends StatelessWidget {
             icon: const Icon(Icons.chevron_right_rounded),
             label: Text(catudyDemoStore.t('profile.viewAll')),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileInsightsCard extends StatelessWidget {
+  const _ProfileInsightsCard({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final unlocked = store.unlockedAchievements.take(4).toList();
+    final goal = store.todayGoalProgress;
+    return CatudyPanel(
+      accentColor: CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardTitle(
+            icon: Icons.auto_graph_rounded,
+            title: store.t('profile.richStats'),
+            color: CatudyColors.violet,
+          ),
+          const SizedBox(height: 12),
+          _MiniWeekChart(minutes: store.lastSevenDayMinutes),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _InsightChip(
+                icon: Icons.local_fire_department_rounded,
+                label: store.t('profile.bestStreak', {
+                  'days': store.bestStreakDays,
+                }),
+              ),
+              _InsightChip(
+                icon: Icons.track_changes_rounded,
+                label: store.t('profile.todayGoalShort', {
+                  'done': goal.completedMinutes,
+                  'goal': goal.goalMinutes,
+                }),
+              ),
+              _InsightChip(
+                icon: Icons.star_rounded,
+                label: store.t('profile.favorite', {
+                  'category': store.favoriteCategory.name,
+                }),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            store.t('profile.badges'),
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (unlocked.isEmpty)
+            Text(
+              store.t('profile.noBadges'),
+              style: TextStyle(color: CatudyColors.mutedFor(context)),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final achievement in unlocked)
+                  Chip(
+                    avatar: Icon(
+                      achievement.icon,
+                      size: 17,
+                      color: CatudyColors.teal,
+                    ),
+                    label: Text(achievement.title),
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InsightChip extends StatelessWidget {
+  const _InsightChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Icon(icon, size: 17, color: CatudyColors.violet),
+      label: Text(label),
+    );
+  }
+}
+
+class _MiniWeekChart extends StatelessWidget {
+  const _MiniWeekChart({required this.minutes});
+
+  final List<int> minutes;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxMinutes = minutes.fold(
+      1,
+      (max, value) => value > max ? value : max,
+    );
+    const labels = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    return SizedBox(
+      height: 96,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (var index = 0; index < minutes.length; index++)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: FractionallySizedBox(
+                          heightFactor: (minutes[index] / maxMinutes).clamp(
+                            0.08,
+                            1.0,
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: CatudyColors.teal.withValues(alpha: 0.78),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      labels[index.clamp(0, labels.length - 1)],
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

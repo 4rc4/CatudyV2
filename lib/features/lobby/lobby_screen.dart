@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../app/demo/catudy_demo_store.dart';
+import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/screen_scaffold.dart';
@@ -357,6 +359,22 @@ class _LobbyStatusPanel extends StatelessWidget {
                     }
                   },
                   icon: const Icon(Icons.copy_rounded),
+                ),
+                IconButton(
+                  tooltip: store.t('lobby.shareInvite'),
+                  onPressed: () async {
+                    await CatudyNotificationService.instance
+                        .showLobbyInviteNotification(
+                          code: code,
+                          languageCode: store.languageCode,
+                        );
+                    await SharePlus.instance.share(
+                      ShareParams(
+                        text: store.t('lobby.inviteText', {'code': code}),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.ios_share_rounded),
                 ),
               ],
             ),

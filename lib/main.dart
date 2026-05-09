@@ -17,6 +17,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await catudyDemoStore.load();
   await CatudyNotificationService.instance.initialize();
+  catudyDemoStore.configureSocialNotifications(
+    onFriendRequest: (name, languageCode) {
+      CatudyNotificationService.instance.showFriendRequestNotification(
+        name: name,
+        languageCode: languageCode,
+      );
+    },
+  );
   await _initializeOnlineLobby();
   await CatudyNotificationService.instance.schedulePendingReminders(
     catudyDemoStore.todos,
@@ -26,7 +34,9 @@ Future<void> main() async {
     hour: catudyDemoStore.dailyGoalReminderHour,
     minute: catudyDemoStore.dailyGoalReminderMinute,
     languageCode: catudyDemoStore.languageCode,
-    enabled: catudyDemoStore.notifications,
+    enabled:
+        catudyDemoStore.notifications &&
+        catudyDemoStore.dailyGoalReminderEnabled,
   );
   runApp(const ProviderScope(child: CatudyApp()));
 }

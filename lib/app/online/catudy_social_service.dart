@@ -67,6 +67,23 @@ class CatudySocialService {
         );
   }
 
+  Stream<List<String>> watchBlockedIds() {
+    final userId = currentUserId;
+    if (userId == null) {
+      return Stream.value(const []);
+    }
+    return _client
+        .from('catudy_blocked_users')
+        .stream(primaryKey: ['owner_user_id', 'blocked_user_id'])
+        .eq('owner_user_id', userId)
+        .map(
+          (rows) => rows
+              .map((row) => _readString(row, 'blocked_user_id'))
+              .where((id) => id.isNotEmpty)
+              .toList(),
+        );
+  }
+
   Future<void> sendFriendRequest(String receiverUserId) async {
     final userId = currentUserId;
     if (userId == null) {
@@ -99,6 +116,16 @@ class CatudySocialService {
         .eq('id', requestId);
   }
 
+  Future<void> cancelFriendRequest(String requestId) async {
+    await _client
+        .from('catudy_friend_requests')
+        .update({
+          'status': 'cancelled',
+          'responded_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', requestId);
+  }
+
   Future<void> removeFriend(String friendUserId) async {
     final userId = currentUserId;
     if (userId == null) {
@@ -109,6 +136,46 @@ class CatudySocialService {
         .delete()
         .eq('owner_user_id', userId)
         .eq('friend_user_id', friendUserId);
+    await _client
+        .from('catudy_friends')
+        .delete()
+        .eq('owner_user_id', friendUserId)
+        .eq('friend_user_id', userId);
+  }
+
+  Future<void> blockUser(String blockedUserId) async {
+    final userId = currentUserId;
+    if (userId == null) {
+      return;
+    }
+    await _client.from('catudy_blocked_users').upsert({
+      'owner_user_id': userId,
+      'blocked_user_id': blockedUserId,
+    }, onConflict: 'owner_user_id,blocked_user_id');
+    await removeFriend(blockedUserId);
+  }
+
+  Future<void> unblockUser(String blockedUserId) async {
+    final userId = currentUserId;
+    if (userId == null) {
+      return;
+    }
+    await _client
+        .from('catudy_blocked_users')
+        .delete()
+        .eq('owner_user_id', userId)
+        .eq('blocked_user_id', blockedUserId);
+  }
+
+  Future<void> reportUser(String reportedUserId) async {
+    final userId = currentUserId;
+    if (userId == null) {
+      return;
+    }
+    await _client.from('catudy_profile_reports').insert({
+      'reporter_user_id': userId,
+      'reported_user_id': reportedUserId,
+    });
   }
 }
 

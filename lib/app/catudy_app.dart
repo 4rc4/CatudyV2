@@ -57,7 +57,7 @@ class _CatudyAppState extends State<CatudyApp> {
       if (navigatorContext == null) {
         return;
       }
-      showPetIntroTour(navigatorContext, router: _router);
+      showFirstRunOnboarding(navigatorContext, router: _router);
     });
   }
 

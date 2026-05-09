@@ -82,25 +82,23 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
         if (visited == null) {
           _schedulePetNameDialog(context, store);
         }
-        final equippedItem = store.equippedPetItemId == null
-            ? null
-            : store.shopItemById(store.equippedPetItemId!);
+        final equippedItem = store.equippedPetItemForProfile(visited);
         final equipped = equippedItem == null
             ? store.t('pet.noCosmetic')
             : store.itemName(equippedItem);
         final dialogue = store.languageCode == 'en'
             ? _dialoguesEn[_dialogueIndex % _dialoguesEn.length]
             : _dialoguesTr[_dialogueIndex];
-        final studyItem = store.roomItemForSlot('room_study');
-        final bedItem = store.roomItemForSlot('room_bed');
-        final decorItem = store.roomItemForSlot('room_decor');
-        final shelfItem = store.roomItemForSlot('room_shelf');
+        final studyItem = store.roomItemForSlot('room_study', profile: visited);
+        final bedItem = store.roomItemForSlot('room_bed', profile: visited);
+        final decorItem = store.roomItemForSlot('room_decor', profile: visited);
+        final shelfItem = store.roomItemForSlot('room_shelf', profile: visited);
 
         return SizedBox.expand(
           child: _RoomScene(
             petName: visited == null
                 ? store.petDisplayName
-                : store.t('pet.roomName', {'pet': visited.name}),
+                : store.t('pet.roomName', {'pet': visited.petName}),
             equipped: equipped,
             dialogue: dialogue,
             showGreeting: _showGreeting,

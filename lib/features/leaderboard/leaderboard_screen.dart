@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
@@ -172,8 +173,23 @@ class _LeaderboardRow extends StatelessWidget {
           const SizedBox(width: 6),
           IconButton(
             tooltip: store.t('leaderboard.visitSoon'),
-            onPressed: null,
+            onPressed: profile.currentUser
+                ? null
+                : () {
+                    store.visitPetRoom(profile.userId);
+                    context.go('/pet-room');
+                  },
             icon: const Icon(Icons.meeting_room_rounded),
+          ),
+          IconButton(
+            tooltip: store.t('social.visitProfile'),
+            onPressed: profile.currentUser
+                ? null
+                : () {
+                    store.visitProfile(profile.userId);
+                    context.go('/public-profile');
+                  },
+            icon: const Icon(Icons.visibility_rounded),
           ),
         ],
       ),

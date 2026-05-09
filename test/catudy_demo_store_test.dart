@@ -260,6 +260,13 @@ void main() {
       FriendRequestActionResult.alreadyPending,
     );
 
+    store.cancelFriendRequest(store.outgoingFriendRequests.single.id);
+    expect(store.outgoingFriendRequests, isEmpty);
+
+    expect(
+      store.sendFriendRequestByQuery('demo-ada'),
+      FriendRequestActionResult.sent,
+    );
     store.rejectFriendRequest(store.outgoingFriendRequests.single.id);
     store.sendDemoIncomingFriendRequest('demo-ada');
     expect(store.incomingFriendRequests.single.fromUserId, 'demo-ada');
@@ -269,7 +276,49 @@ void main() {
 
     store.visitPetRoom('demo-ada');
     expect(store.visitedRoomProfile?.userId, 'demo-ada');
+
+    store.removeFriend('demo-ada');
+    expect(store.friendUserIds.contains('demo-ada'), isFalse);
+
+    store.friendUserIds.add('demo-ada');
+    store.blockUser('demo-ada');
+    expect(store.blockedUserIds.contains('demo-ada'), isTrue);
+    expect(store.friendUserIds.contains('demo-ada'), isFalse);
+    expect(
+      store.sendFriendRequestByQuery('demo-ada'),
+      FriendRequestActionResult.blocked,
+    );
+
+    store.reportUser('demo-deniz');
+    expect(store.reportedUserIds.contains('demo-deniz'), isTrue);
   });
+
+  test(
+    'profile stats privacy is persisted and reflected in local profile',
+    () async {
+      final storage = _MemoryStorage(null);
+      final store = CatudyDemoStore(storage: storage);
+
+      await store.load();
+
+      expect(store.publicStatsVisible, isTrue);
+      expect(store.leaderboardProfiles.single.statsPublic, isTrue);
+
+      store.updateSettings(
+        name: store.displayName,
+        apiUrl: store.apiBaseUrl,
+        dnd: store.dndReminder,
+        petNotifications: store.notifications,
+        profileStatsVisible: false,
+        language: store.languageCode,
+        themeMode: store.themeModeCode,
+      );
+
+      expect(store.publicStatsVisible, isFalse);
+      expect(store.leaderboardProfiles.single.statsPublic, isFalse);
+      expect(storage.state?['publicStatsVisible'], isFalse);
+    },
+  );
 
   test(
     'local leaderboard contains only the current profile before online sync',
@@ -458,9 +507,15 @@ class _FakeLeaderboardService extends CatudyLeaderboardService {
   Future<String?> upsertCurrentProfile({
     required String displayName,
     required String petId,
+    required String petName,
+    required String? equippedPetItemId,
+    required Map<String, String> roomItemIds,
     required int points,
     required int totalMinutes,
     required int streakDays,
+    required int sessionsCount,
+    required String favoriteCategory,
+    required bool statsPublic,
   }) async {
     upsertCalls++;
     return 'test-user';
