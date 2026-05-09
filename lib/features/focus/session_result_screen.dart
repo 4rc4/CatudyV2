@@ -49,22 +49,44 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
           }
         }
         final result = store.lastResult;
+        final goal = store.todayGoalProgress;
         return ScreenScaffold(
           title: store.t('focus.resultTitle'),
           children: [
             CatudyPanel(
               color: CatudyColors.lavenderSoft,
+              accentColor: CatudyColors.violet,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    result == null
-                        ? store.t('focus.resultEmpty')
-                        : store.t('focus.resultComplete'),
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: CatudyColors.blue,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 54,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: CatudyColors.teal.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Icon(
+                          Icons.check_circle_rounded,
+                          color: CatudyColors.teal,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          result == null
+                              ? store.t('focus.resultEmpty')
+                              : store.t('focus.resultComplete'),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: CatudyColors.blueFor(context),
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -75,30 +97,56 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
                             'minutes': result.minutes,
                           }),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: CatudyColors.muted,
+                      color: CatudyColors.mutedFor(context),
                       height: 1.45,
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      Chip(
-                        label: Text(
-                          '+${result?.gold ?? 0} ${store.t('common.gold')}',
+                  if (result != null) ...[
+                    const SizedBox(height: 18),
+                    Text(
+                      store.t('focus.resultSummary'),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _ResultMetricTile(
+                          icon: Icons.add_circle_rounded,
+                          label: store.t('focus.resultPointsEarned'),
+                          value: '+${result.gold} ${store.t('common.points')}',
+                          color: CatudyColors.violet,
                         ),
-                      ),
-                      Chip(
-                        label: Text('${store.gold} ${store.t('common.gold')}'),
-                      ),
-                      Chip(
-                        label: Text(
-                          '${store.focusPoints} ${store.t('common.points')}',
+                        _ResultMetricTile(
+                          icon: Icons.pets_rounded,
+                          label: store.t('focus.resultPetEffect'),
+                          value: store.t('focus.resultPetEffectValue', {
+                            'pet': store.petName,
+                          }),
+                          color: CatudyColors.teal,
                         ),
-                      ),
-                    ],
-                  ),
+                        _ResultMetricTile(
+                          icon: Icons.local_fire_department_rounded,
+                          label: store.t('focus.resultStreak'),
+                          value: store.t('focus.resultStreakValue', {
+                            'days': store.streakDays,
+                          }),
+                          color: CatudyColors.coral,
+                        ),
+                        _ResultMetricTile(
+                          icon: Icons.track_changes_rounded,
+                          label: store.t('focus.resultGoal'),
+                          value:
+                              '${goal.completedMinutes}/${goal.goalMinutes}${store.t('common.minutesShort')}',
+                          color: CatudyColors.tealDark,
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -149,19 +197,88 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
             ),
             const SizedBox(height: 14),
             FilledButton.icon(
-              onPressed: () => context.go('/stats'),
-              icon: const Icon(Icons.query_stats_rounded),
-              label: Text(store.t('focus.seeStats')),
+              onPressed: () => context.go('/focus/category'),
+              icon: const Icon(Icons.replay_rounded),
+              label: Text(store.t('focus.focusAgain')),
             ),
             const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => context.go('/shop'),
-              icon: const Icon(Icons.storefront_rounded),
-              label: Text(store.t('focus.openShop')),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.go('/stats'),
+                    icon: const Icon(Icons.query_stats_rounded),
+                    label: Text(store.t('focus.seeStats')),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.go('/pet-room'),
+                    icon: const Icon(Icons.pets_rounded),
+                    label: Text(store.t('profile.petRoom')),
+                  ),
+                ),
+              ],
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _ResultMetricTile extends StatelessWidget {
+  const _ResultMetricTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 148,
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

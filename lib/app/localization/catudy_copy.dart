@@ -129,6 +129,9 @@ class CatudyCopy {
     'social.requestCancelled': 'İstek iptal edildi.',
     'social.userBlocked': 'Kullanıcı engellendi.',
     'social.userReported': 'Şikayet kaydedildi.',
+    'social.inviteToLobby': 'Davet et',
+    'social.createLobbyFirst': 'Önce lobi kur. Seni lobi ekranına götürüyorum.',
+    'social.lobbyInviteReady': 'Lobi daveti hazır.',
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
@@ -178,6 +181,9 @@ class CatudyCopy {
     'stats.averageSession': 'Ortalama seans',
     'stats.bestHour': 'En verimli saat',
     'stats.todayGoal': 'Bugünkü hedef',
+    'stats.weeklyProgress': 'Haftalık ilerleme',
+    'stats.lastSevenDays': 'Son 7 gün',
+    'stats.weeklyTotalMinutes': 'Haftalık toplam: {minutes} dk',
 
     'focus.categoryTitle': 'Kategori Seç',
     'focus.addCategoryClose': 'Kategori eklemeyi kapat',
@@ -212,6 +218,14 @@ class CatudyCopy {
     'focus.openShop': 'Mağazayı aç',
     'focus.petUnlocked': 'Yeni pet açıldı',
     'focus.petUnlockedBody': '{pet} envantere eklendi.',
+    'focus.resultSummary': 'Seans özeti',
+    'focus.resultPointsEarned': 'Kazanılan puan',
+    'focus.resultPetEffect': 'Pet etkisi',
+    'focus.resultPetEffectValue': '{pet} daha mutlu',
+    'focus.resultStreak': 'Seri durumu',
+    'focus.resultStreakValue': '{days} gün seri',
+    'focus.resultGoal': 'Günlük hedef',
+    'focus.focusAgain': 'Tekrar odaklan',
 
     'pet.room': 'Pet Odası',
     'pet.roomName': '{pet} Odası',
@@ -556,6 +570,10 @@ class CatudyCopy {
     'social.requestCancelled': 'Request cancelled.',
     'social.userBlocked': 'User blocked.',
     'social.userReported': 'Report saved.',
+    'social.inviteToLobby': 'Invite',
+    'social.createLobbyFirst':
+        'Create a lobby first. Taking you to the lobby screen.',
+    'social.lobbyInviteReady': 'Lobby invite is ready.',
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
@@ -606,6 +624,9 @@ class CatudyCopy {
     'stats.averageSession': 'Average session',
     'stats.bestHour': 'Best hour',
     'stats.todayGoal': "Today's target",
+    'stats.weeklyProgress': 'Weekly progress',
+    'stats.lastSevenDays': 'Last 7 days',
+    'stats.weeklyTotalMinutes': 'Weekly total: {minutes} min',
 
     'focus.categoryTitle': 'Choose Category',
     'focus.addCategoryClose': 'Close category form',
@@ -640,6 +661,14 @@ class CatudyCopy {
     'focus.openShop': 'Open shop',
     'focus.petUnlocked': 'New pet unlocked',
     'focus.petUnlockedBody': '{pet} was added to inventory.',
+    'focus.resultSummary': 'Session summary',
+    'focus.resultPointsEarned': 'Points earned',
+    'focus.resultPetEffect': 'Pet effect',
+    'focus.resultPetEffectValue': '{pet} is happier',
+    'focus.resultStreak': 'Streak status',
+    'focus.resultStreakValue': '{days} day streak',
+    'focus.resultGoal': 'Daily target',
+    'focus.focusAgain': 'Focus again',
 
     'pet.room': 'Pet Room',
     'pet.roomName': "{pet}'s Room",

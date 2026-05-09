@@ -746,8 +746,6 @@ class _ProfileInsightsCard extends StatelessWidget {
             color: CatudyColors.violet,
           ),
           const SizedBox(height: 12),
-          _MiniWeekChart(minutes: store.lastSevenDayMinutes),
-          const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -820,66 +818,6 @@ class _InsightChip extends StatelessWidget {
     return Chip(
       avatar: Icon(icon, size: 17, color: CatudyColors.violet),
       label: Text(label),
-    );
-  }
-}
-
-class _MiniWeekChart extends StatelessWidget {
-  const _MiniWeekChart({required this.minutes});
-
-  final List<int> minutes;
-
-  @override
-  Widget build(BuildContext context) {
-    final maxMinutes = minutes.fold(
-      1,
-      (max, value) => value > max ? value : max,
-    );
-    const labels = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-    return SizedBox(
-      height: 96,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          for (var index = 0; index < minutes.length; index++)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: FractionallySizedBox(
-                          heightFactor: (minutes[index] / maxMinutes).clamp(
-                            0.08,
-                            1.0,
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: CatudyColors.teal.withValues(alpha: 0.78),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      labels[index.clamp(0, labels.length - 1)],
-                      style: TextStyle(
-                        color: CatudyColors.mutedFor(context),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

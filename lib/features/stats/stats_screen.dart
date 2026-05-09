@@ -47,6 +47,8 @@ class _StatsScreenState extends State<StatsScreen> {
               streakDays: store.streakDays,
             ),
             const SizedBox(height: 14),
+            _WeeklyProgressCard(store: store),
+            const SizedBox(height: 14),
             _RangeTabs(
               store: store,
               selected: _range,
@@ -410,6 +412,157 @@ class _StatsScreenState extends State<StatsScreen> {
     }
     slices.sort((a, b) => b.minutes.compareTo(a.minutes));
     return slices;
+  }
+}
+
+class _WeeklyProgressCard extends StatelessWidget {
+  const _WeeklyProgressCard({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final minutes = store.lastSevenDayMinutes;
+    final total = minutes.fold(0, (sum, item) => sum + item);
+    return CatudyPanel(
+      color: CatudyColors.lavenderSoft,
+      accentColor: CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: CatudyColors.violet.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.calendar_view_week_rounded,
+                  color: CatudyColors.violet,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      store.t('stats.weeklyProgress'),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      store.t('stats.lastSevenDays'),
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Chip(
+            label: Text(
+              store.t('stats.weeklyTotalMinutes', {'minutes': total}),
+            ),
+          ),
+          const SizedBox(height: 14),
+          _WeeklyMiniBars(minutes: minutes, store: store),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeeklyMiniBars extends StatelessWidget {
+  const _WeeklyMiniBars({required this.minutes, required this.store});
+
+  final List<int> minutes;
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final maxValue = minutes.fold(1, (max, item) => item > max ? item : max);
+    return SizedBox(
+      height: 98,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (var index = 0; index < minutes.length; index++)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      minutes[index] == 0
+                          ? ''
+                          : '${minutes[index]}${store.t('common.minutesShort')}',
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          width: double.infinity,
+                          height:
+                              16 +
+                              (56 *
+                                  (minutes[index] / maxValue).clamp(0.0, 1.0)),
+                          decoration: BoxDecoration(
+                            color:
+                                (index == minutes.length - 1
+                                        ? CatudyColors.teal
+                                        : CatudyColors.violet)
+                                    .withValues(alpha: 0.72),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _weekdayLabel(
+                        now.subtract(Duration(days: 6 - index)),
+                        store.languageCode,
+                      ),
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _weekdayLabel(DateTime day, String languageCode) {
+    const en = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const tr = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+    return (languageCode == 'en' ? en : tr)[day.weekday - 1];
   }
 }
 

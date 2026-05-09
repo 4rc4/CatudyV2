@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
@@ -361,86 +363,140 @@ class _SocialProfileRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.12)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Icon(Icons.person_rounded, color: CatudyColors.teal),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              profile.currentUser
-                  ? '${profile.name} (${store.t('leaderboard.you')})'
-                  : profile.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: CatudyColors.blueFor(context),
-                fontWeight: FontWeight.w900,
+          Row(
+            children: [
+              Icon(Icons.person_rounded, color: CatudyColors.teal),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  profile.currentUser
+                      ? '${profile.name} (${store.t('leaderboard.you')})'
+                      : profile.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Text(
+                '${profile.totalMinutes}${store.t('common.minutesShort')}',
+                style: TextStyle(
+                  color: CatudyColors.mutedFor(context),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if (!profile.currentUser)
+                PopupMenuButton<_SocialAction>(
+                  tooltip: store.t('social.moreActions'),
+                  onSelected: (action) {
+                    final messageKey = switch (action) {
+                      _SocialAction.remove => 'social.friendRemoved',
+                      _SocialAction.block => 'social.userBlocked',
+                      _SocialAction.report => 'social.userReported',
+                    };
+                    switch (action) {
+                      case _SocialAction.remove:
+                        store.removeFriend(profile.userId);
+                      case _SocialAction.block:
+                        store.blockUser(profile.userId);
+                      case _SocialAction.report:
+                        store.reportUser(profile.userId);
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(store.t(messageKey))),
+                    );
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: _SocialAction.remove,
+                      child: Text(store.t('social.removeFriendAction')),
+                    ),
+                    PopupMenuItem(
+                      value: _SocialAction.block,
+                      child: Text(store.t('social.blockUser')),
+                    ),
+                    PopupMenuItem(
+                      value: _SocialAction.report,
+                      child: Text(store.t('social.reportUser')),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          if (!profile.currentUser) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _inviteToLobby(context),
+                    icon: const Icon(Icons.ios_share_rounded, size: 18),
+                    label: Text(store.t('social.inviteToLobby')),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 38),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                  ),
+                  IconButton.filledTonal(
+                    tooltip: store.t('social.visitPetRoom'),
+                    onPressed: () {
+                      store.visitPetRoom(profile.userId);
+                      context.go('/pet-room');
+                    },
+                    icon: const Icon(Icons.meeting_room_rounded),
+                  ),
+                  IconButton(
+                    tooltip: store.t('social.visitProfile'),
+                    onPressed: () {
+                      store.visitProfile(profile.userId);
+                      context.go('/public-profile');
+                    },
+                    icon: const Icon(Icons.visibility_rounded),
+                  ),
+                ],
               ),
             ),
-          ),
-          Text(
-            '${profile.totalMinutes}${store.t('common.minutesShort')}',
-            style: TextStyle(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          if (!profile.currentUser)
-            IconButton(
-              tooltip: store.t('social.visitPetRoom'),
-              onPressed: () {
-                store.visitPetRoom(profile.userId);
-                context.go('/pet-room');
-              },
-              icon: const Icon(Icons.meeting_room_rounded),
-            ),
-          if (!profile.currentUser)
-            IconButton(
-              tooltip: store.t('social.visitProfile'),
-              onPressed: () {
-                store.visitProfile(profile.userId);
-                context.go('/public-profile');
-              },
-              icon: const Icon(Icons.visibility_rounded),
-            ),
-          if (!profile.currentUser)
-            PopupMenuButton<_SocialAction>(
-              tooltip: store.t('social.moreActions'),
-              onSelected: (action) {
-                final messageKey = switch (action) {
-                  _SocialAction.remove => 'social.friendRemoved',
-                  _SocialAction.block => 'social.userBlocked',
-                  _SocialAction.report => 'social.userReported',
-                };
-                switch (action) {
-                  case _SocialAction.remove:
-                    store.removeFriend(profile.userId);
-                  case _SocialAction.block:
-                    store.blockUser(profile.userId);
-                  case _SocialAction.report:
-                    store.reportUser(profile.userId);
-                }
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(store.t(messageKey))));
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: _SocialAction.remove,
-                  child: Text(store.t('social.removeFriendAction')),
-                ),
-                PopupMenuItem(
-                  value: _SocialAction.block,
-                  child: Text(store.t('social.blockUser')),
-                ),
-                PopupMenuItem(
-                  value: _SocialAction.report,
-                  child: Text(store.t('social.reportUser')),
-                ),
-              ],
-            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _inviteToLobby(BuildContext context) async {
+    final code = store.onlineLobbyCode?.trim();
+    if (code == null || code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(store.t('social.createLobbyFirst'))),
+      );
+      context.go('/lobby/create');
+      return;
+    }
+
+    final text = store.t('lobby.inviteText', {'code': code});
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: text, title: store.t('social.inviteToLobby')),
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(store.t('social.lobbyInviteReady'))),
+        );
+      }
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(store.t('lobby.codeCopied'))));
+      }
+    }
   }
 }

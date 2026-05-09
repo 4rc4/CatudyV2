@@ -126,7 +126,6 @@ class HomeScreen extends StatelessWidget {
                 accentColor: CatudyColors.teal,
                 child: Column(
                   children: [
-                    const _SparkleDivider(),
                     Text(
                       store.t('home.focusTime'),
                       textAlign: TextAlign.center,
@@ -135,7 +134,9 @@ class HomeScreen extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 10),
+                    const _SparkleDivider(),
+                    const SizedBox(height: 16),
                     _FocusLaunchButton(
                       onPressed: () => context.go('/focus/category'),
                     ),
