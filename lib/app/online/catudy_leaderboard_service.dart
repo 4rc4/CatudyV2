@@ -54,26 +54,28 @@ class CatudyLeaderboardService {
 
   String? get currentUserId => _client.auth.currentUser?.id;
 
-  Stream<List<CatudyOnlineLeaderboardProfile>> watchTopProfiles() {
-    return _client
+  Future<List<CatudyOnlineLeaderboardProfile>> fetchTopProfiles() async {
+    final rows = await _client
+        .from('catudy_leaderboard')
+        .select()
+        .order('points', ascending: false)
+        .order('total_minutes', ascending: false)
+        .limit(50);
+    return _profilesFromRows(rows);
+  }
+
+  Stream<List<CatudyOnlineLeaderboardProfile>> watchTopProfiles() async* {
+    try {
+      yield await fetchTopProfiles();
+    } catch (_) {
+      // Realtime may still connect even if the initial REST fetch is blocked.
+    }
+    yield* _client
         .from('catudy_leaderboard')
         .stream(primaryKey: ['user_id'])
         .order('points', ascending: false)
         .limit(50)
-        .map((rows) {
-          final profiles = rows
-              .map(CatudyOnlineLeaderboardProfile.fromJson)
-              .where((profile) => profile.userId.isNotEmpty)
-              .toList();
-          profiles.sort((a, b) {
-            final points = b.points.compareTo(a.points);
-            if (points != 0) {
-              return points;
-            }
-            return b.totalMinutes.compareTo(a.totalMinutes);
-          });
-          return profiles;
-        });
+        .map(_profilesFromRows);
   }
 
   Future<CatudyOnlineLeaderboardProfile?> fetchProfile(String userId) async {
@@ -124,6 +126,26 @@ class CatudyLeaderboardService {
     }, onConflict: 'user_id');
     return userId;
   }
+}
+
+List<CatudyOnlineLeaderboardProfile> _profilesFromRows(Iterable rows) {
+  final profiles = rows
+      .whereType<Map>()
+      .map(
+        (row) => CatudyOnlineLeaderboardProfile.fromJson(
+          Map<String, dynamic>.from(row),
+        ),
+      )
+      .where((profile) => profile.userId.isNotEmpty)
+      .toList();
+  profiles.sort((a, b) {
+    final points = b.points.compareTo(a.points);
+    if (points != 0) {
+      return points;
+    }
+    return b.totalMinutes.compareTo(a.totalMinutes);
+  });
+  return profiles;
 }
 
 String? _readNullableString(Map<String, dynamic> json, String key) {

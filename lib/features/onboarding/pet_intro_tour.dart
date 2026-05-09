@@ -153,7 +153,7 @@ class _FirstRunOnboardingState extends State<_FirstRunOnboarding> {
           Text(store.t('onboarding.friendBody')),
           const SizedBox(height: 12),
           SelectableText(
-            store.publicUserId,
+            store.publicUserCode,
             style: TextStyle(
               color: CatudyColors.blueFor(context),
               fontWeight: FontWeight.w900,
@@ -162,7 +162,9 @@ class _FirstRunOnboardingState extends State<_FirstRunOnboarding> {
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: store.publicUserId));
+              await Clipboard.setData(
+                ClipboardData(text: store.publicUserCode),
+              );
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(store.t('profile.idCopied'))),

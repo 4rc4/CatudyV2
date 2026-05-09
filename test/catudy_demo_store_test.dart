@@ -614,6 +614,11 @@ class _FakeLeaderboardService extends CatudyLeaderboardService {
   }
 
   @override
+  Future<List<CatudyOnlineLeaderboardProfile>> fetchTopProfiles() async {
+    return const [];
+  }
+
+  @override
   Future<String?> upsertCurrentProfile({
     required String displayName,
     required String petId,

@@ -56,6 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: store.t('settings.title'),
         showBack: true,
         fallbackBackPath: '/profile',
+        showSettingsAction: false,
         children: [
           CatudyPanel(
             child: Column(
@@ -231,7 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.block_rounded),
                       title: Text(store.blockedUserLabel(userId)),
-                      subtitle: Text(userId),
+                      subtitle: Text(store.displayUserId(userId)),
                       trailing: TextButton(
                         onPressed: () => store.unblockUser(userId),
                         child: Text(store.t('settings.unblock')),

@@ -12,6 +12,7 @@ class ScreenScaffold extends StatelessWidget {
     this.actions = const [],
     this.showBack = false,
     this.fallbackBackPath = '/',
+    this.showSettingsAction = true,
     super.key,
   });
 
@@ -20,6 +21,7 @@ class ScreenScaffold extends StatelessWidget {
   final List<Widget> actions;
   final bool showBack;
   final String fallbackBackPath;
+  final bool showSettingsAction;
 
   @override
   Widget build(BuildContext context) {
@@ -61,11 +63,12 @@ class ScreenScaffold extends StatelessWidget {
                 icon: const Icon(Icons.info_rounded),
               ),
               const SizedBox(width: 4),
-              IconButton.filledTonal(
-                onPressed: () => context.go('/settings'),
-                tooltip: catudyDemoStore.t('pet.settings'),
-                icon: const Icon(Icons.settings_rounded),
-              ),
+              if (showSettingsAction)
+                IconButton.filledTonal(
+                  onPressed: () => context.go('/settings'),
+                  tooltip: catudyDemoStore.t('pet.settings'),
+                  icon: const Icon(Icons.settings_rounded),
+                ),
             ],
           ),
           const SizedBox(height: 18),

@@ -178,7 +178,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         SelectableText(
-                          store.publicUserId,
+                          store.publicUserCode,
                           style: TextStyle(
                             color: CatudyColors.blueFor(context),
                             fontWeight: FontWeight.w900,
@@ -270,7 +270,7 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Future<void> _copyUserId(BuildContext context, CatudyDemoStore store) async {
-    await Clipboard.setData(ClipboardData(text: store.publicUserId));
+    await Clipboard.setData(ClipboardData(text: store.publicUserCode));
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,

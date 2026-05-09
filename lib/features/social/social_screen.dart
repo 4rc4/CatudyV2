@@ -39,6 +39,8 @@ class _SocialScreenState extends State<SocialScreen> {
         final friends = store.friendProfiles;
         return ScreenScaffold(
           title: store.t('social.title'),
+          showBack: true,
+          fallbackBackPath: '/',
           children: [
             CatudyPanel(
               color: CatudyColors.cream,
@@ -278,7 +280,8 @@ class _FriendRequestRow extends StatelessWidget {
       incoming ? request.fromUserId : request.toUserId,
     );
     final name =
-        profile?.name ?? (incoming ? request.fromUserId : request.toUserId);
+        profile?.name ??
+        store.displayUserId(incoming ? request.fromUserId : request.toUserId);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),

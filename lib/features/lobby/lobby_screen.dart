@@ -265,6 +265,16 @@ class LobbyRoomScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: _MemberTile(member: member, store: store),
                 ),
+              if (store.lobbyStartBlockReason != null) ...[
+                Text(
+                  store.lobbyStartBlockReason!,
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
               Row(
                 children: [
                   Expanded(

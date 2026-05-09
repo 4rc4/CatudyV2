@@ -725,11 +725,35 @@ class CatudyDemoStore extends ChangeNotifier {
 
   String get publicUserId => _currentLeaderboardUserId;
 
+  String get publicUserCode => displayUserId(_currentLeaderboardUserId);
+
+  String displayUserId(String userId) => _formatDisplayUserId(userId);
+
   bool get needsAuth => onlineAuthAvailable && !isAuthenticated;
 
   bool get hasOnlineLobby => onlineLobbyId != null;
 
   String? get lobbyJoinCode => onlineLobbyCode;
+
+  int get connectedLobbyMemberCount =>
+      lobbyMembers.where((member) => member.connected).length;
+
+  String? get lobbyStartBlockReason {
+    if (!hasOnlineLobby) {
+      return null;
+    }
+    if (!onlineLobbyOwner) {
+      return t('lobby.onlyOwnerCanStart');
+    }
+    final connected = lobbyMembers.where((member) => member.connected).toList();
+    if (connected.length < 2) {
+      return t('lobby.waitForSecondMember');
+    }
+    if (connected.any((member) => !member.ready)) {
+      return t('lobby.waitForReady');
+    }
+    return null;
+  }
 
   bool get canStartLobby {
     if (!hasOnlineLobby) {
@@ -737,7 +761,7 @@ class CatudyDemoStore extends ChangeNotifier {
     }
     final connected = lobbyMembers.where((member) => member.connected).toList();
     return onlineLobbyOwner &&
-        connected.isNotEmpty &&
+        connected.length >= 2 &&
         connected.every((member) => member.ready);
   }
 
@@ -1328,20 +1352,41 @@ class CatudyDemoStore extends ChangeNotifier {
   void attachLeaderboardService(CatudyLeaderboardService service) {
     _leaderboardService = service;
     unawaited(_leaderboardSubscription?.cancel());
+    unawaited(_refreshOnlineLeaderboard());
     _leaderboardSubscription = service.watchTopProfiles().listen(
       (profiles) {
-        final currentId = _currentLeaderboardUserId;
-        _onlineLeaderboardProfiles = profiles
-            .map((profile) => _profileFromOnline(profile, currentId))
-            .toList();
-        notifyListeners();
+        _applyOnlineLeaderboardProfiles(profiles);
       },
       onError: (_) {
-        _onlineLeaderboardProfiles = null;
-        notifyListeners();
+        unawaited(_refreshOnlineLeaderboard());
       },
     );
     _scheduleLeaderboardSync(immediate: true);
+  }
+
+  void _applyOnlineLeaderboardProfiles(
+    List<CatudyOnlineLeaderboardProfile> profiles,
+  ) {
+    final currentId = _currentLeaderboardUserId;
+    _onlineLeaderboardProfiles = profiles
+        .map((profile) => _profileFromOnline(profile, currentId))
+        .toList();
+    notifyListeners();
+  }
+
+  Future<void> _refreshOnlineLeaderboard() async {
+    final service = _leaderboardService;
+    if (service == null) {
+      return;
+    }
+    try {
+      final profiles = await service.fetchTopProfiles();
+      if (_leaderboardService == service) {
+        _applyOnlineLeaderboardProfiles(profiles);
+      }
+    } catch (_) {
+      // Keep the last known list visible when realtime/fetch briefly fails.
+    }
   }
 
   void attachSocialService(CatudySocialService service) {
@@ -1565,7 +1610,7 @@ class CatudyDemoStore extends ChangeNotifier {
         return profile.name;
       }
     }
-    return userId;
+    return displayUserId(userId);
   }
 
   void sendDemoIncomingFriendRequest(String fromUserId) {
@@ -1594,7 +1639,31 @@ class CatudyDemoStore extends ChangeNotifier {
     if (clean.isEmpty) {
       return FriendRequestActionResult.empty;
     }
-    return sendFriendRequest(clean);
+    final userId = _resolveUserIdQuery(clean);
+    if (userId == null) {
+      return FriendRequestActionResult.notFound;
+    }
+    return sendFriendRequest(userId);
+  }
+
+  String? _resolveUserIdQuery(String query) {
+    final clean = query.trim();
+    final normalized = clean.toUpperCase();
+    final profiles = <LeaderboardProfile>[
+      ...socialProfiles,
+      ..._fetchedProfiles.values,
+      ..._demoSocialProfiles(),
+    ];
+    for (final profile in profiles) {
+      if (profile.userId == clean ||
+          displayUserId(profile.userId).toUpperCase() == normalized) {
+        return profile.userId;
+      }
+    }
+    if (_looksLikeUuid(clean) || clean.startsWith('demo-')) {
+      return clean;
+    }
+    return null;
   }
 
   FriendRequestActionResult sendFriendRequest(String userId) {
@@ -2054,8 +2123,9 @@ class CatudyDemoStore extends ChangeNotifier {
     final userId = onlineLobbyUserId;
     final service = _lobbyService;
     if (service != null && lobbyId != null && userId != null) {
-      if (!onlineLobbyOwner) {
-        lobbyError = t('lobby.onlyOwnerCanStart');
+      final blockedReason = lobbyStartBlockReason;
+      if (blockedReason != null) {
+        lobbyError = blockedReason;
         _commit();
         return;
       }
@@ -2598,9 +2668,8 @@ class CatudyDemoStore extends ChangeNotifier {
                 favoriteCategory: favoriteCategory.name,
                 statsPublic: publicStatsVisible,
               )
+              .then((_) => _refreshOnlineLeaderboard())
               .catchError((Object _) {
-                _onlineLeaderboardProfiles = null;
-                notifyListeners();
                 return null;
               }),
         );
@@ -3307,6 +3376,30 @@ String _stableHash(String value) {
     hash = (hash * 0x01000193) & 0xffffffff;
   }
   return hash.toRadixString(16).padLeft(8, '0');
+}
+
+String _formatDisplayUserId(String userId) {
+  final clean = userId.trim();
+  if (clean.isEmpty) {
+    return '';
+  }
+  if (clean == 'local') {
+    return 'LOCAL';
+  }
+  if (clean.startsWith('demo-')) {
+    return clean.toUpperCase();
+  }
+  final compact = clean.replaceAll('-', '').toUpperCase();
+  if (compact.length >= 10) {
+    return 'CAT-${compact.substring(0, 4)}-${compact.substring(compact.length - 4)}';
+  }
+  return clean.toUpperCase();
+}
+
+bool _looksLikeUuid(String value) {
+  return RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+  ).hasMatch(value);
 }
 
 int _readInt(Map<String, dynamic> json, String key, int fallback) {

@@ -26,8 +26,8 @@ void main() {
     await _pumpCatudy(tester, initialLocation: '/social');
 
     expect(find.text('Sosyal'), findsOneWidget);
-    expect(find.text('ID ile arkadaş ekle'), findsOneWidget);
-    expect(find.text('Kullanıcı ID'), findsOneWidget);
+    expect(find.text('Kod ile arkadaş ekle'), findsOneWidget);
+    expect(find.text('Kullanıcı kodu'), findsOneWidget);
     expect(find.text('Arkadaşlar'), findsOneWidget);
     expect(find.text('Odak panosu'), findsNothing);
     expect(find.byIcon(Icons.meeting_room_rounded), findsNothing);

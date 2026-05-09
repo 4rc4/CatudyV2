@@ -95,8 +95,9 @@ class CatudySupabaseLobbyService {
     required String categoryId,
     required int durationMinutes,
   }) async {
-    final userId = await _ensureAnonymousUser(displayName);
+    var userId = await _ensureAnonymousUser(displayName);
     Object? lastError;
+    var recoveredAuth = false;
     for (var attempt = 0; attempt < 6; attempt++) {
       final code = _generateCode();
       try {
@@ -122,32 +123,57 @@ class CatudySupabaseLobbyService {
         return CatudyLobbyJoinResult(lobby: lobby, userId: userId, owner: true);
       } catch (error) {
         lastError = error;
+        if (_isAuthError(error) && !recoveredAuth) {
+          recoveredAuth = true;
+          userId = await _resetAnonymousUser(displayName);
+          continue;
+        }
+        if (!_isUniqueViolation(error)) {
+          throw StateError('Lobby could not be created: ${_errorText(error)}');
+        }
       }
     }
-    throw StateError('Lobby code could not be reserved: $lastError');
+    throw StateError(
+      'Lobby code could not be reserved: ${_errorText(lastError)}',
+    );
   }
 
   Future<CatudyLobbyJoinResult> joinLobby({
     required String code,
     required String displayName,
   }) async {
-    final userId = await _ensureAnonymousUser(displayName);
-    final lobbyJson = await _client
-        .from('catudy_lobbies')
-        .select()
-        .eq('code', code.trim().toUpperCase())
-        .neq('status', 'finished')
-        .single();
-    final lobby = CatudyOnlineLobby.fromJson(lobbyJson);
-    final owner = lobby.ownerUserId == userId;
-    await _upsertMember(
-      lobbyId: lobby.id,
-      userId: userId,
-      displayName: displayName,
-      owner: owner,
-      ready: false,
-    );
-    return CatudyLobbyJoinResult(lobby: lobby, userId: userId, owner: owner);
+    var userId = await _ensureAnonymousUser(displayName);
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        final lobbyJson = await _client
+            .from('catudy_lobbies')
+            .select()
+            .eq('code', code.trim().toUpperCase())
+            .neq('status', 'finished')
+            .single();
+        final lobby = CatudyOnlineLobby.fromJson(lobbyJson);
+        final owner = lobby.ownerUserId == userId;
+        await _upsertMember(
+          lobbyId: lobby.id,
+          userId: userId,
+          displayName: displayName,
+          owner: owner,
+          ready: false,
+        );
+        return CatudyLobbyJoinResult(
+          lobby: lobby,
+          userId: userId,
+          owner: owner,
+        );
+      } catch (error) {
+        if (attempt == 0 && _isAuthError(error)) {
+          userId = await _resetAnonymousUser(displayName);
+          continue;
+        }
+        rethrow;
+      }
+    }
+    throw StateError('Lobby could not be joined.');
   }
 
   Stream<CatudyOnlineLobby> watchLobby(String lobbyId) {
@@ -239,6 +265,19 @@ class CatudySupabaseLobbyService {
     if (current != null) {
       return current.id;
     }
+    return _signInAnonymous(displayName);
+  }
+
+  Future<String> _resetAnonymousUser(String displayName) async {
+    try {
+      await _client.auth.signOut();
+    } catch (_) {
+      // A stale browser session should not block creating a fresh guest user.
+    }
+    return _signInAnonymous(displayName);
+  }
+
+  Future<String> _signInAnonymous(String displayName) async {
     await _client.auth.signInAnonymously(
       data: {'display_name': displayName.trim()},
     );
@@ -313,4 +352,35 @@ DateTime? _readDate(Object? value) {
     return null;
   }
   return DateTime.tryParse(value)?.toLocal();
+}
+
+bool _isUniqueViolation(Object error) {
+  if (error is PostgrestException) {
+    return error.code == '23505';
+  }
+  return '$error'.contains('duplicate key');
+}
+
+bool _isAuthError(Object error) {
+  if (error is AuthException) {
+    return true;
+  }
+  final text = '$error'.toLowerCase();
+  return text.contains('jwt') ||
+      text.contains('unauthorized') ||
+      text.contains('invalid token') ||
+      text.contains('session');
+}
+
+String _errorText(Object? error) {
+  if (error == null) {
+    return 'unknown error';
+  }
+  if (error is PostgrestException) {
+    return error.message;
+  }
+  if (error is AuthException) {
+    return error.message;
+  }
+  return '$error';
 }
