@@ -111,25 +111,21 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _ResultMetricTile(
+                    _ResultMetricGrid(
+                      items: [
+                        _ResultMetricItem(
                           icon: Icons.add_circle_rounded,
                           label: store.t('focus.resultPointsEarned'),
                           value: '+${result.gold} ${store.t('common.points')}',
                           color: CatudyColors.violet,
                         ),
-                        _ResultMetricTile(
+                        _ResultMetricItem(
                           icon: Icons.pets_rounded,
                           label: store.t('focus.resultPetEffect'),
-                          value: store.t('focus.resultPetEffectValue', {
-                            'pet': store.petName,
-                          }),
+                          value: store.t('focus.resultPetEffectValue'),
                           color: CatudyColors.teal,
                         ),
-                        _ResultMetricTile(
+                        _ResultMetricItem(
                           icon: Icons.local_fire_department_rounded,
                           label: store.t('focus.resultStreak'),
                           value: store.t('focus.resultStreakValue', {
@@ -137,7 +133,7 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
                           }),
                           color: CatudyColors.coral,
                         ),
-                        _ResultMetricTile(
+                        _ResultMetricItem(
                           icon: Icons.track_changes_rounded,
                           label: store.t('focus.resultGoal'),
                           value:
@@ -228,8 +224,8 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
   }
 }
 
-class _ResultMetricTile extends StatelessWidget {
-  const _ResultMetricTile({
+class _ResultMetricItem {
+  const _ResultMetricItem({
     required this.icon,
     required this.label,
     required this.value,
@@ -240,44 +236,81 @@ class _ResultMetricTile extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+}
+
+class _ResultMetricGrid extends StatelessWidget {
+  const _ResultMetricGrid({required this.items});
+
+  final List<_ResultMetricItem> items;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 148,
-      padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: CatudyColors.surfaceFor(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.blueFor(context),
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 10.0;
+        final columns = constraints.maxWidth >= 260 ? 2 : 1;
+        final tileWidth =
+            (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: tileWidth,
+                child: _ResultMetricTile(item: item),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _ResultMetricTile extends StatelessWidget {
+  const _ResultMetricTile({required this.item});
+
+  final _ResultMetricItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 96),
+      child: Container(
+        padding: const EdgeInsets.all(11),
+        decoration: BoxDecoration(
+          color: CatudyColors.surfaceFor(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: item.color.withValues(alpha: 0.16)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(item.icon, color: item.color, size: 22),
+            const SizedBox(height: 8),
+            Text(
+              item.value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: CatudyColors.blueFor(context),
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
+            const SizedBox(height: 2),
+            Text(
+              item.label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: CatudyColors.mutedFor(context),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -30,6 +30,7 @@ class _StatsScreenState extends State<StatsScreen> {
         final minutes = records.fold(0, (sum, item) => sum + item.minutes);
         final sessions = records.where((item) => !item.manual).length;
         final categorySlices = _categorySlices(store, records);
+        final chartData = _chartData(store, _range);
 
         return ScreenScaffold(
           title: store.t('stats.title'),
@@ -40,6 +41,12 @@ class _StatsScreenState extends State<StatsScreen> {
             ),
           ],
           children: [
+            _RangeTabs(
+              store: store,
+              selected: _range,
+              onChanged: (range) => setState(() => _range = range),
+            ),
+            const SizedBox(height: 14),
             _StatsHero(
               store: store,
               minutes: minutes,
@@ -47,18 +54,11 @@ class _StatsScreenState extends State<StatsScreen> {
               streakDays: store.streakDays,
             ),
             const SizedBox(height: 14),
-            _WeeklyProgressCard(store: store),
-            const SizedBox(height: 14),
-            _RangeTabs(
+            _PeriodProgressCard(
               store: store,
-              selected: _range,
-              onChanged: (range) => setState(() => _range = range),
-            ),
-            const SizedBox(height: 14),
-            _FocusChart(
-              data: _chartData(store, _range),
-              title: store.t('stats.focusRhythm'),
-              store: store,
+              range: _range,
+              data: chartData,
+              totalMinutes: minutes,
             ),
             const SizedBox(height: 14),
             _InsightPanel(store: store, records: records),
@@ -415,15 +415,21 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 }
 
-class _WeeklyProgressCard extends StatelessWidget {
-  const _WeeklyProgressCard({required this.store});
+class _PeriodProgressCard extends StatelessWidget {
+  const _PeriodProgressCard({
+    required this.store,
+    required this.range,
+    required this.data,
+    required this.totalMinutes,
+  });
 
   final CatudyDemoStore store;
+  final StatsRange range;
+  final List<_ChartPoint> data;
+  final int totalMinutes;
 
   @override
   Widget build(BuildContext context) {
-    final minutes = store.lastSevenDayMinutes;
-    final total = minutes.fold(0, (sum, item) => sum + item);
     return CatudyPanel(
       color: CatudyColors.lavenderSoft,
       accentColor: CatudyColors.violet,
@@ -450,14 +456,14 @@ class _WeeklyProgressCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      store.t('stats.weeklyProgress'),
+                      store.t(_titleKey),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: CatudyColors.mutedFor(context),
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     Text(
-                      store.t('stats.lastSevenDays'),
+                      store.t(_subtitleKey),
                       style: TextStyle(
                         color: CatudyColors.mutedFor(context),
                         fontWeight: FontWeight.w700,
@@ -471,33 +477,47 @@ class _WeeklyProgressCard extends StatelessWidget {
           const SizedBox(height: 10),
           Chip(
             label: Text(
-              store.t('stats.weeklyTotalMinutes', {'minutes': total}),
+              store.t('stats.periodTotalMinutes', {'minutes': totalMinutes}),
             ),
           ),
           const SizedBox(height: 14),
-          _WeeklyMiniBars(minutes: minutes, store: store),
+          _PeriodMiniBars(data: data, store: store),
         ],
       ),
     );
   }
+
+  String get _titleKey => switch (range) {
+    StatsRange.week => 'stats.weeklyProgress',
+    StatsRange.month => 'stats.monthlyProgress',
+    StatsRange.allTime => 'stats.allTimeProgress',
+  };
+
+  String get _subtitleKey => switch (range) {
+    StatsRange.week => 'stats.lastSevenDays',
+    StatsRange.month => 'stats.thisMonth',
+    StatsRange.allTime => 'stats.allRecords',
+  };
 }
 
-class _WeeklyMiniBars extends StatelessWidget {
-  const _WeeklyMiniBars({required this.minutes, required this.store});
+class _PeriodMiniBars extends StatelessWidget {
+  const _PeriodMiniBars({required this.data, required this.store});
 
-  final List<int> minutes;
+  final List<_ChartPoint> data;
   final CatudyDemoStore store;
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final maxValue = minutes.fold(1, (max, item) => item > max ? item : max);
+    final maxValue = data.fold(
+      1,
+      (max, item) => item.minutes > max ? item.minutes : max,
+    );
     return SizedBox(
       height: 98,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          for (var index = 0; index < minutes.length; index++)
+          for (var index = 0; index < data.length; index++)
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
@@ -505,9 +525,9 @@ class _WeeklyMiniBars extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
-                      minutes[index] == 0
+                      data[index].minutes == 0
                           ? ''
-                          : '${minutes[index]}${store.t('common.minutesShort')}',
+                          : '${data[index].minutes}${store.t('common.minutesShort')}',
                       maxLines: 1,
                       style: TextStyle(
                         color: CatudyColors.mutedFor(context),
@@ -525,10 +545,13 @@ class _WeeklyMiniBars extends StatelessWidget {
                           height:
                               16 +
                               (56 *
-                                  (minutes[index] / maxValue).clamp(0.0, 1.0)),
+                                  (data[index].minutes / maxValue).clamp(
+                                    0.0,
+                                    1.0,
+                                  )),
                           decoration: BoxDecoration(
                             color:
-                                (index == minutes.length - 1
+                                (index == data.length - 1
                                         ? CatudyColors.teal
                                         : CatudyColors.violet)
                                     .withValues(alpha: 0.72),
@@ -539,10 +562,7 @@ class _WeeklyMiniBars extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      _weekdayLabel(
-                        now.subtract(Duration(days: 6 - index)),
-                        store.languageCode,
-                      ),
+                      data[index].label,
                       maxLines: 1,
                       style: TextStyle(
                         color: CatudyColors.mutedFor(context),
@@ -557,12 +577,6 @@ class _WeeklyMiniBars extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _weekdayLabel(DateTime day, String languageCode) {
-    const en = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const tr = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-    return (languageCode == 'en' ? en : tr)[day.weekday - 1];
   }
 }
 
@@ -1152,63 +1166,6 @@ class _RangeTab extends StatelessWidget {
   }
 }
 
-class _FocusChart extends StatelessWidget {
-  const _FocusChart({
-    required this.data,
-    required this.title,
-    required this.store,
-  });
-
-  final List<_ChartPoint> data;
-  final String title;
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    final maxValue = data.fold(
-      1,
-      (max, item) => item.minutes > max ? item.minutes : max,
-    );
-
-    return CatudyPanel(
-      accentColor: CatudyColors.teal,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 150,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                for (var index = 0; index < data.length; index++)
-                  Expanded(
-                    child: _ChartColumn(
-                      label: data[index].label,
-                      minutes: data[index].minutes,
-                      title: data[index].title,
-                      message: data[index].message,
-                      ratio: data[index].minutes / maxValue,
-                      selected: index == data.length - 1,
-                      store: store,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ChartPoint {
   const _ChartPoint({
     required this.label,
@@ -1221,70 +1178,4 @@ class _ChartPoint {
   final int minutes;
   final String title;
   final String message;
-}
-
-class _ChartColumn extends StatelessWidget {
-  const _ChartColumn({
-    required this.label,
-    required this.minutes,
-    required this.title,
-    required this.message,
-    required this.ratio,
-    required this.selected,
-    required this.store,
-  });
-
-  final String label;
-  final int minutes;
-  final String title;
-  final String message;
-  final double ratio;
-  final bool selected;
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? CatudyColors.teal : CatudyColors.violet;
-    return CatudyInfoTap(
-      title: title,
-      message: message,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text(
-              minutes == 0 ? '' : '$minutes${store.t('common.minutesShort')}',
-              style: TextStyle(
-                color: CatudyColors.mutedFor(context),
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 5),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              width: double.infinity,
-              height: 20 + (74 * ratio.clamp(0.0, 1.0)),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: selected ? 0.82 : 0.34),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: color.withValues(alpha: 0.18)),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              maxLines: 1,
-              style: TextStyle(
-                color: CatudyColors.mutedFor(context),
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
