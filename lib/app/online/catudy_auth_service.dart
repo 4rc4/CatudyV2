@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CatudyAuthSession {
@@ -120,7 +121,7 @@ class CatudyAuthService {
   Future<void> _signInWithOAuth(OAuthProvider provider) async {
     final opened = await _client.auth.signInWithOAuth(
       provider,
-      redirectTo: 'io.supabase.catudy://login-callback/',
+      redirectTo: kIsWeb ? null : 'io.supabase.catudy://login-callback/',
     );
     if (!opened) {
       throw StateError('OAuth browser could not be opened.');

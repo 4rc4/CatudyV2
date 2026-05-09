@@ -110,6 +110,15 @@ void main() {
     expect(find.text('Pet notifications'), findsOneWidget);
     expect(find.text('Save settings'), findsNothing);
   });
+
+  testWidgets('renders Online MVP auth options without Apple', (tester) async {
+    await _pumpCatudy(tester, initialLocation: '/auth');
+
+    expect(find.byIcon(Icons.mail_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.g_mobiledata_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.apple_rounded), findsNothing);
+  });
 }
 
 Future<void> _pumpCatudy(

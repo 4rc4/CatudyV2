@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../localization/catudy_copy.dart';
 import '../online/catudy_auth_service.dart';
+import '../online/catudy_backup_service.dart';
 import '../online/catudy_leaderboard_service.dart';
 import '../online/catudy_lobby_service.dart';
 import '../online/catudy_social_service.dart';
@@ -18,6 +19,7 @@ class FocusCategory {
     required this.id,
     required this.name,
     required this.color,
+    this.updatedAt,
   });
 
   factory FocusCategory.fromJson(Map<String, dynamic> json) {
@@ -25,29 +27,39 @@ class FocusCategory {
       id: _readString(json, 'id', 'study'),
       name: _readString(json, 'name', 'Study'),
       color: Color(_readInt(json, 'color', CatudyColors.violet.toARGB32())),
+      updatedAt: _readNullableDate(json, 'updatedAt'),
     );
   }
 
   final String id;
   final String name;
   final Color color;
+  final DateTime? updatedAt;
 
-  FocusCategory copyWith({String? name}) {
-    return FocusCategory(id: id, name: name ?? this.name, color: color);
+  FocusCategory copyWith({String? name, DateTime? updatedAt}) {
+    return FocusCategory(
+      id: id,
+      name: name ?? this.name,
+      color: color,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
     'color': color.toARGB32(),
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
   };
 }
 
 class FocusRecord {
   const FocusRecord({
+    required this.id,
     required this.categoryId,
     required this.minutes,
     required this.createdAt,
+    required this.updatedAt,
     required this.manual,
     required this.note,
     required this.gold,
@@ -55,29 +67,52 @@ class FocusRecord {
   });
 
   factory FocusRecord.fromJson(Map<String, dynamic> json) {
+    final categoryId = _readString(json, 'categoryId', 'study');
+    final minutes = _readInt(json, 'minutes', 25);
+    final createdAt = _readDate(json, 'createdAt', DateTime.now());
+    final manual = _readBool(json, 'manual', false);
+    final note = _readString(json, 'note', 'Focus session');
+    final todoId = _readNullableString(json, 'todoId');
     return FocusRecord(
-      categoryId: _readString(json, 'categoryId', 'study'),
-      minutes: _readInt(json, 'minutes', 25),
-      createdAt: _readDate(json, 'createdAt', DateTime.now()),
-      manual: _readBool(json, 'manual', false),
-      note: _readString(json, 'note', 'Focus session'),
+      id: _readString(
+        json,
+        'id',
+        _legacyEntityId('focus', [
+          categoryId,
+          minutes,
+          createdAt.toIso8601String(),
+          manual,
+          note,
+          todoId ?? '',
+        ]),
+      ),
+      categoryId: categoryId,
+      minutes: minutes,
+      createdAt: createdAt,
+      updatedAt: _readDate(json, 'updatedAt', createdAt),
+      manual: manual,
+      note: note,
       gold: _readInt(json, 'gold', 0),
-      todoId: _readNullableString(json, 'todoId'),
+      todoId: todoId,
     );
   }
 
+  final String id;
   final String categoryId;
   final int minutes;
   final DateTime createdAt;
+  final DateTime updatedAt;
   final bool manual;
   final String note;
   final int gold;
   final String? todoId;
 
   Map<String, dynamic> toJson() => {
+    'id': id,
     'categoryId': categoryId,
     'minutes': minutes,
     'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
     'manual': manual,
     'note': note,
     'gold': gold,
@@ -93,20 +128,24 @@ class CalendarTodo {
     required this.hour,
     required this.minute,
     required this.done,
+    required this.updatedAt,
   });
 
   factory CalendarTodo.fromJson(Map<String, dynamic> json) {
+    final id = _readString(
+      json,
+      'id',
+      DateTime.now().microsecondsSinceEpoch.toString(),
+    );
+    final date = _readDate(json, 'date', DateTime.now());
     return CalendarTodo(
-      id: _readString(
-        json,
-        'id',
-        DateTime.now().microsecondsSinceEpoch.toString(),
-      ),
+      id: id,
       title: _readString(json, 'title', 'Hatırlatma'),
-      date: _readDate(json, 'date', DateTime.now()),
+      date: date,
       hour: _readInt(json, 'hour', 9).clamp(0, 23),
       minute: _readInt(json, 'minute', 0).clamp(0, 59),
       done: _readBool(json, 'done', false),
+      updatedAt: _readDate(json, 'updatedAt', date),
     );
   }
 
@@ -116,11 +155,12 @@ class CalendarTodo {
   final int hour;
   final int minute;
   final bool done;
+  final DateTime updatedAt;
 
   DateTime get scheduledAt =>
       DateTime(date.year, date.month, date.day, hour, minute);
 
-  CalendarTodo copyWith({bool? done}) {
+  CalendarTodo copyWith({bool? done, DateTime? updatedAt}) {
     return CalendarTodo(
       id: id,
       title: title,
@@ -128,6 +168,7 @@ class CalendarTodo {
       hour: hour,
       minute: minute,
       done: done ?? this.done,
+      updatedAt: updatedAt ?? DateTime.now(),
     );
   }
 
@@ -138,6 +179,7 @@ class CalendarTodo {
     'hour': hour,
     'minute': minute,
     'done': done,
+    'updatedAt': updatedAt.toIso8601String(),
   };
 }
 
@@ -402,6 +444,7 @@ class CatudyDemoStore extends ChangeNotifier {
 
   final CatudyLocalStorage _storage;
   CatudyAuthService? _authService;
+  CatudyBackupService? _backupService;
   CatudySupabaseLobbyService? _lobbyService;
   CatudyLeaderboardService? _leaderboardService;
   CatudySocialService? _socialService;
@@ -424,6 +467,10 @@ class CatudyDemoStore extends ChangeNotifier {
   final _fetchedProfiles = <String, LeaderboardProfile>{};
   final _profileFetches = <String>{};
   Timer? _leaderboardSyncTimer;
+  Timer? _backupSyncTimer;
+  Future<void>? _backupMergeFuture;
+  String? _lastBackupMergedUserId;
+  bool _backupMergeInProgress = false;
   String? _explicitGuestUserId;
   bool _explicitGuestSignInPending = false;
 
@@ -612,6 +659,7 @@ class CatudyDemoStore extends ChangeNotifier {
   String? customProfileImageBase64;
   String? equippedPetItemId = 'violet_collar';
   String? equippedProfileItemId;
+  DateTime stateUpdatedAt = DateTime.now();
 
   bool get isLoaded => _loaded;
 
@@ -1250,11 +1298,13 @@ class CatudyDemoStore extends ChangeNotifier {
       } else {
         _applyAuthSession(session);
       }
-      _commit();
+      _commit(touchState: false);
       _watchSocialState();
+      _mergeBackupForCurrentUser();
     }, onError: _setAuthError);
     notifyListeners();
     unawaited(_save());
+    _mergeBackupForCurrentUser();
   }
 
   bool _shouldDiscardAnonymousSession(CatudyAuthSession? session) {
@@ -1268,6 +1318,11 @@ class CatudyDemoStore extends ChangeNotifier {
     offlineMode = false;
     notifyListeners();
     unawaited(_save());
+  }
+
+  void attachBackupService(CatudyBackupService service) {
+    _backupService = service;
+    _mergeBackupForCurrentUser();
   }
 
   void attachLeaderboardService(CatudyLeaderboardService service) {
@@ -1426,12 +1481,13 @@ class CatudyDemoStore extends ChangeNotifier {
       return null;
     }
     final todo = CalendarTodo(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      id: _newEntityId('todo'),
       title: cleanTitle,
       date: DateTime(date.year, date.month, date.day),
       hour: time.hour,
       minute: time.minute,
       done: false,
+      updatedAt: DateTime.now(),
     );
     todos.add(todo);
     _commit();
@@ -1729,7 +1785,14 @@ class CatudyDemoStore extends ChangeNotifier {
       _commit();
       return;
     }
-    categories.add(FocusCategory(id: id, name: cleanName, color: color));
+    categories.add(
+      FocusCategory(
+        id: id,
+        name: cleanName,
+        color: color,
+        updatedAt: DateTime.now(),
+      ),
+    );
     selectedCategoryId = id;
     _commit();
   }
@@ -1807,6 +1870,7 @@ class CatudyDemoStore extends ChangeNotifier {
     history.insert(
       0,
       FocusRecord(
+        id: _newEntityId('focus'),
         categoryId: categoryId,
         minutes: minutes,
         createdAt: DateTime(
@@ -1816,6 +1880,7 @@ class CatudyDemoStore extends ChangeNotifier {
           now.hour,
           now.minute,
         ),
+        updatedAt: now,
         manual: true,
         note: note.trim().isEmpty ? 'Manuel kayıt' : note.trim(),
         gold: 0,
@@ -1868,7 +1933,7 @@ class CatudyDemoStore extends ChangeNotifier {
     final service = _authService;
     if (service == null) {
       authError = t('auth.offlineUnavailable');
-      _commit();
+      _commit(touchState: false);
       return;
     }
     await _runAuthAction(
@@ -1884,7 +1949,7 @@ class CatudyDemoStore extends ChangeNotifier {
     final service = _authService;
     if (service == null) {
       authError = t('auth.offlineUnavailable');
-      _commit();
+      _commit(touchState: false);
       return;
     }
     await _runAuthAction(
@@ -1900,13 +1965,13 @@ class CatudyDemoStore extends ChangeNotifier {
     final service = _authService;
     if (service == null) {
       authError = t('auth.offlineUnavailable');
-      _commit();
+      _commit(touchState: false);
       return;
     }
     final cleanName = displayName.trim();
     if (cleanName.isEmpty) {
       authError = t('auth.displayNameRequired');
-      _commit();
+      _commit(touchState: false);
       return;
     }
     await _runAuthAction(() async {
@@ -1929,7 +1994,7 @@ class CatudyDemoStore extends ChangeNotifier {
     final service = _authService;
     if (service == null) {
       authError = t('auth.offlineUnavailable');
-      _commit();
+      _commit(touchState: false);
       return;
     }
     await _runAuthVoidAction(service.signInWithGoogle);
@@ -1939,7 +2004,7 @@ class CatudyDemoStore extends ChangeNotifier {
     final service = _authService;
     if (service == null) {
       authError = t('auth.offlineUnavailable');
-      _commit();
+      _commit(touchState: false);
       return;
     }
     await _runAuthVoidAction(service.signInWithApple);
@@ -1952,7 +2017,7 @@ class CatudyDemoStore extends ChangeNotifier {
     }
     authBusy = true;
     authError = null;
-    _commit();
+    _commit(touchState: false);
     try {
       await service.signOut();
       _explicitGuestUserId = null;
@@ -1962,7 +2027,7 @@ class CatudyDemoStore extends ChangeNotifier {
       return;
     }
     authBusy = false;
-    _commit();
+    _commit(touchState: false);
   }
 
   void toggleReady() {
@@ -2207,7 +2272,7 @@ class CatudyDemoStore extends ChangeNotifier {
     if (explicitGuest) {
       _explicitGuestSignInPending = true;
     }
-    _commit();
+    _commit(touchState: false);
     try {
       final session = await action();
       if (session.anonymous && explicitGuest) {
@@ -2225,13 +2290,13 @@ class CatudyDemoStore extends ChangeNotifier {
       }
     }
     authBusy = false;
-    _commit();
+    _commit(touchState: false);
   }
 
   Future<void> _runAuthVoidAction(Future<void> Function() action) async {
     authBusy = true;
     authError = null;
-    _commit();
+    _commit(touchState: false);
     try {
       await action();
     } catch (error) {
@@ -2239,7 +2304,7 @@ class CatudyDemoStore extends ChangeNotifier {
       return;
     }
     authBusy = false;
-    _commit();
+    _commit(touchState: false);
   }
 
   void _applyAuthSession(CatudyAuthSession? session) {
@@ -2248,13 +2313,18 @@ class CatudyDemoStore extends ChangeNotifier {
     authProvider = session?.anonymous == true ? 'guest' : session?.provider;
     authError = null;
     authBusy = false;
-    if (session != null && !session.anonymous) {
+    if (session == null) {
+      _lastBackupMergedUserId = null;
+      _backupSyncTimer?.cancel();
+      return;
+    }
+    if (!session.anonymous) {
       _explicitGuestUserId = null;
     }
-    final sessionName = session?.displayName.trim();
-    if (sessionName != null && sessionName.isNotEmpty) {
+    final sessionName = session.displayName.trim();
+    if (sessionName.isNotEmpty) {
       final keepLocalName =
-          session?.anonymous != true &&
+          !session.anonymous &&
           sessionName == 'Guest Cat' &&
           displayName.trim().isNotEmpty &&
           displayName.trim() != 'Guest Cat';
@@ -2262,6 +2332,7 @@ class CatudyDemoStore extends ChangeNotifier {
         displayName = sessionName;
       }
     }
+    _mergeBackupForCurrentUser();
   }
 
   void _setAuthError(Object error) {
@@ -2493,10 +2564,14 @@ class CatudyDemoStore extends ChangeNotifier {
     await _save();
   }
 
-  void _commit() {
+  void _commit({bool touchState = true}) {
+    if (touchState && !_backupMergeInProgress) {
+      stateUpdatedAt = DateTime.now();
+    }
     notifyListeners();
     unawaited(_save());
     _scheduleLeaderboardSync();
+    _scheduleBackupSync();
   }
 
   void _scheduleLeaderboardSync({bool immediate = false}) {
@@ -2540,6 +2615,84 @@ class CatudyDemoStore extends ChangeNotifier {
     await _storage.writeState(_toJson());
   }
 
+  void _mergeBackupForCurrentUser() {
+    final service = _backupService;
+    final userId = authUserId;
+    if (service == null || userId == null) {
+      _lastBackupMergedUserId = null;
+      _backupSyncTimer?.cancel();
+      return;
+    }
+    if (_lastBackupMergedUserId == userId) {
+      _scheduleBackupSync(immediate: true);
+      return;
+    }
+    if (_backupMergeFuture != null) {
+      return;
+    }
+    _backupMergeFuture = _runBackupMerge(service, userId).whenComplete(() {
+      _backupMergeFuture = null;
+    });
+  }
+
+  Future<void> _runBackupMerge(
+    CatudyBackupService service,
+    String userId,
+  ) async {
+    try {
+      final snapshot = await service.fetchCurrentBackup();
+      if (authUserId != userId) {
+        return;
+      }
+      if (snapshot != null && snapshot.data.isNotEmpty) {
+        final merged = mergeCatudyBackupStates(_toJson(), snapshot.data);
+        _backupMergeInProgress = true;
+        try {
+          _restoreFromJson(merged);
+          if (authProvider == 'guest') {
+            _explicitGuestUserId = userId;
+          }
+          if (_lobbyService != null) {
+            offlineMode = false;
+          }
+          _completeExpiredRestoredSession(DateTime.now());
+        } finally {
+          _backupMergeInProgress = false;
+        }
+        notifyListeners();
+        await _save();
+      }
+      _lastBackupMergedUserId = userId;
+      _scheduleBackupSync(immediate: true);
+    } catch (_) {
+      _lastBackupMergedUserId = null;
+    }
+  }
+
+  void _scheduleBackupSync({bool immediate = false}) {
+    _backupSyncTimer?.cancel();
+    final service = _backupService;
+    if (service == null ||
+        authUserId == null ||
+        _lastBackupMergedUserId != authUserId ||
+        _backupMergeInProgress) {
+      return;
+    }
+    _backupSyncTimer = Timer(
+      immediate ? Duration.zero : const Duration(seconds: 4),
+      () {
+        unawaited(
+          service
+              .upsertCurrentBackup(
+                data: _toJson(),
+                clientUpdatedAt: stateUpdatedAt,
+              )
+              .catchError((Object _) {}),
+        );
+      },
+    );
+  }
+
   FocusRecord _completeCurrentSession({required DateTime completedAt}) {
     final session =
         activeSession ??
@@ -2560,9 +2713,11 @@ class CatudyDemoStore extends ChangeNotifier {
     );
     final reward = _rewardForMinutes(actualMinutes);
     final record = FocusRecord(
+      id: _newEntityId('focus'),
       categoryId: session.categoryId,
       minutes: actualMinutes,
       createdAt: completedAt,
+      updatedAt: completedAt,
       manual: false,
       note: actualMinutes < session.durationMinutes
           ? (session.lobbyMode
@@ -2687,10 +2842,12 @@ class CatudyDemoStore extends ChangeNotifier {
     customProfileImageBase64 = null;
     equippedPetItemId = 'violet_collar';
     equippedProfileItemId = null;
+    stateUpdatedAt = DateTime.now();
     _restoredCompletedSession = false;
   }
 
   void _restoreFromJson(Map<String, dynamic> json) {
+    stateUpdatedAt = _readDate(json, 'stateUpdatedAt', DateTime.now());
     languageCode = _readString(json, 'languageCode', 'tr') == 'en'
         ? 'en'
         : 'tr';
@@ -2869,7 +3026,8 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   Map<String, dynamic> _toJson() => {
-    'version': 1,
+    'version': 2,
+    'stateUpdatedAt': stateUpdatedAt.toIso8601String(),
     'categories': categories.map((item) => item.toJson()).toList(),
     'history': history.map((item) => item.toJson()).toList(),
     'todos': todos.map((item) => item.toJson()).toList(),
@@ -3027,6 +3185,130 @@ class _DefaultCategorySpec {
 
 List<FocusRecord> _defaultHistory() => [];
 
+Map<String, dynamic> mergeCatudyBackupStates(
+  Map<String, dynamic> local,
+  Map<String, dynamic> remote,
+) {
+  final localUpdated = _readDate(
+    local,
+    'stateUpdatedAt',
+    DateTime.fromMillisecondsSinceEpoch(0),
+  );
+  final remoteUpdated = _readDate(
+    remote,
+    'stateUpdatedAt',
+    DateTime.fromMillisecondsSinceEpoch(0),
+  );
+  final merged = Map<String, dynamic>.from(
+    remoteUpdated.isAfter(localUpdated) ? remote : local,
+  );
+  merged['categories'] = _mergeJsonRowsById(
+    _readMapList(local['categories']),
+    _readMapList(remote['categories']),
+  );
+  merged['history'] = _mergeJsonRowsById(
+    _readMapList(local['history']),
+    _readMapList(remote['history']),
+  );
+  merged['todos'] = _mergeJsonRowsById(
+    _readMapList(local['todos']),
+    _readMapList(remote['todos']),
+  );
+  merged['friendRequests'] = _mergeJsonRowsById(
+    _readMapList(local['friendRequests']),
+    _readMapList(remote['friendRequests']),
+  );
+  merged['friendUserIds'] = _mergeStringLists(
+    local['friendUserIds'],
+    remote['friendUserIds'],
+  );
+  merged['blockedUserIds'] = _mergeStringLists(
+    local['blockedUserIds'],
+    remote['blockedUserIds'],
+  );
+  merged['reportedUserIds'] = _mergeStringLists(
+    local['reportedUserIds'],
+    remote['reportedUserIds'],
+  );
+  merged['ownedItems'] = _mergeStringLists(
+    local['ownedItems'],
+    remote['ownedItems'],
+  );
+  merged['unlockedPetIds'] = _mergeStringLists(
+    local['unlockedPetIds'],
+    remote['unlockedPetIds'],
+  );
+  merged['stateUpdatedAt'] =
+      (remoteUpdated.isAfter(localUpdated) ? remoteUpdated : localUpdated)
+          .toIso8601String();
+  return merged;
+}
+
+List<Map<String, dynamic>> _mergeJsonRowsById(
+  List<Map<String, dynamic>> local,
+  List<Map<String, dynamic>> remote,
+) {
+  final byId = <String, Map<String, dynamic>>{};
+  for (final row in [...remote, ...local]) {
+    final id = _jsonRowId(row);
+    if (id.isEmpty) {
+      continue;
+    }
+    final normalized = Map<String, dynamic>.from(row)
+      ..putIfAbsent('id', () => id);
+    final current = byId[id];
+    if (current == null || _jsonRowIsNewer(normalized, current)) {
+      byId[id] = normalized;
+    }
+  }
+  return byId.values.toList();
+}
+
+String _jsonRowId(Map<String, dynamic> row) {
+  final id = _readString(row, 'id', '');
+  if (id.isNotEmpty) {
+    return id;
+  }
+  final keys = row.keys.toList()..sort();
+  return _legacyEntityId('row', [for (final key in keys) '$key=${row[key]}']);
+}
+
+bool _jsonRowIsNewer(Map<String, dynamic> next, Map<String, dynamic> current) {
+  final fallback = DateTime.fromMillisecondsSinceEpoch(0);
+  final nextDate = _readDate(
+    next,
+    'updatedAt',
+    _readDate(next, 'createdAt', fallback),
+  );
+  final currentDate = _readDate(
+    current,
+    'updatedAt',
+    _readDate(current, 'createdAt', fallback),
+  );
+  return nextDate.isAfter(currentDate);
+}
+
+List<String> _mergeStringLists(Object? local, Object? remote) {
+  return {..._readStringList(remote), ..._readStringList(local)}.toList();
+}
+
+String _newEntityId(String prefix) {
+  return '${prefix}_${DateTime.now().microsecondsSinceEpoch}';
+}
+
+String _legacyEntityId(String prefix, Iterable<Object?> parts) {
+  return '${prefix}_${_stableHash(parts.join('|'))}';
+}
+
+String _stableHash(String value) {
+  var hash = 0x811c9dc5;
+  for (final unit in value.codeUnits) {
+    hash ^= unit;
+    hash = (hash * 0x01000193) & 0xffffffff;
+  }
+  return hash.toRadixString(16).padLeft(8, '0');
+}
+
 int _readInt(Map<String, dynamic> json, String key, int fallback) {
   final value = json[key];
   if (value is int) {
@@ -3058,11 +3340,23 @@ DateTime _readDate(Map<String, dynamic> json, String key, DateTime fallback) {
   return value is String ? DateTime.tryParse(value) ?? fallback : fallback;
 }
 
+DateTime? _readNullableDate(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  return value is String ? DateTime.tryParse(value) : null;
+}
+
 List<Map<String, dynamic>> _readMapList(Object? value) {
   if (value is! List) {
     return const [];
   }
-  return value.whereType<Map<String, dynamic>>().toList();
+  return [
+    for (final item in value)
+      if (item is Map)
+        {
+          for (final entry in item.entries)
+            if (entry.key is String) entry.key as String: entry.value,
+        },
+  ];
 }
 
 List<String> _readStringList(Object? value) {

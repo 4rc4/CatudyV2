@@ -474,6 +474,116 @@ void main() {
 
     expect(store.categories.map((item) => item.name), ['Ders', 'İş']);
   });
+
+  test('legacy records receive stable sync ids during restore', () async {
+    final storage = _MemoryStorage({
+      'categories': [
+        {
+          'id': 'study',
+          'name': 'Study',
+          'color': CatudyColors.violet.toARGB32(),
+        },
+      ],
+      'history': [
+        {
+          'categoryId': 'study',
+          'minutes': 25,
+          'createdAt': DateTime(2026, 5, 1, 10).toIso8601String(),
+          'manual': false,
+          'note': 'Focus session',
+          'gold': 25,
+        },
+      ],
+      'todos': [
+        {
+          'id': 'todo-1',
+          'title': 'Read',
+          'date': DateTime(2026, 5, 2).toIso8601String(),
+          'hour': 9,
+          'minute': 0,
+          'done': false,
+        },
+      ],
+      'selectedCategoryId': 'study',
+      'ownedItems': ['violet_collar'],
+    });
+    final store = CatudyDemoStore(storage: storage);
+
+    await store.load();
+
+    expect(store.history.single.id, startsWith('focus_'));
+    expect(storage.state?['history'].single['id'], startsWith('focus_'));
+    expect(storage.state?['history'].single['updatedAt'], isNotNull);
+    expect(store.todos.single.updatedAt, DateTime(2026, 5, 2));
+    expect(storage.state?['todos'].single['updatedAt'], isNotNull);
+  });
+
+  test('backup merge combines records and keeps latest scalar state', () {
+    final oldTime = DateTime(2026, 5, 1, 10);
+    final newTime = DateTime(2026, 5, 2, 10);
+    final merged = mergeCatudyBackupStates(
+      {
+        'stateUpdatedAt': oldTime.toIso8601String(),
+        'displayName': 'Local Cat',
+        'history': [
+          {
+            'id': 'focus-a',
+            'categoryId': 'study',
+            'minutes': 20,
+            'createdAt': oldTime.toIso8601String(),
+            'updatedAt': oldTime.toIso8601String(),
+            'manual': false,
+            'note': 'Local',
+            'gold': 20,
+          },
+        ],
+        'todos': [],
+        'categories': [],
+        'friendRequests': [],
+        'ownedItems': ['violet_collar'],
+      },
+      {
+        'stateUpdatedAt': newTime.toIso8601String(),
+        'displayName': 'Remote Cat',
+        'history': [
+          {
+            'id': 'focus-a',
+            'categoryId': 'study',
+            'minutes': 30,
+            'createdAt': oldTime.toIso8601String(),
+            'updatedAt': newTime.toIso8601String(),
+            'manual': false,
+            'note': 'Remote',
+            'gold': 30,
+          },
+          {
+            'id': 'focus-b',
+            'categoryId': 'math',
+            'minutes': 15,
+            'createdAt': newTime.toIso8601String(),
+            'updatedAt': newTime.toIso8601String(),
+            'manual': false,
+            'note': 'Remote second',
+            'gold': 15,
+          },
+        ],
+        'todos': [],
+        'categories': [],
+        'friendRequests': [],
+        'ownedItems': ['sunny_hat'],
+      },
+    );
+
+    expect(merged['displayName'], 'Remote Cat');
+    expect(merged['history'], hasLength(2));
+    expect(
+      (merged['history'] as List).firstWhere(
+        (item) => item['id'] == 'focus-a',
+      )['minutes'],
+      30,
+    );
+    expect(merged['ownedItems'], containsAll(['violet_collar', 'sunny_hat']));
+  });
 }
 
 class _MemoryStorage extends CatudyLocalStorage {

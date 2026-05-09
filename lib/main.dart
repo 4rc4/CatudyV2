@@ -6,12 +6,17 @@ import 'app/catudy_app.dart';
 import 'app/demo/catudy_demo_store.dart';
 import 'app/notifications/catudy_notification_service.dart';
 import 'app/online/catudy_auth_service.dart';
+import 'app/online/catudy_backup_service.dart';
 import 'app/online/catudy_leaderboard_service.dart';
 import 'app/online/catudy_lobby_service.dart';
 import 'app/online/catudy_social_service.dart';
 
-const _supabaseUrl = String.fromEnvironment('CATUDY_SUPABASE_URL');
-const _supabaseAnonKey = String.fromEnvironment('CATUDY_SUPABASE_ANON_KEY');
+const _supabaseUrl = bool.hasEnvironment('CATUDY_SUPABASE_URL')
+    ? String.fromEnvironment('CATUDY_SUPABASE_URL')
+    : String.fromEnvironment('SUPABASE_URL');
+const _supabaseAnonKey = bool.hasEnvironment('CATUDY_SUPABASE_ANON_KEY')
+    ? String.fromEnvironment('CATUDY_SUPABASE_ANON_KEY')
+    : String.fromEnvironment('SUPABASE_ANON_KEY');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +54,9 @@ Future<void> _initializeOnlineLobby() async {
     await Supabase.initialize(url: _supabaseUrl, anonKey: _supabaseAnonKey);
     catudyDemoStore.attachAuthService(
       CatudyAuthService(Supabase.instance.client),
+    );
+    catudyDemoStore.attachBackupService(
+      CatudyBackupService(Supabase.instance.client),
     );
     catudyDemoStore.attachLobbyService(
       CatudySupabaseLobbyService(Supabase.instance.client),
