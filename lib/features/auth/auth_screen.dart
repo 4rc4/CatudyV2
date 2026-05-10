@@ -47,7 +47,14 @@ class _AuthScreenState extends State<AuthScreen> {
             child: ScreenScaffold(
               title: store.t('auth.title'),
               showBack: false,
+              showInfoAction: false,
+              showSettingsAction: false,
               children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _AuthLanguagePicker(store: store),
+                ),
+                const SizedBox(height: 12),
                 CatudyPanel(
                   accentColor: CatudyColors.teal,
                   child: Column(
@@ -174,6 +181,40 @@ class _AuthScreenState extends State<AuthScreen> {
     return store.signInWithEmail(
       email: _emailController.text,
       password: _passwordController.text,
+    );
+  }
+}
+
+class _AuthLanguagePicker extends StatelessWidget {
+  const _AuthLanguagePicker({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.16)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: store.languageCode,
+          borderRadius: BorderRadius.circular(18),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          icon: const Icon(Icons.expand_more_rounded),
+          items: const [
+            DropdownMenuItem(value: 'tr', child: Text('Türkçe')),
+            DropdownMenuItem(value: 'en', child: Text('English')),
+          ],
+          onChanged: (value) {
+            if (value != null) {
+              store.updateLanguage(value);
+            }
+          },
+        ),
+      ),
     );
   }
 }

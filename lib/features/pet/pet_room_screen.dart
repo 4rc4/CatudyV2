@@ -115,7 +115,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             maintenanceTitle: store.t('pet.roomMaintenanceTitle'),
             maintenanceBody: store.t('pet.roomMaintenanceBody'),
             visiting: visited != null,
-            onSettings: () => context.go('/settings'),
+            onSettings: () => context.push('/settings'),
             onInfo: () => showPetIntroTour(context),
             onShop: () => context.go('/shop'),
             onInventory: () => context.go('/inventory'),
@@ -1059,8 +1059,9 @@ class _CarePanel extends StatelessWidget {
             label: catudyDemoStore.t('pet.mood'),
             value: mood,
             color: CatudyColors.tealDark,
-            info:
-                'Mutluluk, düzenli odaklanma ve pet için alınan eşyalarla artar. Mutlu pet odada daha canlı görünür.',
+            info: catudyDemoStore.languageCode == 'en'
+                ? 'Happiness rises with regular focus and items bought for your pet. A happy pet looks livelier in the room.'
+                : 'Mutluluk, düzenli odaklanma ve pet için alınan eşyalarla artar. Mutlu pet odada daha canlı görünür.',
           ),
           const SizedBox(height: 4),
           _PetMeter(
@@ -1068,16 +1069,18 @@ class _CarePanel extends StatelessWidget {
             value: hunger,
             color: CatudyColors.violet,
             inverse: true,
-            info:
-                'Açlık yükseldikçe bakım dengesi düşer. İleride yiyecek ve mobilya sistemleriyle daha ayrıntılı yönetilecek.',
+            info: catudyDemoStore.languageCode == 'en'
+                ? 'As hunger rises, care balance drops. Later this can be managed in more detail with food and furniture systems.'
+                : 'Açlık yükseldikçe bakım dengesi düşer. İleride yiyecek ve mobilya sistemleriyle daha ayrıntılı yönetilecek.',
           ),
           const SizedBox(height: 4),
           _PetMeter(
             label: catudyDemoStore.t('pet.energy'),
             value: energy,
             color: CatudyColors.teal,
-            info:
-                'Enerji, petin çalışma temposunu gösterir. Odak seansları enerji harcar; iyi ritim peti dengede tutar.',
+            info: catudyDemoStore.languageCode == 'en'
+                ? 'Energy shows your pet’s study rhythm. Focus sessions spend energy; a steady rhythm keeps your pet balanced.'
+                : 'Enerji, petin çalışma temposunu gösterir. Odak seansları enerji harcar; iyi ritim peti dengede tutar.',
           ),
         ],
       ),

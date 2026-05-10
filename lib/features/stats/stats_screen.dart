@@ -87,6 +87,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       totalMinutes: minutes,
                       totalLabel: store.t('stats.total'),
                       minutesSuffix: store.t('common.minutesShort'),
+                      languageCode: store.languageCode,
                     ),
                 ],
               ),
@@ -521,56 +522,60 @@ class _PeriodMiniBars extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      data[index].minutes == 0
-                          ? ''
-                          : '${data[index].minutes}${store.t('common.minutesShort')}',
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: CatudyColors.mutedFor(context),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                child: CatudyInfoTap(
+                  title: data[index].title,
+                  message: data[index].message,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        data[index].minutes == 0
+                            ? ''
+                            : '${data[index].minutes}${store.t('common.minutesShort')}',
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: CatudyColors.mutedFor(context),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          width: double.infinity,
-                          height:
-                              16 +
-                              (56 *
-                                  (data[index].minutes / maxValue).clamp(
-                                    0.0,
-                                    1.0,
-                                  )),
-                          decoration: BoxDecoration(
-                            color:
-                                (index == data.length - 1
-                                        ? CatudyColors.teal
-                                        : CatudyColors.violet)
-                                    .withValues(alpha: 0.72),
-                            borderRadius: BorderRadius.circular(999),
+                      const SizedBox(height: 4),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            width: double.infinity,
+                            height:
+                                16 +
+                                (56 *
+                                    (data[index].minutes / maxValue).clamp(
+                                      0.0,
+                                      1.0,
+                                    )),
+                            decoration: BoxDecoration(
+                              color:
+                                  (index == data.length - 1
+                                          ? CatudyColors.teal
+                                          : CatudyColors.violet)
+                                      .withValues(alpha: 0.72),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      data[index].label,
-                      maxLines: 1,
-                      style: TextStyle(
-                        color: CatudyColors.mutedFor(context),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
+                      const SizedBox(height: 6),
+                      Text(
+                        data[index].label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: CatudyColors.mutedFor(context),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -635,8 +640,9 @@ class _StatsHero extends StatelessWidget {
                 child: _MetricPill(
                   label: store.t('stats.focus'),
                   value: '$minutes${store.t('common.minutesShort')}',
-                  info:
-                      'Seçili aralıktaki toplam odak süresidir. Manuel kayıtlar raporda görünür ama ödül hesabında ayrı tutulur.',
+                  info: store.languageCode == 'en'
+                      ? 'Total focus duration in the selected range. Manual records appear in reports but stay separate from reward calculations.'
+                      : 'Seçili aralıktaki toplam odak süresidir. Manuel kayıtlar raporda görünür ama ödül hesabında ayrı tutulur.',
                 ),
               ),
               const SizedBox(width: 10),
@@ -644,8 +650,9 @@ class _StatsHero extends StatelessWidget {
                 child: _MetricPill(
                   label: store.t('stats.sessions'),
                   value: '$sessions',
-                  info:
-                      'Seçili aralıkta tamamlanan manuel olmayan odak seansı sayısıdır.',
+                  info: store.languageCode == 'en'
+                      ? 'Number of completed non-manual focus sessions in the selected range.'
+                      : 'Seçili aralıkta tamamlanan manuel olmayan odak seansı sayısıdır.',
                 ),
               ),
               const SizedBox(width: 10),
@@ -655,8 +662,9 @@ class _StatsHero extends StatelessWidget {
                   value: '$streakDays${store.t('common.daysShort')}',
                   icon: Icons.local_fire_department_rounded,
                   iconColor: CatudyColors.coral,
-                  info:
-                      'Düzenli odaklanma ritmini gösterir. Gün atlamadan devam ettikçe seri büyür.',
+                  info: store.languageCode == 'en'
+                      ? 'Shows your regular focus rhythm. The streak grows as you continue without skipping days.'
+                      : 'Düzenli odaklanma ritmini gösterir. Gün atlamadan devam ettikçe seri büyür.',
                 ),
               ),
             ],
@@ -868,12 +876,14 @@ class _CategoryPieChart extends StatelessWidget {
     required this.totalMinutes,
     required this.totalLabel,
     required this.minutesSuffix,
+    required this.languageCode,
   });
 
   final List<_CategorySlice> slices;
   final int totalMinutes;
   final String totalLabel;
   final String minutesSuffix;
+  final String languageCode;
 
   @override
   Widget build(BuildContext context) {
@@ -917,6 +927,7 @@ class _CategoryPieChart extends StatelessWidget {
             slice: slice,
             percent: totalMinutes == 0 ? 0 : slice.minutes / totalMinutes,
             minutesSuffix: minutesSuffix,
+            languageCode: languageCode,
           ),
       ],
     );
@@ -950,19 +961,22 @@ class _CategoryLegendRow extends StatelessWidget {
     required this.slice,
     required this.percent,
     required this.minutesSuffix,
+    required this.languageCode,
   });
 
   final _CategorySlice slice;
   final double percent;
   final String minutesSuffix;
+  final String languageCode;
 
   @override
   Widget build(BuildContext context) {
     final percentText = '${(percent * 100).round()}%';
     return CatudyInfoTap(
       title: slice.name,
-      message:
-          '${slice.name} kategorisi seçili aralıktaki toplam odak süresinin $percentText kadarını oluşturuyor.',
+      message: languageCode == 'en'
+          ? '${slice.name} has ${slice.minutes}$minutesSuffix of focus and makes up $percentText of the selected range.'
+          : '${slice.name} kategorisinde ${slice.minutes}$minutesSuffix çalışıldı; seçili aralığın $percentText kadarını oluşturuyor.',
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),

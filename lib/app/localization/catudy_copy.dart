@@ -6,8 +6,8 @@ class CatudyCopy {
     String key, [
     Map<String, Object?> values = const {},
   ]) {
-    final source = languageCode == 'en' ? _en : _tr;
-    var value = source[key] ?? _tr[key] ?? key;
+    final source = languageCode == 'tr' ? _tr : _en;
+    var value = source[key] ?? _en[key] ?? _tr[key] ?? key;
     for (final entry in values.entries) {
       value = value.replaceAll('{${entry.key}}', '${entry.value}');
     }

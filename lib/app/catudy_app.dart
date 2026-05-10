@@ -76,7 +76,9 @@ class _CatudyAppState extends State<CatudyApp> {
           _ => ThemeMode.system,
         },
         locale: Locale(catudyDemoStore.languageCode),
-        supportedLocales: const [Locale('tr'), Locale('en')],
+        supportedLocales: CatudyDemoStore.supportedLanguageCodes
+            .map((code) => Locale(code))
+            .toList(growable: false),
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,

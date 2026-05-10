@@ -130,8 +130,9 @@ class ProfileScreen extends StatelessWidget {
                           icon: Icons.hourglass_bottom_rounded,
                           label: store.t('profile.totalFocus'),
                           value: _formatMinutes(store.totalFocusMinutes, store),
-                          info:
-                              'Hesaptaki tüm odak kayıtlarının toplam süresidir.',
+                          info: store.languageCode == 'en'
+                              ? 'Total duration of all focus records in this account.'
+                              : 'Hesaptaki tüm odak kayıtlarının toplam süresidir.',
                         ),
                       ),
                       Expanded(
@@ -141,7 +142,9 @@ class ProfileScreen extends StatelessWidget {
                           label: store.t('stats.streak'),
                           value:
                               '${store.streakDays}${store.t('common.daysShort')}',
-                          info: 'Art arda sürdürülen odak günlerini gösterir.',
+                          info: store.languageCode == 'en'
+                              ? 'Shows consecutive days with maintained focus.'
+                              : 'Art arda sürdürülen odak günlerini gösterir.',
                         ),
                       ),
                       Expanded(
@@ -149,8 +152,9 @@ class ProfileScreen extends StatelessWidget {
                           icon: Icons.track_changes_rounded,
                           label: store.t('profile.sessions'),
                           value: '${store.sessionsCount}',
-                          info:
-                              'Manuel olmayan tamamlanmış odak seansı sayısıdır.',
+                          info: store.languageCode == 'en'
+                              ? 'Number of completed non-manual focus sessions.'
+                              : 'Manuel olmayan tamamlanmış odak seansı sayısıdır.',
                         ),
                       ),
                     ],
@@ -964,8 +968,12 @@ class _WeeklySummaryCard extends StatelessWidget {
                     child: CatudyInfoTap(
                       title: catudyDemoStore.t('profile.dailyFocus'),
                       message: value == 0
-                          ? 'Bu gün için kayıtlı odak yok.'
-                          : 'Bu gün toplam $value dakika odak kaydı var.',
+                          ? (catudyDemoStore.languageCode == 'en'
+                                ? 'No focus was recorded for this day.'
+                                : 'Bu gün için kayıtlı odak yok.')
+                          : (catudyDemoStore.languageCode == 'en'
+                                ? 'This day has $value minutes of recorded focus.'
+                                : 'Bu gün toplam $value dakika odak kaydı var.'),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 2),
                         child: Container(

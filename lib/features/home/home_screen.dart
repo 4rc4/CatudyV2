@@ -63,7 +63,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   IconButton(
-                    onPressed: () => context.go('/settings'),
+                    onPressed: () => context.push('/settings'),
                     tooltip: store.t('pet.settings'),
                     style: IconButton.styleFrom(
                       backgroundColor: CatudyColors.surfaceFor(context),
@@ -94,16 +94,18 @@ class HomeScreen extends StatelessWidget {
                             label:
                                 '${store.t('home.happiness')}: ${store.petMood > 70 ? store.t('home.good') : store.t('home.normal')}',
                             infoTitle: store.t('home.happiness'),
-                            infoMessage:
-                                'Mochi odak seansları ve sevdiği eşyalarla daha mutlu olur. Mutluluk yüksekken oda daha canlı hissettirir.',
+                            infoMessage: store.languageCode == 'en'
+                                ? 'Mochi gets happier with focus sessions and favorite items. High happiness makes the room feel more lively.'
+                                : 'Mochi odak seansları ve sevdiği eşyalarla daha mutlu olur. Mutluluk yüksekken oda daha canlı hissettirir.',
                           ),
                           _PetStatusChip(
                             icon: Icons.local_cafe_rounded,
                             label:
                                 '${store.t('home.hunger')}: ${store.petHunger < 35 ? store.t('home.full') : store.t('home.hungry')}',
                             infoTitle: store.t('home.hunger'),
-                            infoMessage:
-                                'Açlık zamanla yükselir. Düzenli odak ve bakım petin dengesini korur.',
+                            infoMessage: store.languageCode == 'en'
+                                ? 'Hunger rises over time. Regular focus and care keep your pet balanced.'
+                                : 'Açlık zamanla yükselir. Düzenli odak ve bakım petin dengesini korur.',
                           ),
                         ],
                       ),
@@ -210,16 +212,18 @@ class HomeScreen extends StatelessWidget {
                           label: store.t('home.focus'),
                           value:
                               '${store.todayMinutes}${store.t('common.minutesShort')}',
-                          info:
-                              'Bugün tamamlanan gerçek ve manuel odak kayıtlarının toplam süresi.',
+                          info: store.languageCode == 'en'
+                              ? 'Total duration of real and manual focus records completed today.'
+                              : 'Bugün tamamlanan gerçek ve manuel odak kayıtlarının toplam süresi.',
                         ),
                         _SummaryText(
                           label: store.t('home.streak'),
                           icon: Icons.local_fire_department_rounded,
                           value:
                               '${store.streakDays}${store.t('common.daysShort')}',
-                          info:
-                              'Art arda odak yapılan günleri gösterir. Seri ilerledikçe motivasyon takibi kolaylaşır.',
+                          info: store.languageCode == 'en'
+                              ? 'Shows consecutive focus days. A longer streak makes momentum easier to track.'
+                              : 'Art arda odak yapılan günleri gösterir. Seri ilerledikçe motivasyon takibi kolaylaşır.',
                         ),
                       ],
                     ),

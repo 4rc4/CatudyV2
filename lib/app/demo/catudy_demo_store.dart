@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -441,6 +442,8 @@ class CatudyDemoStore extends ChangeNotifier {
     : _storage = storage {
     _applyDefaults();
   }
+
+  static const supportedLanguageCodes = ['tr', 'en'];
 
   final CatudyLocalStorage _storage;
   CatudyAuthService? _authService;
@@ -2005,6 +2008,7 @@ class CatudyDemoStore extends ChangeNotifier {
       _commit(touchState: false);
       return;
     }
+    _resetLocalProfileIdentity();
     await _runAuthAction(
       () => service.signInAsGuest(displayName),
       explicitGuest: true,
@@ -2091,6 +2095,7 @@ class CatudyDemoStore extends ChangeNotifier {
       await service.signOut();
       _explicitGuestUserId = null;
       _applyAuthSession(null);
+      _resetLocalProfileIdentity();
     } catch (error) {
       _setAuthError(error);
       return;
@@ -2405,6 +2410,15 @@ class CatudyDemoStore extends ChangeNotifier {
     _mergeBackupForCurrentUser();
   }
 
+  void _resetLocalProfileIdentity() {
+    displayName = 'Guest Cat';
+    profileAvatarId = 'catudy';
+    customProfileImageBase64 = null;
+    petName = selectedPet.name;
+    petNameChosen = false;
+    equippedProfileItemId = null;
+  }
+
   void _setAuthError(Object error) {
     authBusy = false;
     authError = _friendlyError(error, 'auth.genericError');
@@ -2497,6 +2511,16 @@ class CatudyDemoStore extends ChangeNotifier {
     _commit();
   }
 
+  void updateLanguage(String language) {
+    final nextLanguageCode = _normalizeLanguageCode(language);
+    final languageChanged = nextLanguageCode != languageCode;
+    languageCode = nextLanguageCode;
+    if (languageChanged) {
+      _localizeDefaultCategories();
+      _commit(touchState: false);
+    }
+  }
+
   void updateSettings({
     required String name,
     required String apiUrl,
@@ -2520,7 +2544,7 @@ class CatudyDemoStore extends ChangeNotifier {
     }
     dndReminder = dnd;
     notifications = petNotifications;
-    final nextLanguageCode = language == 'en' ? 'en' : 'tr';
+    final nextLanguageCode = _normalizeLanguageCode(language);
     final languageChanged = nextLanguageCode != languageCode;
     languageCode = nextLanguageCode;
     if (languageChanged) {
@@ -2837,7 +2861,7 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   void _applyDefaults() {
-    languageCode = 'tr';
+    languageCode = _defaultLanguageCode();
     categories
       ..clear()
       ..addAll(_defaultCategories(languageCode));
@@ -2917,9 +2941,9 @@ class CatudyDemoStore extends ChangeNotifier {
 
   void _restoreFromJson(Map<String, dynamic> json) {
     stateUpdatedAt = _readDate(json, 'stateUpdatedAt', DateTime.now());
-    languageCode = _readString(json, 'languageCode', 'tr') == 'en'
-        ? 'en'
-        : 'tr';
+    languageCode = _normalizeLanguageCode(
+      _readString(json, 'languageCode', _defaultLanguageCode()),
+    );
     categories
       ..clear()
       ..addAll(_readMapList(json['categories']).map(FocusCategory.fromJson));
@@ -3400,6 +3424,21 @@ bool _looksLikeUuid(String value) {
   return RegExp(
     r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
   ).hasMatch(value);
+}
+
+String _defaultLanguageCode() {
+  final systemCode = ui.PlatformDispatcher.instance.locale.languageCode;
+  return _normalizeLanguageCode(systemCode, fallback: 'en');
+}
+
+String _normalizeLanguageCode(String? value, {String fallback = 'en'}) {
+  final clean = value?.trim().toLowerCase();
+  if (clean != null && CatudyDemoStore.supportedLanguageCodes.contains(clean)) {
+    return clean;
+  }
+  return CatudyDemoStore.supportedLanguageCodes.contains(fallback)
+      ? fallback
+      : 'en';
 }
 
 int _readInt(Map<String, dynamic> json, String key, int fallback) {
