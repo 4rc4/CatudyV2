@@ -41,17 +41,17 @@ class _StatsScreenState extends State<StatsScreen> {
             ),
           ],
           children: [
-            _RangeTabs(
-              store: store,
-              selected: _range,
-              onChanged: (range) => setState(() => _range = range),
-            ),
-            const SizedBox(height: 14),
             _StatsHero(
               store: store,
               minutes: minutes,
               sessions: sessions,
               streakDays: store.streakDays,
+            ),
+            const SizedBox(height: 10),
+            _RangeTabs(
+              store: store,
+              selected: _range,
+              onChanged: (range) => setState(() => _range = range),
             ),
             const SizedBox(height: 14),
             _PeriodProgressCard(

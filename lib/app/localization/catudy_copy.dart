@@ -95,6 +95,10 @@ class CatudyCopy {
     'home.goalMinutes': 'Hedef dakika',
 
     'achievements.title': 'Başarımlar',
+    'celebration.achievementTitle': 'Başarım açıldı',
+    'celebration.achievementBody': '{achievement} başarımı kazanıldı.',
+    'celebration.dailyGoalTitle': 'Günlük hedef tamamlandı',
+    'celebration.dailyGoalBody': '{minutes} dakikalık hedef bitti.',
 
     'social.title': 'Sosyal',
     'social.challengeProgress':
@@ -301,8 +305,6 @@ class CatudyCopy {
 
     'profile.title': 'Profil',
     'profile.subtitle': 'Odak meraklısı ve çalışma dostu',
-    'profile.petMessage':
-        'Bugün biraz daha odaklan, {pet} biraz daha mutlu olsun.',
     'profile.totalFocus': 'Toplam Odak',
     'profile.sessions': 'Seans',
     'profile.equippedItems': 'Takılı Eşyalar',
@@ -315,11 +317,11 @@ class CatudyCopy {
     'profile.weeklySummary': 'Haftalık Özet',
     'profile.dailyFocus': 'Günlük odak',
     'profile.edit': 'Profili Düzenle',
-    'profile.share': 'Profil linkini paylaş',
+    'profile.share': 'Profil bağlantısını paylaş',
     'profile.shareSubject': '{name} Catudy profili',
-    'profile.shareText': '{name} Catudy profilini paylaştı: {link}',
+    'profile.shareText': '{name} Catudy profil bağlantısını paylaştı: {link}',
     'profile.shareCopied':
-        'Paylaşım açılamadı, profil linki panoya kopyalandı.',
+        'Paylaşım açılamadı, profil bağlantısı panoya kopyalandı.',
     'profile.copyId': 'Kodumu kopyala',
     'profile.idCopied': 'Kullanıcı kodu kopyalandı.',
     'profile.myId': 'Kullanıcı kodu',
@@ -542,6 +544,10 @@ class CatudyCopy {
     'home.goalMinutes': 'Target minutes',
 
     'achievements.title': 'Achievements',
+    'celebration.achievementTitle': 'Achievement unlocked',
+    'celebration.achievementBody': '{achievement} was unlocked.',
+    'celebration.dailyGoalTitle': 'Daily target complete',
+    'celebration.dailyGoalBody': 'Your {minutes}-minute target is done.',
 
     'social.title': 'Social',
     'social.challengeProgress':
@@ -750,8 +756,6 @@ class CatudyCopy {
 
     'profile.title': 'Profile',
     'profile.subtitle': 'Focus enthusiast and study buddy',
-    'profile.petMessage':
-        'Focus a little more today and {pet} will be happier.',
     'profile.totalFocus': 'Total Focus',
     'profile.sessions': 'Sessions',
     'profile.equippedItems': 'Equipped Items',

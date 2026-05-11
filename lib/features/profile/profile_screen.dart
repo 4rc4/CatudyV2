@@ -82,10 +82,6 @@ class ProfileScreen extends StatelessWidget {
                                         ),
                                   ),
                                 ),
-                                const Icon(
-                                  Icons.star_rounded,
-                                  color: CatudyColors.teal,
-                                ),
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -94,27 +90,6 @@ class ProfileScreen extends StatelessWidget {
                               style: TextStyle(
                                 color: CatudyColors.muted,
                                 fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: CatudyColors.surface.withValues(
-                                  alpha: 0.72,
-                                ),
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              child: Text(
-                                store.t('profile.petMessage', {
-                                  'pet': store.selectedPet.name,
-                                }),
-                                style: const TextStyle(
-                                  color: CatudyColors.muted,
-                                  height: 1.35,
-                                  fontWeight: FontWeight.w700,
-                                ),
                               ),
                             ),
                           ],

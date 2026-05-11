@@ -243,6 +243,34 @@ void main() {
     },
   );
 
+  test(
+    'completed focus queues daily goal and achievement celebrations',
+    () async {
+      final store = CatudyDemoStore(
+        storage: _MemoryStorage({'languageCode': 'tr'}),
+      );
+
+      await store.load();
+
+      store.updateDailyGoal(15);
+      store.activeSession = ActiveFocusSession(
+        categoryId: 'study',
+        durationMinutes: 15,
+        startedAt: DateTime.now().subtract(const Duration(minutes: 15)),
+        lobbyMode: false,
+      );
+
+      store.completeFocus();
+
+      final first = store.takePendingCelebration();
+      final second = store.takePendingCelebration();
+
+      expect(first?.title, 'Günlük hedef tamamlandı');
+      expect(second?.title, 'Başarım açıldı');
+      expect(store.takePendingCelebration(), isNull);
+    },
+  );
+
   test('friends can be added and visited from social profiles', () async {
     final storage = _MemoryStorage(null);
     final store = CatudyDemoStore(storage: storage);

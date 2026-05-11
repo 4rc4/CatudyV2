@@ -259,6 +259,20 @@ class CatudyAchievement {
   double get ratio => target <= 0 ? 1 : (progress / target).clamp(0.0, 1.0);
 }
 
+class CatudyCelebration {
+  const CatudyCelebration({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.icon,
+  });
+
+  final String id;
+  final String title;
+  final String body;
+  final IconData icon;
+}
+
 class SocialChallenge {
   const SocialChallenge({
     required this.id,
@@ -478,6 +492,7 @@ class CatudyDemoStore extends ChangeNotifier {
   String? _explicitGuestUserId;
   bool _explicitGuestSignInPending = false;
   Future<void> Function()? _notificationSync;
+  final _pendingCelebrations = <CatudyCelebration>[];
 
   final categories = <FocusCategory>[];
   final durations = <int>[15, 25, 40, 60];
@@ -968,6 +983,13 @@ class CatudyDemoStore extends ChangeNotifier {
 
   List<CatudyAchievement> get unlockedAchievements =>
       achievements.where((item) => item.unlocked).toList();
+
+  CatudyCelebration? takePendingCelebration() {
+    if (_pendingCelebrations.isEmpty) {
+      return null;
+    }
+    return _pendingCelebrations.removeAt(0);
+  }
 
   int get bestStreakDays {
     final focusDays =
@@ -2835,6 +2857,10 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   FocusRecord _completeCurrentSession({required DateTime completedAt}) {
+    final goalWasCompleted = todayGoalProgress.completed;
+    final unlockedBefore = unlockedAchievements
+        .map((achievement) => achievement.id)
+        .toSet();
     final session =
         activeSession ??
         ActiveFocusSession(
@@ -2883,12 +2909,55 @@ class CatudyDemoStore extends ChangeNotifier {
     petHunger = (petHunger + 4).clamp(0, 100);
     petEnergy = (petEnergy - 6).clamp(0, 100);
     _unlockEligiblePets();
+    _queueCompletionCelebrations(
+      record: record,
+      goalWasCompleted: goalWasCompleted,
+      unlockedBefore: unlockedBefore,
+    );
     activeSession = null;
     selectedTodoId = null;
     lobbyStarted = false;
     currentUserReady = false;
     lastResult = record;
     return record;
+  }
+
+  void _queueCompletionCelebrations({
+    required FocusRecord record,
+    required bool goalWasCompleted,
+    required Set<String> unlockedBefore,
+  }) {
+    final goalCompleted = todayGoalProgress.completed;
+    if (!goalWasCompleted && goalCompleted) {
+      _pendingCelebrations.add(
+        CatudyCelebration(
+          id: 'daily_goal_${record.id}',
+          title: t('celebration.dailyGoalTitle'),
+          body: t('celebration.dailyGoalBody', {'minutes': dailyGoalMinutes}),
+          icon: Icons.track_changes_rounded,
+        ),
+      );
+    }
+    for (final achievement in unlockedAchievements) {
+      if (unlockedBefore.contains(achievement.id)) {
+        continue;
+      }
+      if (achievement.id == 'daily_goal' &&
+          !goalWasCompleted &&
+          goalCompleted) {
+        continue;
+      }
+      _pendingCelebrations.add(
+        CatudyCelebration(
+          id: 'achievement_${achievement.id}_${record.id}',
+          title: t('celebration.achievementTitle'),
+          body: t('celebration.achievementBody', {
+            'achievement': achievement.title,
+          }),
+          icon: achievement.icon,
+        ),
+      );
+    }
   }
 
   int _rewardForMinutes(int minutes) {
@@ -2998,6 +3067,7 @@ class CatudyDemoStore extends ChangeNotifier {
     localBreakVote = null;
     _onlineLobbyMembers = null;
     _onlineLeaderboardProfiles = null;
+    _pendingCelebrations.clear();
     activeSession = null;
     _focusCompletionTimer?.cancel();
     lastResult = null;

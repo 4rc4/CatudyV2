@@ -21,6 +21,9 @@ class CatudyShell extends StatefulWidget {
 
 class _CatudyShellState extends State<CatudyShell> {
   bool _exitDialogOpen = false;
+  bool _celebrationDrainScheduled = false;
+  Timer? _celebrationTimer;
+  CatudyCelebration? _celebration;
 
   static const _paths = ['/', '/stats', '/calendar', '/pet-room', '/profile'];
   static const _items = [
@@ -52,6 +55,20 @@ class _CatudyShellState extends State<CatudyShell> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    catudyDemoStore.addListener(_handleStoreChange);
+    _scheduleCelebrationDrain();
+  }
+
+  @override
+  void dispose() {
+    catudyDemoStore.removeListener(_handleStoreChange);
+    _celebrationTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final selectedIndex = _selectedIndex(widget.location);
     final dark = CatudyColors.isDark(context);
@@ -74,27 +91,42 @@ class _CatudyShellState extends State<CatudyShell> {
         context.go(target);
       },
       child: Scaffold(
-        body: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                CatudyColors.paperFor(context),
-                CatudyColors.surfaceFor(context),
-                CatudyColors.surfaceStrongFor(context),
-              ],
-            ),
-          ),
-          child: SafeArea(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 430),
-                child: widget.child,
+        body: Stack(
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    CatudyColors.paperFor(context),
+                    CatudyColors.surfaceFor(context),
+                    CatudyColors.surfaceStrongFor(context),
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 430),
+                    child: widget.child,
+                  ),
+                ),
               ),
             ),
-          ),
+            if (_celebration != null)
+              Positioned(
+                top: MediaQuery.paddingOf(context).top + 10,
+                left: 14,
+                right: 14,
+                child: IgnorePointer(
+                  child: Center(
+                    child: _CelebrationBubble(celebration: _celebration!),
+                  ),
+                ),
+              ),
+          ],
         ),
         bottomNavigationBar: DecoratedBox(
           decoration: BoxDecoration(
@@ -153,6 +185,43 @@ class _CatudyShellState extends State<CatudyShell> {
         ),
       ),
     );
+  }
+
+  void _handleStoreChange() {
+    _scheduleCelebrationDrain();
+  }
+
+  void _scheduleCelebrationDrain() {
+    if (_celebrationDrainScheduled) {
+      return;
+    }
+    _celebrationDrainScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _celebrationDrainScheduled = false;
+      if (!mounted) {
+        return;
+      }
+      _showNextCelebration();
+    });
+  }
+
+  void _showNextCelebration() {
+    if (_celebration != null) {
+      return;
+    }
+    final next = catudyDemoStore.takePendingCelebration();
+    if (next == null) {
+      return;
+    }
+    _celebrationTimer?.cancel();
+    setState(() => _celebration = next);
+    _celebrationTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _celebration = null);
+      _scheduleCelebrationDrain();
+    });
   }
 
   Future<void> _confirmAndExit(BuildContext context) async {
@@ -236,6 +305,82 @@ class _CatudyShellState extends State<CatudyShell> {
       return 4;
     }
     return 0;
+  }
+}
+
+class _CelebrationBubble extends StatelessWidget {
+  const _CelebrationBubble({required this.celebration});
+
+  final CatudyCelebration celebration;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 390),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: CatudyColors.surfaceFor(context).withValues(alpha: 0.96),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: CatudyColors.teal.withValues(alpha: 0.22),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: CatudyColors.teal.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(celebration.icon, color: CatudyColors.teal),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      celebration.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: CatudyColors.blueFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      celebration.body,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
