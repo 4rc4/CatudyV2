@@ -52,18 +52,17 @@ class CatudyNotificationService {
     }
     await _plugin.zonedSchedule(
       id: _notificationId(todo),
-      title: languageCode == 'en' ? 'Catudy reminder' : 'Catudy hatırlatma',
+      title: _isEnglish(languageCode) ? 'Catudy reminder' : 'Catudy hatırlatma',
       body: todo.title,
       scheduledDate: tz.TZDateTime.from(when, tz.local),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'catudy_reminders',
-          'Catudy Reminders',
-          channelDescription: 'Study reminders from Catudy',
+      notificationDetails: NotificationDetails(
+        android: _androidDetails(
+          channelId: 'catudy_reminders',
+          languageCode: languageCode,
           importance: Importance.high,
           priority: Priority.high,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
     );
@@ -96,26 +95,65 @@ class CatudyNotificationService {
     if (!next.isAfter(DateTime.now())) {
       next = next.add(const Duration(days: 1));
     }
+    final english = _isEnglish(languageCode);
     await _plugin.zonedSchedule(
       id: id,
-      title: languageCode == 'en' ? 'Daily focus target' : 'Günlük odak hedefi',
-      body: languageCode == 'en'
+      title: english ? 'Daily focus target' : 'Günlük odak hedefi',
+      body: english
           ? 'Check your remaining focus minutes for today.'
           : 'Bugün kalan odak dakikalarını kontrol et.',
       scheduledDate: tz.TZDateTime.from(next, tz.local),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'catudy_goals',
-          'Catudy Goals',
-          channelDescription: 'Daily focus target reminders from Catudy',
+      notificationDetails: NotificationDetails(
+        android: _androidDetails(
+          channelId: 'catudy_goals',
+          languageCode: languageCode,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
+  }
+
+  Future<void> scheduleFocusCompleteNotification({
+    required ActiveFocusSession session,
+    required String languageCode,
+  }) async {
+    await initialize();
+    const id = 900002;
+    await _plugin.cancel(id: id);
+    final endAt = session.plannedEndAt;
+    if (!endAt.isAfter(DateTime.now())) {
+      return;
+    }
+    final english = _isEnglish(languageCode);
+    await _plugin.zonedSchedule(
+      id: id,
+      title: session.lobbyMode
+          ? (english ? 'Lobby focus complete' : 'Lobi odağı tamamlandı')
+          : (english ? 'Focus complete' : 'Odak tamamlandı'),
+      body: english
+          ? 'Your session is done. Open Catudy to see the result.'
+          : "Seansın bitti. Sonucu görmek için Catudy'yi aç.",
+      scheduledDate: tz.TZDateTime.from(endAt, tz.local),
+      notificationDetails: NotificationDetails(
+        android: _androidDetails(
+          channelId: 'catudy_focus',
+          languageCode: languageCode,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelFocusCompleteNotification() async {
+    await initialize();
+    await _plugin.cancel(id: 900002);
   }
 
   Future<void> showFriendRequestNotification({
@@ -123,23 +161,21 @@ class CatudyNotificationService {
     required String languageCode,
   }) async {
     await initialize();
+    final english = _isEnglish(languageCode);
     await _plugin.show(
       id: 910001,
-      title: languageCode == 'en'
-          ? 'New friend request'
-          : 'Yeni arkadaşlık isteği',
-      body: languageCode == 'en'
+      title: english ? 'New friend request' : 'Yeni arkadaşlık isteği',
+      body: english
           ? '$name sent you a friend request.'
           : '$name sana arkadaşlık isteği gönderdi.',
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'catudy_social',
-          'Catudy Social',
-          channelDescription: 'Social updates from Catudy',
+      notificationDetails: NotificationDetails(
+        android: _androidDetails(
+          channelId: 'catudy_social',
+          languageCode: languageCode,
           importance: Importance.high,
           priority: Priority.high,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
     );
   }
@@ -149,21 +185,21 @@ class CatudyNotificationService {
     required String languageCode,
   }) async {
     await initialize();
+    final english = _isEnglish(languageCode);
     await _plugin.show(
       id: 910002,
-      title: languageCode == 'en' ? 'Lobby invite ready' : 'Lobi daveti hazır',
-      body: languageCode == 'en'
+      title: english ? 'Lobby invite ready' : 'Lobi daveti hazır',
+      body: english
           ? 'Share lobby code $code with a friend.'
           : '$code lobi kodunu bir arkadaşınla paylaş.',
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'catudy_social',
-          'Catudy Social',
-          channelDescription: 'Social updates from Catudy',
+      notificationDetails: NotificationDetails(
+        android: _androidDetails(
+          channelId: 'catudy_social',
+          languageCode: languageCode,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
     );
   }
@@ -194,5 +230,57 @@ class CatudyNotificationService {
   int _notificationId(CalendarTodo todo) {
     final parsed = int.tryParse(todo.id);
     return (parsed ?? todo.id.hashCode) & 0x7fffffff;
+  }
+
+  AndroidNotificationDetails _androidDetails({
+    required String channelId,
+    required String languageCode,
+    required Importance importance,
+    required Priority priority,
+  }) {
+    final english = _isEnglish(languageCode);
+    return AndroidNotificationDetails(
+      '${channelId}_${english ? 'en' : 'tr'}',
+      _channelName(channelId, english),
+      channelDescription: _channelDescription(channelId, english),
+      importance: importance,
+      priority: priority,
+    );
+  }
+
+  bool _isEnglish(String languageCode) => languageCode == 'en';
+
+  String _channelName(String channelId, bool english) {
+    if (english) {
+      return switch (channelId) {
+        'catudy_goals' => 'Catudy Goals',
+        'catudy_social' => 'Catudy Social',
+        'catudy_focus' => 'Catudy Focus',
+        _ => 'Catudy Reminders',
+      };
+    }
+    return switch (channelId) {
+      'catudy_goals' => 'Catudy Hedefleri',
+      'catudy_social' => 'Catudy Sosyal',
+      'catudy_focus' => 'Catudy Odak',
+      _ => 'Catudy Hatırlatmaları',
+    };
+  }
+
+  String _channelDescription(String channelId, bool english) {
+    if (english) {
+      return switch (channelId) {
+        'catudy_goals' => 'Daily focus target reminders from Catudy',
+        'catudy_social' => 'Social updates from Catudy',
+        'catudy_focus' => 'Focus session updates from Catudy',
+        _ => 'Study reminders from Catudy',
+      };
+    }
+    return switch (channelId) {
+      'catudy_goals' => 'Catudy günlük odak hedefi hatırlatmaları',
+      'catudy_social' => 'Catudy sosyal güncellemeleri',
+      'catudy_focus' => 'Catudy odak seansı güncellemeleri',
+      _ => 'Catudy çalışma hatırlatmaları',
+    };
   }
 }

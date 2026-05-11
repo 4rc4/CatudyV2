@@ -145,7 +145,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: () => context.go('/focus/duration'),
+              onPressed: () {
+                final focusRoute = store.consumeFocusNavigationRoute();
+                context.go(focusRoute ?? '/focus/duration');
+              },
               icon: const Icon(Icons.arrow_forward_rounded),
               label: Text(store.t('common.continue')),
             ),

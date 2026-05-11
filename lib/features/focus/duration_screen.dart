@@ -172,6 +172,11 @@ class _DurationScreenState extends State<DurationScreen> {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: () {
+                final focusRoute = store.consumeFocusNavigationRoute();
+                if (focusRoute != null) {
+                  context.go(focusRoute);
+                  return;
+                }
                 store.startFocus();
                 context.go('/focus/timer');
               },

@@ -471,11 +471,13 @@ class CatudyDemoStore extends ChangeNotifier {
   final _profileFetches = <String>{};
   Timer? _leaderboardSyncTimer;
   Timer? _backupSyncTimer;
+  Timer? _focusCompletionTimer;
   Future<void>? _backupMergeFuture;
   String? _lastBackupMergedUserId;
   bool _backupMergeInProgress = false;
   String? _explicitGuestUserId;
   bool _explicitGuestSignInPending = false;
+  Future<void> Function()? _notificationSync;
 
   final categories = <FocusCategory>[];
   final durations = <int>[15, 25, 40, 60];
@@ -1307,6 +1309,11 @@ class CatudyDemoStore extends ChangeNotifier {
     return _loadFuture ??= _loadFromStorage();
   }
 
+  void configureNotificationSync(Future<void> Function() sync) {
+    _notificationSync = sync;
+    _syncNotifications();
+  }
+
   void attachAuthService(CatudyAuthService service) {
     _authService = service;
     final session = service.currentSession;
@@ -1475,6 +1482,25 @@ class CatudyDemoStore extends ChangeNotifier {
       return '/focus/result';
     }
     return null;
+  }
+
+  bool get hasPendingFocusResult => _restoredCompletedSession;
+
+  String? consumeFocusNavigationRoute() {
+    refreshActiveFocusState();
+    if (activeSession != null) {
+      return '/focus/timer';
+    }
+    if (_restoredCompletedSession) {
+      _restoredCompletedSession = false;
+      _commit(touchState: false);
+      return '/focus/result';
+    }
+    return null;
+  }
+
+  void refreshActiveFocusState() {
+    _completeExpiredRestoredSession(DateTime.now(), persist: true);
   }
 
   int remainingSeconds(DateTime now) {
@@ -1887,6 +1913,7 @@ class CatudyDemoStore extends ChangeNotifier {
     dailyGoalReminderHour = time.hour;
     dailyGoalReminderMinute = time.minute;
     _commit();
+    _syncNotifications();
   }
 
   void prepareRecommendedFocus() {
@@ -1913,6 +1940,8 @@ class CatudyDemoStore extends ChangeNotifier {
       lobbyStarted = true;
     }
     _commit();
+    _scheduleActiveFocusCompletion();
+    _syncNotifications();
   }
 
   void cancelFocus() {
@@ -1921,13 +1950,20 @@ class CatudyDemoStore extends ChangeNotifier {
     currentUserReady = false;
     localBreakVote = null;
     _restoredCompletedSession = false;
+    _focusCompletionTimer?.cancel();
     _commit();
+    _syncNotifications();
   }
 
   FocusRecord completeFocus() {
+    if (activeSession == null && lastResult != null) {
+      return lastResult!;
+    }
     final record = _completeCurrentSession(completedAt: DateTime.now());
     _restoredCompletedSession = false;
+    _focusCompletionTimer?.cancel();
     _commit();
+    _syncNotifications();
     return record;
   }
 
@@ -2518,6 +2554,7 @@ class CatudyDemoStore extends ChangeNotifier {
     if (languageChanged) {
       _localizeDefaultCategories();
       _commit(touchState: false);
+      _syncNotifications();
     }
   }
 
@@ -2556,6 +2593,9 @@ class CatudyDemoStore extends ChangeNotifier {
       _ => 'system',
     };
     _commit();
+    if (languageChanged) {
+      _syncNotifications();
+    }
     if (syncDisplayName) {
       _syncAuthDisplayName();
     }
@@ -2666,6 +2706,14 @@ class CatudyDemoStore extends ChangeNotifier {
     unawaited(_save());
     _scheduleLeaderboardSync();
     _scheduleBackupSync();
+  }
+
+  void _syncNotifications() {
+    final sync = _notificationSync;
+    if (sync == null) {
+      return;
+    }
+    unawaited(sync().catchError((Object _) {}));
   }
 
   void _scheduleLeaderboardSync({bool immediate = false}) {
@@ -2851,13 +2899,38 @@ class CatudyDemoStore extends ChangeNotifier {
     return minutes + bonus;
   }
 
-  void _completeExpiredRestoredSession(DateTime now) {
+  void _scheduleActiveFocusCompletion() {
+    _focusCompletionTimer?.cancel();
     final session = activeSession;
-    if (session == null || session.plannedEndAt.isAfter(now)) {
+    if (session == null) {
       return;
     }
+    final now = DateTime.now();
+    if (!session.plannedEndAt.isAfter(now)) {
+      _completeExpiredRestoredSession(now, persist: true);
+      return;
+    }
+    _focusCompletionTimer = Timer(
+      session.plannedEndAt.difference(now),
+      () => _completeExpiredRestoredSession(DateTime.now(), persist: true),
+    );
+  }
+
+  void _completeExpiredRestoredSession(DateTime now, {bool persist = false}) {
+    final session = activeSession;
+    if (session == null) {
+      return;
+    }
+    if (session.plannedEndAt.isAfter(now)) {
+      _scheduleActiveFocusCompletion();
+      return;
+    }
+    _focusCompletionTimer?.cancel();
     _completeCurrentSession(completedAt: session.plannedEndAt);
     _restoredCompletedSession = true;
+    if (persist) {
+      _commit();
+    }
   }
 
   void _applyDefaults() {
@@ -2926,6 +2999,7 @@ class CatudyDemoStore extends ChangeNotifier {
     _onlineLobbyMembers = null;
     _onlineLeaderboardProfiles = null;
     activeSession = null;
+    _focusCompletionTimer?.cancel();
     lastResult = null;
     selectedCalendarDate = DateTime.now();
     selectedPetId = 'mochi';

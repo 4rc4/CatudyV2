@@ -20,6 +20,7 @@ class CatudyCopy {
     'common.complete': 'Tamamla',
     'common.continue': 'Devam et',
     'common.done': 'Tamam',
+    'common.exit': 'Çık',
     'common.daysShort': 'g',
     'common.minutes': 'dakika',
     'common.minutesShort': 'dk',
@@ -36,6 +37,8 @@ class CatudyCopy {
     'error.auth': 'Giriş bilgilerini kontrol edip tekrar dene.',
     'auth.genericError': 'Giriş işlemi tamamlanamadı. Biraz sonra tekrar dene.',
     'lobby.genericError': 'Lobi işlemi tamamlanamadı. Biraz sonra tekrar dene.',
+    'app.exitTitle': 'Uygulamadan çıkılsın mı?',
+    'app.exitBody': 'Catudy kapatılacak. Emin misin?',
 
     'auth.title': 'Giriş',
     'auth.subtitle': 'Catudy hesabına gir, lobileri ve ilerlemeyi eşitle.',
@@ -463,6 +466,7 @@ class CatudyCopy {
     'common.complete': 'Complete',
     'common.continue': 'Continue',
     'common.done': 'OK',
+    'common.exit': 'Exit',
     'common.daysShort': 'd',
     'common.minutes': 'minutes',
     'common.minutesShort': 'min',
@@ -479,6 +483,8 @@ class CatudyCopy {
     'auth.genericError': 'Sign-in could not be completed. Try again shortly.',
     'lobby.genericError':
         'Lobby action could not be completed. Try again shortly.',
+    'app.exitTitle': 'Exit the app?',
+    'app.exitBody': 'Catudy will close. Are you sure?',
 
     'auth.title': 'Sign in',
     'auth.subtitle': 'Sign in to Catudy and sync lobbies and progress.',

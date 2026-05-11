@@ -30,20 +30,33 @@ Future<void> main() async {
       );
     },
   );
+  catudyDemoStore.configureNotificationSync(_scheduleLocalizedNotifications);
   await _initializeOnlineLobby();
+  await _scheduleLocalizedNotifications();
+  runApp(const ProviderScope(child: CatudyApp()));
+}
+
+Future<void> _scheduleLocalizedNotifications() async {
+  final store = catudyDemoStore;
   await CatudyNotificationService.instance.schedulePendingReminders(
-    catudyDemoStore.todos,
-    languageCode: catudyDemoStore.languageCode,
+    store.todos,
+    languageCode: store.languageCode,
   );
   await CatudyNotificationService.instance.scheduleDailyGoalReminder(
-    hour: catudyDemoStore.dailyGoalReminderHour,
-    minute: catudyDemoStore.dailyGoalReminderMinute,
-    languageCode: catudyDemoStore.languageCode,
-    enabled:
-        catudyDemoStore.notifications &&
-        catudyDemoStore.dailyGoalReminderEnabled,
+    hour: store.dailyGoalReminderHour,
+    minute: store.dailyGoalReminderMinute,
+    languageCode: store.languageCode,
+    enabled: store.notifications && store.dailyGoalReminderEnabled,
   );
-  runApp(const ProviderScope(child: CatudyApp()));
+  final activeSession = store.activeSession;
+  if (store.notifications && activeSession != null) {
+    await CatudyNotificationService.instance.scheduleFocusCompleteNotification(
+      session: activeSession,
+      languageCode: store.languageCode,
+    );
+    return;
+  }
+  await CatudyNotificationService.instance.cancelFocusCompleteNotification();
 }
 
 Future<void> _initializeOnlineLobby() async {

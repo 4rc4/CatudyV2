@@ -15,7 +15,7 @@ class CatudyApp extends StatefulWidget {
   State<CatudyApp> createState() => _CatudyAppState();
 }
 
-class _CatudyAppState extends State<CatudyApp> {
+class _CatudyAppState extends State<CatudyApp> with WidgetsBindingObserver {
   final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
   late final _router = CatudyRouter.createRouter(
@@ -26,6 +26,7 @@ class _CatudyAppState extends State<CatudyApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     catudyDemoStore.load().then((_) {
       if (!mounted) {
         return;
@@ -43,6 +44,19 @@ class _CatudyAppState extends State<CatudyApp> {
       }
       _showIntroIfNeeded();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      catudyDemoStore.refreshActiveFocusState();
+    }
   }
 
   void _showIntroIfNeeded() {

@@ -140,7 +140,10 @@ class HomeScreen extends StatelessWidget {
                     const _SparkleDivider(),
                     const SizedBox(height: 16),
                     _FocusLaunchButton(
-                      onPressed: () => context.go('/focus/category'),
+                      onPressed: () {
+                        final focusRoute = store.consumeFocusNavigationRoute();
+                        context.go(focusRoute ?? '/focus/category');
+                      },
                     ),
                   ],
                 ),

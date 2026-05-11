@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
@@ -7,11 +9,18 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/store_builder.dart';
 
-class CatudyShell extends StatelessWidget {
+class CatudyShell extends StatefulWidget {
   const CatudyShell({required this.location, required this.child, super.key});
 
   final String location;
   final Widget child;
+
+  @override
+  State<CatudyShell> createState() => _CatudyShellState();
+}
+
+class _CatudyShellState extends State<CatudyShell> {
+  bool _exitDialogOpen = false;
 
   static const _paths = ['/', '/stats', '/calendar', '/pet-room', '/profile'];
   static const _items = [
@@ -44,7 +53,7 @@ class CatudyShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedIndex = _selectedIndex(location);
+    final selectedIndex = _selectedIndex(widget.location);
     final dark = CatudyColors.isDark(context);
 
     return PopScope<Object?>(
@@ -57,9 +66,9 @@ class CatudyShell extends StatelessWidget {
           context.pop();
           return;
         }
-        final target = _backTarget(location);
+        final target = _backTarget(widget.location);
         if (target == null) {
-          SystemNavigator.pop();
+          unawaited(_confirmAndExit(context));
           return;
         }
         context.go(target);
@@ -82,7 +91,7 @@ class CatudyShell extends StatelessWidget {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 430),
-                child: child,
+                child: widget.child,
               ),
             ),
           ),
@@ -125,7 +134,12 @@ class CatudyShell extends StatelessWidget {
                                 if (index == 3) {
                                   catudyDemoStore.clearVisitedRoom();
                                 }
-                                context.go(_paths[index]);
+                                final target = index == 0
+                                    ? (catudyDemoStore
+                                              .consumeFocusNavigationRoute() ??
+                                          _paths[index])
+                                    : _paths[index];
+                                context.go(target);
                               },
                             ),
                           ),
@@ -139,6 +153,38 @@ class CatudyShell extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmAndExit(BuildContext context) async {
+    if (_exitDialogOpen) {
+      return;
+    }
+    _exitDialogOpen = true;
+    final store = catudyDemoStore;
+    final shouldExit =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(store.t('app.exitTitle')),
+            content: Text(store.t('app.exitBody')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(store.t('common.cancel')),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(store.t('common.exit')),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    _exitDialogOpen = false;
+    if (!mounted || !shouldExit) {
+      return;
+    }
+    SystemNavigator.pop();
   }
 
   String? _backTarget(String path) {

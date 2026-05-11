@@ -219,6 +219,30 @@ void main() {
     expect(storage.state?['todos'].single['done'], isTrue);
   });
 
+  test(
+    'active focus navigation returns to timer without clearing session',
+    () async {
+      final storage = _MemoryStorage(null);
+      final store = CatudyDemoStore(storage: storage);
+
+      await store.load();
+
+      store.activeSession = ActiveFocusSession(
+        categoryId: 'study',
+        durationMinutes: 25,
+        startedAt: DateTime.now(),
+        lobbyMode: false,
+      );
+
+      try {
+        expect(store.consumeFocusNavigationRoute(), '/focus/timer');
+        expect(store.activeSession, isNotNull);
+      } finally {
+        store.cancelFocus();
+      }
+    },
+  );
+
   test('friends can be added and visited from social profiles', () async {
     final storage = _MemoryStorage(null);
     final store = CatudyDemoStore(storage: storage);
@@ -399,7 +423,9 @@ void main() {
   });
 
   test('shop item names follow selected language', () async {
-    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+    final store = CatudyDemoStore(
+      storage: _MemoryStorage({'languageCode': 'tr'}),
+    );
 
     await store.load();
 
@@ -423,7 +449,9 @@ void main() {
   });
 
   test('default category names follow selected language', () async {
-    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+    final store = CatudyDemoStore(
+      storage: _MemoryStorage({'languageCode': 'tr'}),
+    );
 
     await store.load();
 

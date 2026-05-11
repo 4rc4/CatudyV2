@@ -55,6 +55,20 @@ class _TimerScreenState extends State<TimerScreen> {
             context.go('/focus/result');
           });
         }
+        if (session == null &&
+            store.hasPendingFocusResult &&
+            !_completedFromTicker) {
+          _completedFromTicker = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) {
+              return;
+            }
+            final focusRoute = store.consumeFocusNavigationRoute();
+            if (focusRoute != null) {
+              context.go(focusRoute);
+            }
+          });
+        }
 
         return ScreenScaffold(
           title: session?.lobbyMode == true
