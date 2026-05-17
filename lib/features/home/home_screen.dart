@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/notifications/catudy_notification_service.dart';
+import '../../app/premium/catudy_premium_models.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
@@ -21,9 +22,12 @@ class HomeScreen extends StatelessWidget {
 
     return StoreBuilder(
       builder: (context, store) {
-        final recommendation = store.focusRecommendation;
+        final basicRecommendation = store.focusRecommendation;
+        final coachRecommendation = store.coachRecommendation;
         final recommendationCategory = store.categoryName(
-          recommendation.categoryId,
+          store.hasPremiumAccess
+              ? coachRecommendation.categoryId
+              : basicRecommendation.categoryId,
         );
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
@@ -42,6 +46,24 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  IconButton(
+                    onPressed: () => context.go('/plus'),
+                    tooltip: store.t('premium.title'),
+                    style: IconButton.styleFrom(
+                      backgroundColor: store.hasPremiumAccess
+                          ? CatudyColors.violet.withValues(alpha: 0.16)
+                          : CatudyColors.surfaceFor(context),
+                      foregroundColor: store.hasPremiumAccess
+                          ? CatudyColors.violet
+                          : CatudyColors.mutedFor(context),
+                    ),
+                    icon: Icon(
+                      store.hasPremiumAccess
+                          ? Icons.workspace_premium_rounded
+                          : Icons.workspace_premium_outlined,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
                   IconButton(
                     onPressed: () => context.go('/leaderboard'),
                     tooltip: store.t('leaderboard.title'),
@@ -247,9 +269,13 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               _FocusSuggestionCard(
-                recommendation: recommendation,
+                basicRecommendation: basicRecommendation,
+                coachRecommendation: coachRecommendation,
                 category: recommendationCategory,
+                premiumActive: store.hasPremiumAccess,
               ),
+              const SizedBox(height: 14),
+              _SeasonPassPreview(store: store),
               const SizedBox(height: 14),
               _AchievementPreview(store: store),
             ],
@@ -473,12 +499,16 @@ class _HomeTodoTile extends StatelessWidget {
 
 class _FocusSuggestionCard extends StatelessWidget {
   const _FocusSuggestionCard({
-    required this.recommendation,
+    required this.basicRecommendation,
+    required this.coachRecommendation,
     required this.category,
+    required this.premiumActive,
   });
 
-  final FocusRecommendation recommendation;
+  final FocusRecommendation basicRecommendation;
+  final CoachRecommendation coachRecommendation;
   final String category;
+  final bool premiumActive;
 
   @override
   Widget build(BuildContext context) {
@@ -508,7 +538,9 @@ class _FocusSuggestionCard extends StatelessWidget {
               children: [
                 Text(
                   store.t('home.focusSuggestion', {
-                    'minutes': recommendation.minutes,
+                    'minutes': premiumActive
+                        ? coachRecommendation.minutes
+                        : basicRecommendation.minutes,
                     'category': category,
                   }),
                   style: textTheme.titleMedium?.copyWith(
@@ -518,9 +550,11 @@ class _FocusSuggestionCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  recommendation.basedOnHistory
+                  premiumActive
+                      ? '${coachRecommendation.headline} ${coachRecommendation.reason}'
+                      : basicRecommendation.basedOnHistory
                       ? store.t('home.focusSuggestionReason', {
-                          'sessions': recommendation.sessionsConsidered,
+                          'sessions': basicRecommendation.sessionsConsidered,
                         })
                       : store.t('home.focusSuggestionStarter'),
                   style: textTheme.bodyMedium?.copyWith(
@@ -530,19 +564,86 @@ class _FocusSuggestionCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilledButton.icon(
-                    onPressed: () {
-                      store.prepareRecommendedFocus();
-                      context.go('/focus/category');
-                    },
-                    icon: const Icon(Icons.playlist_add_check_rounded),
-                    label: Text(store.t('home.prepareFocusPlan')),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () {
+                        store.prepareRecommendedFocus();
+                        context.go('/focus/category');
+                      },
+                      icon: const Icon(Icons.playlist_add_check_rounded),
+                      label: Text(store.t('home.prepareFocusPlan')),
+                    ),
+                    if (!premiumActive)
+                      OutlinedButton.icon(
+                        onPressed: () => context.go('/plus'),
+                        icon: const Icon(Icons.auto_awesome_rounded),
+                        label: Text(store.t('home.unlockCoach')),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SeasonPassPreview extends StatelessWidget {
+  const _SeasonPassPreview({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = store.seasonProgress.focusMinutes;
+    return CatudyPanel(
+      color: CatudyColors.cream,
+      accentColor: CatudyColors.coral,
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: CatudyColors.coral.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Icon(
+              Icons.emoji_events_rounded,
+              color: CatudyColors.coral,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  store.t('season.previewTitle'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  store.t('season.previewBody', {'minutes': progress}),
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
+          ),
+          TextButton(
+            onPressed: () => context.go('/season'),
+            child: Text(store.t('season.open')),
           ),
         ],
       ),

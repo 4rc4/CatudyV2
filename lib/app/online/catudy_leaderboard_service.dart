@@ -58,8 +58,8 @@ class CatudyLeaderboardService {
     final rows = await _client
         .from('catudy_leaderboard')
         .select()
-        .order('points', ascending: false)
         .order('total_minutes', ascending: false)
+        .order('points', ascending: false)
         .limit(50);
     return _profilesFromRows(rows);
   }
@@ -73,7 +73,7 @@ class CatudyLeaderboardService {
     yield* _client
         .from('catudy_leaderboard')
         .stream(primaryKey: ['user_id'])
-        .order('points', ascending: false)
+        .order('total_minutes', ascending: false)
         .limit(50)
         .map(_profilesFromRows);
   }
@@ -139,11 +139,11 @@ List<CatudyOnlineLeaderboardProfile> _profilesFromRows(Iterable rows) {
       .where((profile) => profile.userId.isNotEmpty)
       .toList();
   profiles.sort((a, b) {
-    final points = b.points.compareTo(a.points);
-    if (points != 0) {
-      return points;
+    final minutes = b.totalMinutes.compareTo(a.totalMinutes);
+    if (minutes != 0) {
+      return minutes;
     }
-    return b.totalMinutes.compareTo(a.totalMinutes);
+    return b.points.compareTo(a.points);
   });
   return profiles;
 }

@@ -28,10 +28,9 @@ class PublicProfileScreen extends StatelessWidget {
         final isCurrentUser = userId == null || userId == currentUserId;
         final name =
             visited?.name ?? (isCurrentUser ? store.displayName : userId!);
-        final points =
-            visited?.points ?? (isCurrentUser ? store.focusPoints : 0);
-        final weekMinutes =
-            visited?.totalMinutes ?? (isCurrentUser ? store.weeklyMinutes : 0);
+        final totalMinutes =
+            visited?.totalMinutes ??
+            (isCurrentUser ? store.totalFocusMinutes : 0);
         final streak =
             visited?.streakDays ?? (isCurrentUser ? store.streakDays : 0);
         final sessions = visited?.sessionsCount ?? store.sessionsCount;
@@ -73,13 +72,10 @@ class PublicProfileScreen extends StatelessWidget {
                       children: [
                         Chip(
                           label: Text(
-                            store.t('profile.thisWeek', {
-                              'minutes': weekMinutes,
+                            store.t('profile.totalPublic', {
+                              'minutes': totalMinutes,
                             }),
                           ),
-                        ),
-                        Chip(
-                          label: Text('$points ${store.t('common.points')}'),
                         ),
                         Chip(
                           label: Text('$streak${store.t('common.daysShort')}'),
@@ -115,8 +111,7 @@ class PublicProfileScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     _PublicStatsGrid(
                       store: store,
-                      totalMinutes: weekMinutes,
-                      points: points,
+                      totalMinutes: totalMinutes,
                       streak: streak,
                       sessions: sessions,
                       favorite: favorite,
@@ -154,7 +149,6 @@ class _PublicStatsGrid extends StatelessWidget {
   const _PublicStatsGrid({
     required this.store,
     required this.totalMinutes,
-    required this.points,
     required this.streak,
     required this.sessions,
     required this.favorite,
@@ -162,7 +156,6 @@ class _PublicStatsGrid extends StatelessWidget {
 
   final CatudyDemoStore store;
   final int totalMinutes;
-  final int points;
   final int streak;
   final int sessions;
   final String favorite;
@@ -176,10 +169,6 @@ class _PublicStatsGrid extends StatelessWidget {
         _PublicStatTile(
           icon: Icons.hourglass_bottom_rounded,
           label: store.t('profile.totalPublic', {'minutes': totalMinutes}),
-        ),
-        _PublicStatTile(
-          icon: Icons.star_rounded,
-          label: '$points ${store.t('common.points')}',
         ),
         _PublicStatTile(
           icon: Icons.local_fire_department_rounded,

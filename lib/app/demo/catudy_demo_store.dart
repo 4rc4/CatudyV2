@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -10,6 +11,7 @@ import '../online/catudy_backup_service.dart';
 import '../online/catudy_leaderboard_service.dart';
 import '../online/catudy_lobby_service.dart';
 import '../online/catudy_social_service.dart';
+import '../premium/catudy_premium_models.dart';
 import '../storage/catudy_local_storage.dart';
 import '../theme/catudy_colors.dart';
 
@@ -503,9 +505,299 @@ class CatudyDemoStore extends ChangeNotifier {
   final blockedUserIds = <String>{};
   final reportedUserIds = <String>{};
   final ownedItems = <String>{};
+  final ownedCosmeticIds = <String>{};
   final equippedRoomItemIds = <String, String>{};
   final unlockedPetIds = <String>{};
   final _pendingUnlockedPetIds = <String>[];
+
+  final cosmeticItems = <CosmeticItem>[
+    const CosmeticItem(
+      id: 'starlight_glasses',
+      name: 'Starlight Glasses',
+      description: 'Round glasses with tiny star glints.',
+      slot: 'pet_style',
+      rarity: Rarity.rare,
+      accent: CatudyColors.yellow,
+      icon: Icons.visibility_rounded,
+      crateType: LootCrateType.cat,
+      directPrice: 180,
+      premiumOnly: false,
+      seasonal: false,
+    ),
+    const CosmeticItem(
+      id: 'moon_fedora',
+      name: 'Moon Fedora',
+      description: 'A sleepy moon hat for long study nights.',
+      slot: 'pet_style',
+      rarity: Rarity.epic,
+      accent: CatudyColors.violet,
+      icon: Icons.nightlight_round,
+      crateType: LootCrateType.cat,
+      directPrice: 260,
+      premiumOnly: true,
+      seasonal: false,
+    ),
+    const CosmeticItem(
+      id: 'rainbow_scarf',
+      name: 'Rainbow Scarf',
+      description: 'A bright scarf for streak celebrations.',
+      slot: 'pet_style',
+      rarity: Rarity.common,
+      accent: CatudyColors.coral,
+      icon: Icons.checkroom_rounded,
+      crateType: LootCrateType.cat,
+      directPrice: 120,
+      premiumOnly: false,
+      seasonal: false,
+    ),
+    const CosmeticItem(
+      id: 'aurora_tail',
+      name: 'Aurora Tail',
+      description: 'A mythic glow that follows Mochi around the room.',
+      slot: 'pet_style',
+      rarity: Rarity.mythic,
+      accent: CatudyColors.teal,
+      icon: Icons.auto_awesome_rounded,
+      crateType: LootCrateType.cat,
+      directPrice: null,
+      premiumOnly: true,
+      seasonal: true,
+      animated: true,
+    ),
+    const CosmeticItem(
+      id: 'rainy_window',
+      name: 'Rainy Window',
+      description: 'Soft rain streaks across the study window.',
+      slot: 'room_effect',
+      rarity: Rarity.epic,
+      accent: CatudyColors.blue,
+      icon: Icons.grain_rounded,
+      crateType: LootCrateType.room,
+      directPrice: 260,
+      premiumOnly: true,
+      seasonal: false,
+      animated: true,
+    ),
+    const CosmeticItem(
+      id: 'warm_floor_lamp',
+      name: 'Warm Floor Lamp',
+      description: 'A cozy amber floor lamp for the reading corner.',
+      slot: 'room_effect',
+      rarity: Rarity.rare,
+      accent: CatudyColors.yellow,
+      icon: Icons.light_rounded,
+      crateType: LootCrateType.room,
+      directPrice: 180,
+      premiumOnly: false,
+      seasonal: false,
+    ),
+    const CosmeticItem(
+      id: 'snowy_room',
+      name: 'Snowy Room',
+      description: 'A seasonal room effect with drifting snow.',
+      slot: 'room_effect',
+      rarity: Rarity.legendary,
+      accent: CatudyColors.lavender,
+      icon: Icons.ac_unit_rounded,
+      crateType: LootCrateType.room,
+      directPrice: null,
+      premiumOnly: true,
+      seasonal: true,
+      animated: true,
+    ),
+    const CosmeticItem(
+      id: 'violet_profile_frame',
+      name: 'Violet Frame',
+      description: 'A polished violet frame for your public profile.',
+      slot: 'profile_theme',
+      rarity: Rarity.rare,
+      accent: CatudyColors.violet,
+      icon: Icons.crop_square_rounded,
+      crateType: LootCrateType.style,
+      directPrice: 150,
+      premiumOnly: false,
+      seasonal: false,
+    ),
+    const CosmeticItem(
+      id: 'galaxy_profile_theme',
+      name: 'Galaxy Theme',
+      description: 'A premium midnight gradient for profile cards.',
+      slot: 'profile_theme',
+      rarity: Rarity.epic,
+      accent: CatudyColors.tealDark,
+      icon: Icons.gradient_rounded,
+      crateType: LootCrateType.style,
+      directPrice: 240,
+      premiumOnly: true,
+      seasonal: false,
+    ),
+    const CosmeticItem(
+      id: 'focus_crown_badge',
+      name: 'Focus Crown',
+      description: 'A legendary badge for dedicated study streaks.',
+      slot: 'profile_badge',
+      rarity: Rarity.legendary,
+      accent: CatudyColors.yellow,
+      icon: Icons.workspace_premium_rounded,
+      crateType: LootCrateType.style,
+      directPrice: null,
+      premiumOnly: true,
+      seasonal: true,
+    ),
+    const CosmeticItem(
+      id: 'pet_widget_theme',
+      name: 'Pet Widget Theme',
+      description: 'Widget cards with Mochi peeking over the progress bar.',
+      slot: 'widget_theme',
+      rarity: Rarity.rare,
+      accent: CatudyColors.teal,
+      icon: Icons.widgets_rounded,
+      crateType: LootCrateType.style,
+      directPrice: 160,
+      premiumOnly: true,
+      seasonal: false,
+    ),
+    const CosmeticItem(
+      id: 'midnight_widget_theme',
+      name: 'Midnight Widget Theme',
+      description: 'A deeper lock-screen palette for late focus sessions.',
+      slot: 'widget_theme',
+      rarity: Rarity.epic,
+      accent: CatudyColors.tealDark,
+      icon: Icons.dark_mode_rounded,
+      crateType: LootCrateType.style,
+      directPrice: 220,
+      premiumOnly: true,
+      seasonal: false,
+    ),
+    const CosmeticItem(
+      id: 'storybook_dialogues',
+      name: 'Storybook Dialogues',
+      description: 'Extra cozy lines for your pet room companion.',
+      slot: 'dialogue_pack',
+      rarity: Rarity.rare,
+      accent: CatudyColors.coral,
+      icon: Icons.chat_bubble_rounded,
+      crateType: LootCrateType.style,
+      directPrice: 180,
+      premiumOnly: true,
+      seasonal: false,
+    ),
+  ];
+
+  final lootPools = <LootPool>[
+    const LootPool(
+      id: 'cat_core',
+      name: 'Cat Core Pool',
+      itemIds: ['starlight_glasses', 'moon_fedora', 'rainbow_scarf'],
+      seasonal: false,
+      premiumOnly: false,
+    ),
+    const LootPool(
+      id: 'cat_may_2026',
+      name: 'May Cat Pool',
+      itemIds: ['aurora_tail'],
+      seasonal: true,
+      premiumOnly: true,
+    ),
+    const LootPool(
+      id: 'room_core',
+      name: 'Room Core Pool',
+      itemIds: ['rainy_window', 'warm_floor_lamp'],
+      seasonal: false,
+      premiumOnly: false,
+    ),
+    const LootPool(
+      id: 'room_may_2026',
+      name: 'May Room Pool',
+      itemIds: ['snowy_room'],
+      seasonal: true,
+      premiumOnly: true,
+    ),
+    const LootPool(
+      id: 'style_core',
+      name: 'Style Core Pool',
+      itemIds: [
+        'violet_profile_frame',
+        'galaxy_profile_theme',
+        'pet_widget_theme',
+        'midnight_widget_theme',
+        'storybook_dialogues',
+      ],
+      seasonal: false,
+      premiumOnly: false,
+    ),
+    const LootPool(
+      id: 'style_may_2026',
+      name: 'May Style Pool',
+      itemIds: ['focus_crown_badge'],
+      seasonal: true,
+      premiumOnly: true,
+    ),
+  ];
+
+  final lootCrates = <LootCrate>[
+    const LootCrate(
+      id: 'cat_crate',
+      name: 'Cat Crate',
+      description: 'Pet accessories and cat-only styles.',
+      type: LootCrateType.cat,
+      poolId: 'cat_core',
+      price: 140,
+      seasonal: false,
+      premiumOnly: false,
+    ),
+    const LootCrate(
+      id: 'room_crate',
+      name: 'Room Crate',
+      description: 'Decor, room effects, and study ambience.',
+      type: LootCrateType.room,
+      poolId: 'room_core',
+      price: 160,
+      seasonal: false,
+      premiumOnly: false,
+    ),
+    const LootCrate(
+      id: 'style_crate',
+      name: 'Style Crate',
+      description: 'Frames, themes, badges, and dialogue packs.',
+      type: LootCrateType.style,
+      poolId: 'style_core',
+      price: 150,
+      seasonal: false,
+      premiumOnly: false,
+    ),
+    const LootCrate(
+      id: 'season_cat_crate',
+      name: 'Season Cat Crate',
+      description: 'Premium seasonal cat cosmetics.',
+      type: LootCrateType.cat,
+      poolId: 'cat_may_2026',
+      price: 0,
+      seasonal: true,
+      premiumOnly: true,
+    ),
+    const LootCrate(
+      id: 'season_room_crate',
+      name: 'Season Room Crate',
+      description: 'Premium seasonal room cosmetics.',
+      type: LootCrateType.room,
+      poolId: 'room_may_2026',
+      price: 0,
+      seasonal: true,
+      premiumOnly: true,
+    ),
+    const LootCrate(
+      id: 'season_style_crate',
+      name: 'Season Style Crate',
+      description: 'Premium seasonal profile cosmetics.',
+      type: LootCrateType.style,
+      poolId: 'style_may_2026',
+      price: 0,
+      seasonal: true,
+      premiumOnly: true,
+    ),
+  ];
 
   final unlockablePets = <UnlockablePet>[
     const UnlockablePet(
@@ -679,9 +971,51 @@ class CatudyDemoStore extends ChangeNotifier {
   String? customProfileImageBase64;
   String? equippedPetItemId = 'violet_collar';
   String? equippedProfileItemId;
+  PremiumEntitlement premiumEntitlement = const PremiumEntitlement.inactive();
+  final issuedBuddyPasses = <BuddyPass>[];
+  BuddyPassRedemption buddyPassRedemption = const BuddyPassRedemption(
+    code: '',
+    redeemedAt: null,
+  );
+  ShardWallet shardWallet = const ShardWallet(shards: 0);
+  final pityStates = <String, PityState>{};
+  final crateInventory = <String, int>{};
+  late Season currentSeason = _buildCurrentSeason();
+  late SeasonProgress seasonProgress = SeasonProgress(
+    seasonId: currentSeason.id,
+    focusMinutes: 0,
+    claimedRewardIds: <String>{},
+  );
+  String selectedPetStyleId = '';
+  String selectedRoomEffectId = '';
+  String selectedProfileThemeId = '';
+  String selectedWidgetThemeId = '';
+  String selectedDialoguePackId = '';
   DateTime stateUpdatedAt = DateTime.now();
 
   bool get isLoaded => _loaded;
+
+  bool get hasPremiumAccess => premiumEntitlement.active;
+
+  bool get canSendBuddyPass {
+    if (!hasPremiumAccess) {
+      return false;
+    }
+    final latest = issuedBuddyPasses.isEmpty
+        ? null
+        : issuedBuddyPasses
+              .map((pass) => pass.createdAt)
+              .reduce((a, b) => a.isAfter(b) ? a : b);
+    final now = DateTime.now();
+    return latest == null ||
+        latest.year != now.year ||
+        latest.month != now.month;
+  }
+
+  bool get canRedeemBuddyPass => !hasPremiumAccess && !buddyPassRedemption.used;
+
+  int get ownedCrateCount =>
+      crateInventory.values.fold(0, (sum, value) => sum + value);
 
   FocusCategory get selectedCategory => _categoryById(selectedCategoryId);
 
@@ -875,6 +1209,118 @@ class CatudyDemoStore extends ChangeNotifier {
     );
   }
 
+  CoachRecommendation get coachRecommendation {
+    final records = history
+        .where((item) => !item.manual && item.minutes > 0)
+        .toList();
+    final fallback = focusRecommendation;
+    if (records.length < 3) {
+      return CoachRecommendation(
+        categoryId: fallback.categoryId,
+        minutes: fallback.minutes,
+        headline: t('coach.starterHeadline'),
+        reason: t('coach.starterReason'),
+        basedOnHistory: false,
+        sessionsConsidered: records.length,
+      );
+    }
+
+    final now = DateTime.now();
+    final recent = records.where(
+      (item) => now.difference(item.createdAt).inDays <= 30,
+    );
+    final candidateHours = <int, List<FocusRecord>>{};
+    for (final record in recent) {
+      candidateHours.putIfAbsent(record.createdAt.hour, () => []).add(record);
+    }
+    final bestHourEntry = candidateHours.entries.isEmpty
+        ? null
+        : candidateHours.entries.reduce((a, b) {
+            final aScore = a.value.fold<int>(
+              0,
+              (sum, item) => sum + item.minutes,
+            );
+            final bScore = b.value.fold<int>(
+              0,
+              (sum, item) => sum + item.minutes,
+            );
+            return aScore >= bScore ? a : b;
+          });
+    final recentCategoryRecords = recent
+        .where((item) => item.categoryId == fallback.categoryId)
+        .toList();
+    final plannedByActual = recentCategoryRecords
+        .where((item) => item.note.contains('Early'))
+        .length;
+    final earlyRatio = recentCategoryRecords.isEmpty
+        ? 0.0
+        : plannedByActual / recentCategoryRecords.length;
+    final adjustedMinutes = earlyRatio >= 0.35
+        ? (fallback.minutes - 5).clamp(15, 120).toInt()
+        : fallback.minutes;
+    final hour = bestHourEntry?.key;
+    final headline = hour == null
+        ? t('coach.historyHeadline')
+        : t('coach.bestHourHeadline', {
+            'hour': hour.toString().padLeft(2, '0'),
+          });
+    final reason = earlyRatio >= 0.35
+        ? t('coach.shorterReason', {
+            'category': categoryName(fallback.categoryId),
+            'minutes': adjustedMinutes,
+          })
+        : t('coach.historyReason', {
+            'category': categoryName(fallback.categoryId),
+            'minutes': adjustedMinutes,
+            'sessions': recentCategoryRecords.length,
+          });
+    return CoachRecommendation(
+      categoryId: fallback.categoryId,
+      minutes: adjustedMinutes,
+      headline: headline,
+      reason: reason,
+      basedOnHistory: true,
+      sessionsConsidered: recentCategoryRecords.length,
+    );
+  }
+
+  Iterable<CosmeticItem> get directPurchaseCosmetics =>
+      cosmeticItems.where((item) => item.directPrice != null);
+
+  CosmeticItem? cosmeticById(String id) {
+    for (final item in cosmeticItems) {
+      if (item.id == id) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  LootCrate? crateById(String id) {
+    for (final crate in lootCrates) {
+      if (crate.id == id) {
+        return crate;
+      }
+    }
+    return null;
+  }
+
+  LootPool? lootPoolById(String id) {
+    for (final pool in lootPools) {
+      if (pool.id == id) {
+        return pool;
+      }
+    }
+    return null;
+  }
+
+  Iterable<SeasonReward> get availableSeasonRewards sync* {
+    yield* currentSeason.freeTrack.rewards;
+    if (hasPremiumAccess) {
+      yield* currentSeason.premiumTrack.rewards;
+    }
+  }
+
   CalendarTodo? get selectedFocusTodo {
     final id = selectedTodoId;
     if (id == null) {
@@ -1051,7 +1497,7 @@ class CatudyDemoStore extends ChangeNotifier {
               !blockedUserIds.contains(profile.userId),
         )
         .toList();
-    friends.sort((a, b) => b.points.compareTo(a.points));
+    friends.sort((a, b) => b.totalMinutes.compareTo(a.totalMinutes));
     return friends;
   }
 
@@ -1086,7 +1532,7 @@ class CatudyDemoStore extends ChangeNotifier {
     final visible = profiles
         .where((profile) => !blockedUserIds.contains(profile.userId))
         .toList();
-    visible.sort((a, b) => b.points.compareTo(a.points));
+    visible.sort((a, b) => b.totalMinutes.compareTo(a.totalMinutes));
     return visible;
   }
 
@@ -1142,7 +1588,7 @@ class CatudyDemoStore extends ChangeNotifier {
     if (!profiles.any((profile) => profile.userId == currentId)) {
       profiles.add(_localLeaderboardProfile(currentId));
     }
-    profiles.sort((a, b) => b.points.compareTo(a.points));
+    profiles.sort((a, b) => b.totalMinutes.compareTo(a.totalMinutes));
     return profiles;
   }
 
@@ -1939,7 +2385,16 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   void prepareRecommendedFocus() {
-    final recommendation = focusRecommendation;
+    final recommendation = hasPremiumAccess
+        ? coachRecommendation
+        : CoachRecommendation(
+            categoryId: focusRecommendation.categoryId,
+            minutes: focusRecommendation.minutes,
+            headline: '',
+            reason: '',
+            basedOnHistory: focusRecommendation.basedOnHistory,
+            sessionsConsidered: focusRecommendation.sessionsConsidered,
+          );
     selectCategory(recommendation.categoryId);
     selectedDurationMinutes = recommendation.minutes;
     _commit();
@@ -2032,6 +2487,204 @@ class CatudyDemoStore extends ChangeNotifier {
       equippedRoomItemIds[item.slot] = id;
     }
     petMood = (petMood + 6).clamp(0, 100);
+    _commit();
+    return true;
+  }
+
+  void activatePremiumDemo({Duration duration = const Duration(days: 30)}) {
+    final now = DateTime.now();
+    premiumEntitlement = PremiumEntitlement(
+      source: PremiumSource.subscription,
+      activatedAt: now,
+      expiresAt: now.add(duration),
+    );
+    _commit();
+  }
+
+  void clearPremiumEntitlement() {
+    premiumEntitlement = const PremiumEntitlement.inactive();
+    _commit();
+  }
+
+  BuddyPass? createBuddyPass() {
+    if (!canSendBuddyPass) {
+      return null;
+    }
+    final now = DateTime.now();
+    final code = 'PLUS-${_stableHash('$publicUserId|${now.toIso8601String()}')}'
+        .substring(0, 13)
+        .toUpperCase();
+    final pass = BuddyPass(
+      code: code,
+      createdAt: now,
+      expiresAt: now.add(const Duration(days: 30)),
+      redeemedByUserId: null,
+      redeemedAt: null,
+    );
+    issuedBuddyPasses.add(pass);
+    _commit();
+    return pass;
+  }
+
+  bool redeemBuddyPass(String code) {
+    final clean = code.trim().toUpperCase();
+    final looksLikeBuddyPass = RegExp(r'^PLUS-[A-Z0-9]{8}$').hasMatch(clean);
+    if (!canRedeemBuddyPass || !looksLikeBuddyPass) {
+      return false;
+    }
+    final now = DateTime.now();
+    buddyPassRedemption = BuddyPassRedemption(code: clean, redeemedAt: now);
+    premiumEntitlement = PremiumEntitlement(
+      source: PremiumSource.buddyPass,
+      activatedAt: now,
+      expiresAt: now.add(const Duration(days: 30)),
+    );
+    _commit();
+    return true;
+  }
+
+  bool buyCosmetic(String id) {
+    final item = cosmeticById(id);
+    final price = item?.directPrice;
+    if (item == null ||
+        price == null ||
+        ownedCosmeticIds.contains(id) ||
+        (item.premiumOnly && !hasPremiumAccess) ||
+        gold < price) {
+      return false;
+    }
+    gold -= price;
+    ownedCosmeticIds.add(id);
+    _autoEquipCosmetic(item);
+    _commit();
+    return true;
+  }
+
+  bool buyCrate(String id) {
+    final crate = crateById(id);
+    if (crate == null ||
+        crate.price <= 0 ||
+        (crate.premiumOnly && !hasPremiumAccess) ||
+        gold < crate.price) {
+      return false;
+    }
+    gold -= crate.price;
+    crateInventory[id] = (crateInventory[id] ?? 0) + 1;
+    _commit();
+    return true;
+  }
+
+  CosmeticItem? openCrate(String id, {Random? random}) {
+    final crate = crateById(id);
+    final count = crateInventory[id] ?? 0;
+    if (crate == null ||
+        count <= 0 ||
+        (crate.premiumOnly && !hasPremiumAccess)) {
+      return null;
+    }
+    final pool = lootPoolById(crate.poolId);
+    final candidates = pool == null
+        ? const <CosmeticItem>[]
+        : pool.itemIds
+              .map(cosmeticById)
+              .whereType<CosmeticItem>()
+              .where((item) => !item.premiumOnly || hasPremiumAccess)
+              .toList();
+    if (candidates.isEmpty) {
+      return null;
+    }
+    final state = pityStates[id] ?? const PityState(opensSinceRare: 0);
+    final rng = random ?? Random();
+    final targetRarity = _rollRarity(
+      seasonal: crate.seasonal,
+      state: state,
+      random: rng,
+    );
+    final item = _pickCosmeticForRarity(
+      candidates: candidates,
+      target: targetRarity,
+      random: rng,
+    );
+    crateInventory[id] = count - 1;
+    if (ownedCosmeticIds.contains(item.id)) {
+      shardWallet = shardWallet.copyWith(
+        shards: shardWallet.shards + item.rarity.shardValue,
+      );
+    } else {
+      ownedCosmeticIds.add(item.id);
+      _autoEquipCosmetic(item);
+    }
+    pityStates[id] = item.rarity == Rarity.common
+        ? state.copyWith(opensSinceRare: state.opensSinceRare + 1)
+        : const PityState(opensSinceRare: 0);
+    _commit();
+    return item;
+  }
+
+  bool craftCosmetic(String id) {
+    final item = cosmeticById(id);
+    if (item == null ||
+        ownedCosmeticIds.contains(id) ||
+        (item.premiumOnly && !hasPremiumAccess)) {
+      return false;
+    }
+    final cost = item.rarity.shardValue * 4;
+    if (shardWallet.shards < cost) {
+      return false;
+    }
+    shardWallet = shardWallet.copyWith(shards: shardWallet.shards - cost);
+    ownedCosmeticIds.add(id);
+    _autoEquipCosmetic(item);
+    _commit();
+    return true;
+  }
+
+  bool equipCosmetic(String id) {
+    final item = cosmeticById(id);
+    if (item == null || !ownedCosmeticIds.contains(id)) {
+      return false;
+    }
+    _autoEquipCosmetic(item, force: true);
+    _commit();
+    return true;
+  }
+
+  bool claimSeasonReward(String id) {
+    SeasonReward? reward;
+    for (final item in [
+      ...currentSeason.freeTrack.rewards,
+      ...currentSeason.premiumTrack.rewards,
+    ]) {
+      if (item.id == id) {
+        reward = item;
+        break;
+      }
+    }
+    if (reward == null ||
+        seasonProgress.claimedRewardIds.contains(id) ||
+        seasonProgress.focusMinutes < reward.thresholdMinutes ||
+        (reward.premiumOnly && !hasPremiumAccess)) {
+      return false;
+    }
+    switch (reward.kind) {
+      case SeasonRewardKind.gold:
+        gold += int.tryParse(reward.payload) ?? 0;
+        break;
+      case SeasonRewardKind.crate:
+        crateInventory[reward.payload] =
+            (crateInventory[reward.payload] ?? 0) + 1;
+        break;
+      case SeasonRewardKind.cosmetic:
+        ownedCosmeticIds.add(reward.payload);
+        final item = cosmeticById(reward.payload);
+        if (item != null) {
+          _autoEquipCosmetic(item);
+        }
+        break;
+    }
+    seasonProgress = seasonProgress.copyWith(
+      claimedRewardIds: {...seasonProgress.claimedRewardIds, id},
+    );
     _commit();
     return true;
   }
@@ -2904,6 +3557,16 @@ class CatudyDemoStore extends ChangeNotifier {
     }
     gold += reward;
     focusPoints += reward;
+    if (seasonProgress.seasonId != currentSeason.id) {
+      seasonProgress = SeasonProgress(
+        seasonId: currentSeason.id,
+        focusMinutes: 0,
+        claimedRewardIds: <String>{},
+      );
+    }
+    seasonProgress = seasonProgress.copyWith(
+      focusMinutes: seasonProgress.focusMinutes + actualMinutes,
+    );
     streakDays = streakDays < 1 ? 1 : streakDays;
     petMood = (petMood + 8).clamp(0, 100);
     petHunger = (petHunger + 4).clamp(0, 100);
@@ -2965,7 +3628,88 @@ class CatudyDemoStore extends ChangeNotifier {
       return 0;
     }
     final bonus = ((minutes * focusRewardBoostBasisPoints) / 10000).round();
-    return minutes + bonus;
+    final premiumBonus = hasPremiumAccess ? (minutes * 0.15).round() : 0;
+    return minutes + bonus + premiumBonus;
+  }
+
+  Rarity _rollRarity({
+    required bool seasonal,
+    required PityState state,
+    required Random random,
+  }) {
+    if (state.opensSinceRare >= 8) {
+      return seasonal && random.nextDouble() < 0.04
+          ? Rarity.mythic
+          : Rarity.rare;
+    }
+    final roll = random.nextDouble();
+    if (seasonal && roll < 0.01) {
+      return Rarity.mythic;
+    }
+    if (roll < 0.05) {
+      return Rarity.legendary;
+    }
+    if (roll < 0.15) {
+      return Rarity.epic;
+    }
+    if (roll < 0.40) {
+      return Rarity.rare;
+    }
+    return Rarity.common;
+  }
+
+  CosmeticItem _pickCosmeticForRarity({
+    required List<CosmeticItem> candidates,
+    required Rarity target,
+    required Random random,
+  }) {
+    final order = [
+      target,
+      Rarity.legendary,
+      Rarity.epic,
+      Rarity.rare,
+      Rarity.common,
+      Rarity.mythic,
+    ];
+    for (final rarity in order) {
+      final matches = candidates
+          .where((item) => item.rarity == rarity)
+          .toList();
+      if (matches.isNotEmpty) {
+        return matches[random.nextInt(matches.length)];
+      }
+    }
+    return candidates[random.nextInt(candidates.length)];
+  }
+
+  void _autoEquipCosmetic(CosmeticItem item, {bool force = false}) {
+    switch (item.slot) {
+      case 'pet_style':
+        if (force || selectedPetStyleId.isEmpty) {
+          selectedPetStyleId = item.id;
+        }
+        break;
+      case 'room_effect':
+        if (force || selectedRoomEffectId.isEmpty) {
+          selectedRoomEffectId = item.id;
+        }
+        break;
+      case 'profile_theme':
+        if (force || selectedProfileThemeId.isEmpty) {
+          selectedProfileThemeId = item.id;
+        }
+        break;
+      case 'widget_theme':
+        if (force || selectedWidgetThemeId.isEmpty) {
+          selectedWidgetThemeId = item.id;
+        }
+        break;
+      case 'dialogue_pack':
+        if (force || selectedDialoguePackId.isEmpty) {
+          selectedDialoguePackId = item.id;
+        }
+        break;
+    }
   }
 
   void _scheduleActiveFocusCompletion() {
@@ -3020,6 +3764,7 @@ class CatudyDemoStore extends ChangeNotifier {
     ownedItems
       ..clear()
       ..add('violet_collar');
+    ownedCosmeticIds.clear();
     equippedRoomItemIds.clear();
     unlockedPetIds
       ..clear()
@@ -3079,6 +3824,23 @@ class CatudyDemoStore extends ChangeNotifier {
     customProfileImageBase64 = null;
     equippedPetItemId = 'violet_collar';
     equippedProfileItemId = null;
+    premiumEntitlement = const PremiumEntitlement.inactive();
+    issuedBuddyPasses.clear();
+    buddyPassRedemption = const BuddyPassRedemption(code: '', redeemedAt: null);
+    shardWallet = const ShardWallet(shards: 0);
+    pityStates.clear();
+    crateInventory.clear();
+    currentSeason = _buildCurrentSeason();
+    seasonProgress = SeasonProgress(
+      seasonId: currentSeason.id,
+      focusMinutes: 0,
+      claimedRewardIds: <String>{},
+    );
+    selectedPetStyleId = '';
+    selectedRoomEffectId = '';
+    selectedProfileThemeId = '';
+    selectedWidgetThemeId = '';
+    selectedDialoguePackId = '';
     stateUpdatedAt = DateTime.now();
     _restoredCompletedSession = false;
   }
@@ -3197,6 +3959,9 @@ class CatudyDemoStore extends ChangeNotifier {
     if (ownedItems.isEmpty) {
       ownedItems.add('violet_collar');
     }
+    ownedCosmeticIds
+      ..clear()
+      ..addAll(_readStringList(json['ownedCosmeticIds']));
     unlockedPetIds
       ..clear()
       ..addAll(_readStringList(json['unlockedPetIds']));
@@ -3216,6 +3981,42 @@ class CatudyDemoStore extends ChangeNotifier {
     );
     equippedPetItemId = _readNullableString(json, 'equippedPetItemId');
     equippedProfileItemId = _readNullableString(json, 'equippedProfileItemId');
+    premiumEntitlement = PremiumEntitlement.fromJson(
+      _readNullableMap(json['premiumEntitlement']),
+    );
+    issuedBuddyPasses
+      ..clear()
+      ..addAll(_readMapList(json['issuedBuddyPasses']).map(BuddyPass.fromJson));
+    buddyPassRedemption = BuddyPassRedemption.fromJson(
+      _readNullableMap(json['buddyPassRedemption']),
+    );
+    shardWallet = ShardWallet.fromJson(_readNullableMap(json['shardWallet']));
+    pityStates
+      ..clear()
+      ..addAll({
+        for (final entry in _readMap(json['pityStates']).entries)
+          if (entry.value is Map<String, dynamic>)
+            entry.key: PityState.fromJson(entry.value as Map<String, dynamic>),
+      });
+    crateInventory
+      ..clear()
+      ..addAll(_readIntMap(json['crateInventory']));
+    currentSeason = _buildCurrentSeason();
+    seasonProgress = SeasonProgress.fromJson(
+      _readNullableMap(json['seasonProgress']),
+    );
+    if (seasonProgress.seasonId != currentSeason.id) {
+      seasonProgress = SeasonProgress(
+        seasonId: currentSeason.id,
+        focusMinutes: 0,
+        claimedRewardIds: <String>{},
+      );
+    }
+    selectedPetStyleId = _readString(json, 'selectedPetStyleId', '');
+    selectedRoomEffectId = _readString(json, 'selectedRoomEffectId', '');
+    selectedProfileThemeId = _readString(json, 'selectedProfileThemeId', '');
+    selectedWidgetThemeId = _readString(json, 'selectedWidgetThemeId', '');
+    selectedDialoguePackId = _readString(json, 'selectedDialoguePackId', '');
     equippedRoomItemIds
       ..clear()
       ..addAll(_readStringMap(json['equippedRoomItemIds']));
@@ -3227,6 +4028,7 @@ class CatudyDemoStore extends ChangeNotifier {
       equippedProfileItemId = null;
     }
     _normalizeRoomEquipment();
+    _normalizeCosmeticSelections();
 
     final activeJson = _readNullableMap(json['activeSession']);
     activeSession = activeJson == null
@@ -3263,7 +4065,7 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   Map<String, dynamic> _toJson() => {
-    'version': 2,
+    'version': 3,
     'stateUpdatedAt': stateUpdatedAt.toIso8601String(),
     'categories': categories.map((item) => item.toJson()).toList(),
     'history': history.map((item) => item.toJson()).toList(),
@@ -3302,6 +4104,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'lobbyStarted': lobbyStarted,
     'selectedCalendarDate': selectedCalendarDate.toIso8601String(),
     'ownedItems': ownedItems.toList(),
+    'ownedCosmeticIds': ownedCosmeticIds.toList(),
     'unlockedPetIds': unlockedPetIds.toList(),
     'selectedPetId': selectedPetId,
     'petName': petName,
@@ -3311,6 +4114,22 @@ class CatudyDemoStore extends ChangeNotifier {
     'equippedPetItemId': equippedPetItemId,
     'equippedProfileItemId': equippedProfileItemId,
     'equippedRoomItemIds': Map<String, String>.from(equippedRoomItemIds),
+    'premiumEntitlement': premiumEntitlement.toJson(),
+    'issuedBuddyPasses': issuedBuddyPasses
+        .map((item) => item.toJson())
+        .toList(),
+    'buddyPassRedemption': buddyPassRedemption.toJson(),
+    'shardWallet': shardWallet.toJson(),
+    'pityStates': {
+      for (final entry in pityStates.entries) entry.key: entry.value.toJson(),
+    },
+    'crateInventory': Map<String, int>.from(crateInventory),
+    'seasonProgress': seasonProgress.toJson(),
+    'selectedPetStyleId': selectedPetStyleId,
+    'selectedRoomEffectId': selectedRoomEffectId,
+    'selectedProfileThemeId': selectedProfileThemeId,
+    'selectedWidgetThemeId': selectedWidgetThemeId,
+    'selectedDialoguePackId': selectedDialoguePackId,
     'activeSession': activeSession?.toJson(),
     'lastResult': lastResult?.toJson(),
   };
@@ -3327,6 +4146,24 @@ class CatudyDemoStore extends ChangeNotifier {
       if (ownedItems.contains(item.id)) {
         equippedRoomItemIds.putIfAbsent(item.slot, () => item.id);
       }
+    }
+  }
+
+  void _normalizeCosmeticSelections() {
+    if (!ownedCosmeticIds.contains(selectedPetStyleId)) {
+      selectedPetStyleId = '';
+    }
+    if (!ownedCosmeticIds.contains(selectedRoomEffectId)) {
+      selectedRoomEffectId = '';
+    }
+    if (!ownedCosmeticIds.contains(selectedProfileThemeId)) {
+      selectedProfileThemeId = '';
+    }
+    if (!ownedCosmeticIds.contains(selectedWidgetThemeId)) {
+      selectedWidgetThemeId = '';
+    }
+    if (!ownedCosmeticIds.contains(selectedDialoguePackId)) {
+      selectedDialoguePackId = '';
     }
   }
 
@@ -3422,6 +4259,85 @@ class _DefaultCategorySpec {
 
 List<FocusRecord> _defaultHistory() => [];
 
+Season _buildCurrentSeason() {
+  final now = DateTime.now();
+  final startsAt = DateTime(now.year, now.month);
+  final endsAt = DateTime(now.year, now.month + 1);
+  final seasonId =
+      'season_${startsAt.year}_${startsAt.month.toString().padLeft(2, '0')}';
+  return Season(
+    id: seasonId,
+    name: 'Moonlight Semester',
+    description: 'Study under a softer sky and collect monthly rewards.',
+    startsAt: startsAt,
+    endsAt: endsAt,
+    freeTrack: const SeasonRewardTrack(
+      rewards: [
+        SeasonReward(
+          id: 'free_gold_60',
+          title: '60 focus minutes',
+          thresholdMinutes: 60,
+          kind: SeasonRewardKind.gold,
+          payload: '90',
+          premiumOnly: false,
+        ),
+        SeasonReward(
+          id: 'free_cat_crate_140',
+          title: 'Cat Crate',
+          thresholdMinutes: 140,
+          kind: SeasonRewardKind.crate,
+          payload: 'cat_crate',
+          premiumOnly: false,
+        ),
+        SeasonReward(
+          id: 'free_room_crate_240',
+          title: 'Room Crate',
+          thresholdMinutes: 240,
+          kind: SeasonRewardKind.crate,
+          payload: 'room_crate',
+          premiumOnly: false,
+        ),
+      ],
+    ),
+    premiumTrack: const SeasonRewardTrack(
+      rewards: [
+        SeasonReward(
+          id: 'plus_style_crate_60',
+          title: 'Style Crate',
+          thresholdMinutes: 60,
+          kind: SeasonRewardKind.crate,
+          payload: 'style_crate',
+          premiumOnly: true,
+        ),
+        SeasonReward(
+          id: 'plus_season_cat_140',
+          title: 'Season Cat Crate',
+          thresholdMinutes: 140,
+          kind: SeasonRewardKind.crate,
+          payload: 'season_cat_crate',
+          premiumOnly: true,
+        ),
+        SeasonReward(
+          id: 'plus_dialogues_220',
+          title: 'Storybook Dialogues',
+          thresholdMinutes: 220,
+          kind: SeasonRewardKind.cosmetic,
+          payload: 'storybook_dialogues',
+          premiumOnly: true,
+        ),
+        SeasonReward(
+          id: 'plus_season_style_320',
+          title: 'Season Style Crate',
+          thresholdMinutes: 320,
+          kind: SeasonRewardKind.crate,
+          payload: 'season_style_crate',
+          premiumOnly: true,
+        ),
+      ],
+    ),
+  );
+}
+
 Map<String, dynamic> mergeCatudyBackupStates(
   Map<String, dynamic> local,
   Map<String, dynamic> remote,
@@ -3470,6 +4386,10 @@ Map<String, dynamic> mergeCatudyBackupStates(
   merged['ownedItems'] = _mergeStringLists(
     local['ownedItems'],
     remote['ownedItems'],
+  );
+  merged['ownedCosmeticIds'] = _mergeStringLists(
+    local['ownedCosmeticIds'],
+    remote['ownedCosmeticIds'],
   );
   merged['unlockedPetIds'] = _mergeStringLists(
     local['unlockedPetIds'],
@@ -3650,6 +4570,27 @@ Map<String, String> _readStringMap(Object? value) {
     for (final entry in value.entries)
       if (entry.key is String && entry.value is String)
         entry.key as String: entry.value as String,
+  };
+}
+
+Map<String, dynamic> _readMap(Object? value) {
+  if (value is! Map) {
+    return const {};
+  }
+  return {
+    for (final entry in value.entries)
+      if (entry.key is String) entry.key as String: entry.value,
+  };
+}
+
+Map<String, int> _readIntMap(Object? value) {
+  if (value is! Map) {
+    return const {};
+  }
+  return {
+    for (final entry in value.entries)
+      if (entry.key is String && entry.value is num)
+        entry.key as String: (entry.value as num).toInt(),
   };
 }
 

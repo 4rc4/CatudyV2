@@ -26,11 +26,14 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget build(BuildContext context) {
     return StoreBuilder(
       builder: (context, store) {
-        final records = _recordsForRange(store.history, _range);
+        final effectiveRange = store.hasPremiumAccess
+            ? _range
+            : StatsRange.week;
+        final records = _recordsForRange(store.history, effectiveRange);
         final minutes = records.fold(0, (sum, item) => sum + item.minutes);
         final sessions = records.where((item) => !item.manual).length;
         final categorySlices = _categorySlices(store, records);
-        final chartData = _chartData(store, _range);
+        final chartData = _chartData(store, effectiveRange);
 
         return ScreenScaffold(
           title: store.t('stats.title'),
@@ -50,18 +53,33 @@ class _StatsScreenState extends State<StatsScreen> {
             const SizedBox(height: 10),
             _RangeTabs(
               store: store,
-              selected: _range,
-              onChanged: (range) => setState(() => _range = range),
+              selected: effectiveRange,
+              premiumEnabled: store.hasPremiumAccess,
+              onChanged: (range) {
+                if (!store.hasPremiumAccess && range != StatsRange.week) {
+                  context.go('/plus');
+                  return;
+                }
+                setState(() => _range = range);
+              },
             ),
+            if (!store.hasPremiumAccess) ...[
+              const SizedBox(height: 12),
+              _PremiumStatsUpsell(store: store),
+            ],
             const SizedBox(height: 14),
             _PeriodProgressCard(
               store: store,
-              range: _range,
+              range: effectiveRange,
               data: chartData,
               totalMinutes: minutes,
             ),
-            const SizedBox(height: 14),
-            _InsightPanel(store: store, records: records),
+            if (store.hasPremiumAccess) ...[
+              const SizedBox(height: 14),
+              _InsightPanel(store: store, records: records),
+              const SizedBox(height: 14),
+              _CoachInsightPanel(store: store),
+            ],
             const SizedBox(height: 14),
             CatudyPanel(
               accentColor: CatudyColors.teal,
@@ -1101,11 +1119,13 @@ class _RangeTabs extends StatelessWidget {
   const _RangeTabs({
     required this.store,
     required this.selected,
+    required this.premiumEnabled,
     required this.onChanged,
   });
 
   final CatudyDemoStore store;
   final StatsRange selected;
+  final bool premiumEnabled;
   final ValueChanged<StatsRange> onChanged;
 
   @override
@@ -1127,11 +1147,13 @@ class _RangeTabs extends StatelessWidget {
           _RangeTab(
             label: store.t('stats.month'),
             selected: selected == StatsRange.month,
+            locked: !premiumEnabled,
             onTap: () => onChanged(StatsRange.month),
           ),
           _RangeTab(
             label: store.t('stats.all'),
             selected: selected == StatsRange.allTime,
+            locked: !premiumEnabled,
             onTap: () => onChanged(StatsRange.allTime),
           ),
         ],
@@ -1144,11 +1166,13 @@ class _RangeTab extends StatelessWidget {
   const _RangeTab({
     required this.label,
     required this.selected,
+    this.locked = false,
     required this.onTap,
   });
 
   final String label;
   final bool selected;
+  final bool locked;
   final VoidCallback onTap;
 
   @override
@@ -1165,16 +1189,112 @@ class _RangeTab extends StatelessWidget {
             color: selected ? CatudyColors.violet : Colors.transparent,
             borderRadius: BorderRadius.circular(999),
           ),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: selected ? Colors.white : CatudyColors.mutedFor(context),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected
+                        ? Colors.white
+                        : CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              if (locked) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.lock_rounded,
+                  size: 13,
+                  color: selected
+                      ? Colors.white
+                      : CatudyColors.mutedFor(context),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PremiumStatsUpsell extends StatelessWidget {
+  const _PremiumStatsUpsell({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      color: CatudyColors.lavenderSoft,
+      accentColor: CatudyColors.violet,
+      child: Row(
+        children: [
+          const Icon(Icons.lock_rounded, color: CatudyColors.violet),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              store.t('stats.plusLocked'),
+              style: TextStyle(
+                color: CatudyColors.mutedFor(context),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.go('/plus'),
+            child: Text(store.t('stats.openPlus')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CoachInsightPanel extends StatelessWidget {
+  const _CoachInsightPanel({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final recommendation = store.coachRecommendation;
+    return CatudyPanel(
+      color: CatudyColors.cream,
+      accentColor: CatudyColors.coral,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            store.t('stats.coachInsight'),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: CatudyColors.mutedFor(context),
               fontWeight: FontWeight.w900,
             ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            recommendation.headline,
+            style: TextStyle(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            recommendation.reason,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              height: 1.35,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

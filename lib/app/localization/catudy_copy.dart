@@ -89,6 +89,7 @@ class CatudyCopy {
     'home.focusSuggestionStarter':
         'İlk öneri için dengeli bir başlangıç süresi seçildi.',
     'home.prepareFocusPlan': 'Planı Hazırla',
+    'home.unlockCoach': 'Koçu aç',
     'home.dailyGoal': 'Günlük hedef',
     'home.dailyGoalProgress': '{done}/{goal} dk tamamlandı. Kalan: {left} dk.',
     'home.editDailyGoal': 'Günlük hedefi düzenle',
@@ -142,8 +143,9 @@ class CatudyCopy {
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
-        'Canlı odak puanı sıralaması. Buradan profilleri ve pet odalarını ziyaret edebilirsin.',
+        'Sıralama yalnızca gerçek odak dakikasına göre yapılır. Buradan profilleri ve pet odalarını ziyaret edebilirsin.',
     'leaderboard.you': 'sen',
+    'leaderboard.minutes': 'odak dk',
     'leaderboard.roomSoon': 'Pet odasını ziyaret et',
     'leaderboard.visitSoon': 'Pet odasını ziyaret et',
 
@@ -194,6 +196,10 @@ class CatudyCopy {
     'stats.thisMonth': 'Bu ay',
     'stats.allRecords': 'Tüm kayıtlar',
     'stats.periodTotalMinutes': 'Toplam: {minutes} dk',
+    'stats.plusLocked':
+        'Ay ve tüm zaman görünümü, saat bazlı analizler ve koç içgörüleri Catudy Plus ile açılır.',
+    'stats.openPlus': 'Plus',
+    'stats.coachInsight': 'Koç İçgörüsü',
 
     'focus.categoryTitle': 'Kategori Seç',
     'focus.addCategoryClose': 'Kategori eklemeyi kapat',
@@ -267,6 +273,11 @@ class CatudyCopy {
     'shop.buy': 'Al',
     'shop.openInventory': 'Envanteri aç',
     'shop.unlocked': 'Açık',
+    'shop.cratesBody':
+        'Kedi, oda ve stil kutularını aç; çıkan kozmetikler rekabet gücü değil, koleksiyon hissi verir.',
+    'shop.openCrates': 'Kutular',
+    'shop.plusCosmetics': 'Plus Kozmetikleri',
+    'shop.plusOnly': 'Plus',
 
     'item.violet_collar.name': 'Mor Tasma',
     'item.violet_collar.description': 'Mochi için yumuşak bir pet kozmetiği.',
@@ -302,6 +313,13 @@ class CatudyCopy {
     'inventory.petCosmetic': 'Pet kozmetiği',
     'inventory.profileEquipped': 'Profilde takılı',
     'inventory.profileCosmetic': 'Profil kozmetiği',
+    'inventory.premiumCosmetics': 'Plus Kozmetikleri',
+    'inventory.cosmeticSlot.pet_style': 'Pet stili',
+    'inventory.cosmeticSlot.room_effect': 'Oda efekti',
+    'inventory.cosmeticSlot.profile_theme': 'Profil teması',
+    'inventory.cosmeticSlot.profile_badge': 'Profil rozeti',
+    'inventory.cosmeticSlot.widget_theme': 'Widget teması',
+    'inventory.cosmeticSlot.dialogue_pack': 'Diyalog paketi',
 
     'profile.title': 'Profil',
     'profile.subtitle': 'Odak meraklısı ve çalışma dostu',
@@ -345,6 +363,72 @@ class CatudyCopy {
         'Bu kullanıcı profil istatistiklerini gizli tutuyor.',
     'profile.sessionsPublic': '{count} seans',
     'profile.totalPublic': 'Toplam {minutes} dk',
+    'profile.plusActive': 'Catudy Plus aktif',
+    'profile.plusLocked': 'Catudy Plus koleksiyonu',
+    'profile.collectionSummary': '{count} premium kozmetik toplandı.',
+    'profile.themeSummary': '{theme} aktif · {count} kozmetik toplandı.',
+    'profile.openPlus': 'Aç',
+
+    'premium.title': 'Catudy Plus',
+    'premium.active': 'Catudy Plus aktif',
+    'premium.pitch': 'Daha akıllı öneriler, daha zengin koleksiyon',
+    'premium.body':
+        'Koç, gelişmiş istatistikler, sezon pass, premium kozmetikler, widget temaları ve Buddy Pass tek pakette.',
+    'premium.featureCoach': 'Algoritmik koç',
+    'premium.featureStats': 'Gelişmiş istatistik',
+    'premium.featureSeason': 'Sezon pass',
+    'premium.featureCosmetics': 'Premium kozmetik',
+    'premium.activateDemo': 'Demo Plus aç',
+    'premium.clearDemo': 'Demo Plus kapat',
+    'premium.openSeason': 'Sezon Pass',
+    'premium.openCrates': 'Kutular',
+    'premium.widgetThemes': 'Widget / Lock-screen temaları',
+    'premium.widgetClassic': 'Klasik widget',
+    'premium.widgetPreview': '{done}/{goal} dk bugün',
+
+    'buddy.title': 'Buddy Pass',
+    'buddy.body':
+        'Her aktif Plus hesabı ayda 1 kez 30 günlük pass gönderebilir. Alıcı yeni kullanıcı olmak zorunda değildir; her hesap yalnızca 1 kez kullanabilir.',
+    'buddy.copy': 'Kopyala',
+    'buddy.copied': 'Buddy Pass kodu kopyalandı.',
+    'buddy.create': 'Buddy Pass oluştur',
+    'buddy.created': 'Buddy Pass hazır.',
+    'buddy.redeemLabel': 'Buddy Pass kodu',
+    'buddy.redeem': 'Kullan',
+    'buddy.redeemed': 'Buddy Pass kullanıldı.',
+    'buddy.invalid': 'Kod kullanılamadı.',
+
+    'season.title': 'Sezon Pass',
+    'season.progress': '{minutes} gerçek odak dakikası',
+    'season.freeTrack': 'Ücretsiz yol',
+    'season.premiumTrack': 'Plus yolu',
+    'season.unlockAt': '{minutes} dk’da açılır',
+    'season.claim': 'Al',
+    'season.claimed': 'Alındı',
+    'season.previewTitle': 'Aylık sezon başladı',
+    'season.previewBody': '{minutes} gerçek odak dakikası işlendi.',
+    'season.open': 'Aç',
+
+    'crates.title': 'Kutular',
+    'crates.wallet': '{gold} altın · {shards} shard',
+    'crates.collection': 'Koleksiyon',
+    'crates.owned': '{count} adet',
+    'crates.price': '{gold} altın',
+    'crates.plusOnly': 'Plus',
+    'crates.buy': 'Al',
+    'crates.open': 'Aç',
+    'crates.opening': 'Kutu açılıyor',
+    'crates.rolling': 'Ne çıkacak?',
+
+    'coach.starterHeadline': 'Güvenli başlangıç',
+    'coach.starterReason':
+        'Veri az olduğu için dengeli bir süre öneriyorum; birkaç gerçek seans sonra ritim kişiselleşecek.',
+    'coach.historyHeadline': 'Son ritmine göre',
+    'coach.bestHourHeadline': 'En güçlü penceren {hour}:00',
+    'coach.shorterReason':
+        '{category} seanslarında erken bitirme arttığı için {minutes} dakikalık daha temiz bir blok öneriyorum.',
+    'coach.historyReason':
+        'Son {sessions} {category} seansını harmanlayınca {minutes} dakika en dengeli seçenek görünüyor.',
 
     'settings.title': 'Ayarlar',
     'settings.displayName': 'Görünen ad',
@@ -537,6 +621,7 @@ class CatudyCopy {
     'home.focusSuggestionStarter':
         'A balanced starter duration was selected for the first recommendation.',
     'home.prepareFocusPlan': 'Prepare Plan',
+    'home.unlockCoach': 'Unlock coach',
     'home.dailyGoal': 'Daily target',
     'home.dailyGoalProgress':
         '{done}/{goal} min completed. Remaining: {left} min.',
@@ -593,8 +678,9 @@ class CatudyCopy {
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
-        'Live ranking by focus points. You can visit profiles and pet rooms from here.',
+        'Ranking uses only real focus minutes. You can visit profiles and pet rooms from here.',
     'leaderboard.you': 'you',
+    'leaderboard.minutes': 'focus min',
     'leaderboard.roomSoon': 'Visit pet room',
     'leaderboard.visitSoon': 'Visit pet room',
 
@@ -646,6 +732,10 @@ class CatudyCopy {
     'stats.thisMonth': 'This month',
     'stats.allRecords': 'All records',
     'stats.periodTotalMinutes': 'Total: {minutes} min',
+    'stats.plusLocked':
+        'Month and all-time views, hourly analysis, and coach insights unlock with Catudy Plus.',
+    'stats.openPlus': 'Plus',
+    'stats.coachInsight': 'Coach Insight',
 
     'focus.categoryTitle': 'Choose Category',
     'focus.addCategoryClose': 'Close category form',
@@ -718,6 +808,11 @@ class CatudyCopy {
     'shop.buy': 'Buy',
     'shop.openInventory': 'Open inventory',
     'shop.unlocked': 'Unlocked',
+    'shop.cratesBody':
+        'Open cat, room, and style crates; every reward is cosmetic, never competitive power.',
+    'shop.openCrates': 'Crates',
+    'shop.plusCosmetics': 'Plus Cosmetics',
+    'shop.plusOnly': 'Plus',
 
     'item.violet_collar.name': 'Violet Collar',
     'item.violet_collar.description': 'A soft pet cosmetic for Mochi.',
@@ -753,6 +848,13 @@ class CatudyCopy {
     'inventory.petCosmetic': 'Pet cosmetic',
     'inventory.profileEquipped': 'Equipped on profile',
     'inventory.profileCosmetic': 'Profile cosmetic',
+    'inventory.premiumCosmetics': 'Plus Cosmetics',
+    'inventory.cosmeticSlot.pet_style': 'Pet style',
+    'inventory.cosmeticSlot.room_effect': 'Room effect',
+    'inventory.cosmeticSlot.profile_theme': 'Profile theme',
+    'inventory.cosmeticSlot.profile_badge': 'Profile badge',
+    'inventory.cosmeticSlot.widget_theme': 'Widget theme',
+    'inventory.cosmeticSlot.dialogue_pack': 'Dialogue pack',
 
     'profile.title': 'Profile',
     'profile.subtitle': 'Focus enthusiast and study buddy',
@@ -795,6 +897,72 @@ class CatudyCopy {
     'profile.publicStatsHidden': 'This user keeps profile stats private.',
     'profile.sessionsPublic': '{count} sessions',
     'profile.totalPublic': 'Total {minutes} min',
+    'profile.plusActive': 'Catudy Plus active',
+    'profile.plusLocked': 'Catudy Plus collection',
+    'profile.collectionSummary': '{count} premium cosmetics collected.',
+    'profile.themeSummary': '{theme} active · {count} cosmetics collected.',
+    'profile.openPlus': 'Open',
+
+    'premium.title': 'Catudy Plus',
+    'premium.active': 'Catudy Plus active',
+    'premium.pitch': 'Smarter guidance, richer collection',
+    'premium.body':
+        'Coach, advanced stats, season pass, premium cosmetics, widget themes, and Buddy Pass in one layer.',
+    'premium.featureCoach': 'Algorithmic coach',
+    'premium.featureStats': 'Advanced stats',
+    'premium.featureSeason': 'Season pass',
+    'premium.featureCosmetics': 'Premium cosmetics',
+    'premium.activateDemo': 'Enable demo Plus',
+    'premium.clearDemo': 'Disable demo Plus',
+    'premium.openSeason': 'Season Pass',
+    'premium.openCrates': 'Crates',
+    'premium.widgetThemes': 'Widget / lock-screen themes',
+    'premium.widgetClassic': 'Classic widget',
+    'premium.widgetPreview': '{done}/{goal} min today',
+
+    'buddy.title': 'Buddy Pass',
+    'buddy.body':
+        'Each active Plus account can send one 30-day pass per month. The receiver does not need to be new; each account can redeem only once.',
+    'buddy.copy': 'Copy',
+    'buddy.copied': 'Buddy Pass code copied.',
+    'buddy.create': 'Create Buddy Pass',
+    'buddy.created': 'Buddy Pass is ready.',
+    'buddy.redeemLabel': 'Buddy Pass code',
+    'buddy.redeem': 'Redeem',
+    'buddy.redeemed': 'Buddy Pass redeemed.',
+    'buddy.invalid': 'That code could not be used.',
+
+    'season.title': 'Season Pass',
+    'season.progress': '{minutes} real focus minutes',
+    'season.freeTrack': 'Free track',
+    'season.premiumTrack': 'Plus track',
+    'season.unlockAt': 'Unlocks at {minutes} min',
+    'season.claim': 'Claim',
+    'season.claimed': 'Claimed',
+    'season.previewTitle': 'Monthly season is live',
+    'season.previewBody': '{minutes} real focus minutes logged.',
+    'season.open': 'Open',
+
+    'crates.title': 'Crates',
+    'crates.wallet': '{gold} gold · {shards} shards',
+    'crates.collection': 'Collection',
+    'crates.owned': '{count} owned',
+    'crates.price': '{gold} gold',
+    'crates.plusOnly': 'Plus',
+    'crates.buy': 'Buy',
+    'crates.open': 'Open',
+    'crates.opening': 'Opening crate',
+    'crates.rolling': 'What will drop?',
+
+    'coach.starterHeadline': 'Safe starting point',
+    'coach.starterReason':
+        'There is little data yet, so I am using a balanced block; a few real sessions will personalize the rhythm.',
+    'coach.historyHeadline': 'Based on your recent rhythm',
+    'coach.bestHourHeadline': 'Your strongest window is {hour}:00',
+    'coach.shorterReason':
+        'Early endings increased in {category}, so a cleaner {minutes}-minute block looks wiser.',
+    'coach.historyReason':
+        'Blending your last {sessions} {category} sessions makes {minutes} minutes look like the most balanced option.',
 
     'settings.title': 'Settings',
     'settings.displayName': 'Display name',

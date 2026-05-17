@@ -27,13 +27,16 @@ class ProfileScreen extends StatelessWidget {
             .take(3)
             .toList();
         final favorite = store.favoriteCategory;
+        final profileTheme = store.cosmeticById(store.selectedProfileThemeId);
 
         return ScreenScaffold(
           title: store.t('profile.title'),
           children: [
             CatudyPanel(
-              color: CatudyColors.cream,
-              accentColor: CatudyColors.teal,
+              color:
+                  profileTheme?.accent.withValues(alpha: 0.10) ??
+                  CatudyColors.cream,
+              accentColor: profileTheme?.accent ?? CatudyColors.teal,
               child: Column(
                 children: [
                   Row(
@@ -176,6 +179,8 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             _ProfileInsightsCard(store: store),
+            const SizedBox(height: 14),
+            _PlusCollectionCard(store: store),
             const SizedBox(height: 14),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,6 +342,69 @@ class ProfileScreen extends StatelessWidget {
       return '$rest${store.t('common.minutesShort')}';
     }
     return '$hours${store.t('common.hoursShort')} $rest${store.t('common.minutesShort')}';
+  }
+}
+
+class _PlusCollectionCard extends StatelessWidget {
+  const _PlusCollectionCard({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = store.cosmeticById(store.selectedProfileThemeId);
+    return CatudyPanel(
+      accentColor: CatudyColors.violet,
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: CatudyColors.violet.withValues(alpha: 0.14),
+            child: Icon(
+              store.hasPremiumAccess
+                  ? Icons.workspace_premium_rounded
+                  : Icons.workspace_premium_outlined,
+              color: CatudyColors.violet,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  store.hasPremiumAccess
+                      ? store.t('profile.plusActive')
+                      : store.t('profile.plusLocked'),
+                  style: TextStyle(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  theme == null
+                      ? store.t('profile.collectionSummary', {
+                          'count': store.ownedCosmeticIds.length,
+                        })
+                      : store.t('profile.themeSummary', {
+                          'theme': theme.name,
+                          'count': store.ownedCosmeticIds.length,
+                        }),
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.go('/plus'),
+            child: Text(store.t('profile.openPlus')),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -713,6 +781,13 @@ class _ProfileInsightsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unlocked = store.unlockedAchievements.take(4).toList();
+    final premiumBadges = store.cosmeticItems
+        .where(
+          (item) =>
+              item.slot == 'profile_badge' &&
+              store.ownedCosmeticIds.contains(item.id),
+        )
+        .toList();
     final goal = store.todayGoalProgress;
     return CatudyPanel(
       accentColor: CatudyColors.violet,
@@ -759,7 +834,7 @@ class _ProfileInsightsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          if (unlocked.isEmpty)
+          if (unlocked.isEmpty && premiumBadges.isEmpty)
             Text(
               store.t('profile.noBadges'),
               style: TextStyle(color: CatudyColors.mutedFor(context)),
@@ -777,6 +852,11 @@ class _ProfileInsightsCard extends StatelessWidget {
                       color: CatudyColors.teal,
                     ),
                     label: Text(achievement.title),
+                  ),
+                for (final badge in premiumBadges)
+                  Chip(
+                    avatar: Icon(badge.icon, size: 17, color: badge.accent),
+                    label: Text(badge.name),
                   ),
               ],
             ),

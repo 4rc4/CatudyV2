@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/demo/catudy_demo_store.dart';
+import '../../app/premium/catudy_premium_models.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/screen_scaffold.dart';
@@ -28,7 +29,7 @@ class ShopScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 4),
               child: Chip(
-                label: Text('${store.focusPoints} ${store.t('common.points')}'),
+                label: Text('${store.gold} ${store.t('common.gold')}'),
               ),
             ),
           ],
@@ -85,6 +86,46 @@ class ShopScreen extends StatelessWidget {
             const SizedBox(height: 10),
             for (final item in cosmeticItems)
               _ShopItemTile(store: store, item: item),
+            const SizedBox(height: 2),
+            CatudyPanel(
+              color: CatudyColors.lavenderSoft,
+              accentColor: CatudyColors.violet,
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.inventory_2_rounded,
+                    color: CatudyColors.violet,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      store.t('shop.cratesBody'),
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.go('/crates'),
+                    child: Text(store.t('shop.openCrates')),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              store.t('shop.plusCosmetics'),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: CatudyColors.muted,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 10),
+            for (final item in store.directPurchaseCosmetics.where(
+              (item) => item.premiumOnly,
+            ))
+              _PremiumCosmeticTile(store: store, item: item),
             OutlinedButton.icon(
               onPressed: () => context.go('/inventory'),
               icon: const Icon(Icons.inventory_2_rounded),
@@ -93,6 +134,61 @@ class ShopScreen extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _PremiumCosmeticTile extends StatelessWidget {
+  const _PremiumCosmeticTile({required this.store, required this.item});
+
+  final CatudyDemoStore store;
+  final CosmeticItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final owned = store.ownedCosmeticIds.contains(item.id);
+    final locked = item.premiumOnly && !store.hasPremiumAccess;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: CatudyPanel(
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: item.accent.withValues(alpha: 0.14),
+              child: Icon(item.icon, color: item.accent),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  Text(
+                    '${item.rarity.code} · ${item.description}',
+                    style: TextStyle(color: CatudyColors.mutedFor(context)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: owned || locked
+                  ? null
+                  : () => store.buyCosmetic(item.id),
+              child: Text(
+                owned
+                    ? store.t('shop.owned')
+                    : locked
+                    ? store.t('shop.plusOnly')
+                    : '${item.directPrice} ${store.t('common.gold')}',
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

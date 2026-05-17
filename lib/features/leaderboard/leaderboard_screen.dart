@@ -154,14 +154,14 @@ class _LeaderboardRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${profile.points}',
+                '${profile.totalMinutes}',
                 style: TextStyle(
                   color: CatudyColors.blueFor(context),
                   fontWeight: FontWeight.w900,
                 ),
               ),
               Text(
-                store.t('common.points'),
+                store.t('leaderboard.minutes'),
                 style: TextStyle(
                   color: CatudyColors.mutedFor(context),
                   fontSize: 11,

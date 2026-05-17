@@ -263,6 +263,12 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path.startsWith('/shop') || path.startsWith('/inventory')) {
       return '/pet-room';
     }
+    if (path.startsWith('/season') || path.startsWith('/crates')) {
+      return '/plus';
+    }
+    if (path.startsWith('/plus')) {
+      return '/profile';
+    }
     if (path.startsWith('/settings') || path.startsWith('/public-profile')) {
       return '/profile';
     }
@@ -301,7 +307,10 @@ class _CatudyShellState extends State<CatudyShell> {
     }
     if (path.startsWith('/profile') ||
         path.startsWith('/settings') ||
-        path.startsWith('/public-profile')) {
+        path.startsWith('/public-profile') ||
+        path.startsWith('/plus') ||
+        path.startsWith('/season') ||
+        path.startsWith('/crates')) {
       return 4;
     }
     return 0;

@@ -42,6 +42,7 @@ void main() {
     expect(find.text('Hafta'), findsOneWidget);
     expect(find.text('Ay'), findsOneWidget);
     expect(find.text('Tümü'), findsOneWidget);
+    expect(find.byIcon(Icons.lock_rounded), findsWidgets);
   });
 
   testWidgets('renders category flow with large add toggle', (tester) async {
@@ -118,6 +119,22 @@ void main() {
     expect(find.byIcon(Icons.g_mobiledata_rounded), findsOneWidget);
     expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);
     expect(find.byIcon(Icons.apple_rounded), findsNothing);
+  });
+
+  testWidgets('renders premium, season pass, and crates routes', (
+    tester,
+  ) async {
+    await _pumpCatudy(tester, initialLocation: '/plus');
+    expect(find.text('Catudy Plus'), findsOneWidget);
+    expect(find.text('Buddy Pass'), findsOneWidget);
+
+    await _pumpCatudy(tester, initialLocation: '/season');
+    expect(find.text('Sezon Pass'), findsOneWidget);
+    expect(find.text('Ücretsiz yol'), findsOneWidget);
+
+    await _pumpCatudy(tester, initialLocation: '/crates');
+    expect(find.text('Kutular'), findsOneWidget);
+    expect(find.text('Koleksiyon'), findsOneWidget);
   });
 }
 

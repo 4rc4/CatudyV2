@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:catudy_app/app/demo/catudy_demo_store.dart';
 import 'package:catudy_app/app/online/catudy_auth_service.dart';
 import 'package:catudy_app/app/online/catudy_leaderboard_service.dart';
+import 'package:catudy_app/app/premium/catudy_premium_models.dart';
 import 'package:catudy_app/app/storage/catudy_local_storage.dart';
 import 'package:catudy_app/app/theme/catudy_colors.dart';
 import 'package:flutter/material.dart';
@@ -640,6 +642,158 @@ void main() {
     );
     expect(merged['ownedItems'], containsAll(['violet_collar', 'sunny_hat']));
   });
+
+  test(
+    'premium entitlement unlocks coach and adds premium reward bonus',
+    () async {
+      final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+      await store.load();
+      store.activatePremiumDemo();
+
+      expect(store.hasPremiumAccess, isTrue);
+      expect(store.coachRecommendation.headline, isNotEmpty);
+
+      store.activeSession = ActiveFocusSession(
+        categoryId: 'study',
+        durationMinutes: 20,
+        startedAt: DateTime.now().subtract(const Duration(minutes: 20)),
+        lobbyMode: false,
+      );
+
+      final record = store.completeFocus();
+
+      expect(record.gold, 23);
+      expect(store.gold, 23);
+    },
+  );
+
+  test('coach personalizes after enough real focus history', () async {
+    final now = DateTime.now();
+    final store = CatudyDemoStore(
+      storage: _MemoryStorage({
+        'history': [
+          {
+            'categoryId': 'study',
+            'minutes': 25,
+            'createdAt': now
+                .subtract(const Duration(days: 1))
+                .toIso8601String(),
+            'manual': false,
+            'note': 'Focus session',
+            'gold': 25,
+          },
+          {
+            'categoryId': 'study',
+            'minutes': 30,
+            'createdAt': now
+                .subtract(const Duration(days: 2))
+                .toIso8601String(),
+            'manual': false,
+            'note': 'Focus session',
+            'gold': 30,
+          },
+          {
+            'categoryId': 'study',
+            'minutes': 20,
+            'createdAt': now
+                .subtract(const Duration(days: 3))
+                .toIso8601String(),
+            'manual': false,
+            'note': 'Focus session',
+            'gold': 20,
+          },
+        ],
+        'selectedCategoryId': 'study',
+        'ownedItems': ['violet_collar'],
+      }),
+    );
+
+    await store.load();
+
+    final recommendation = store.coachRecommendation;
+
+    expect(recommendation.basedOnHistory, isTrue);
+    expect(recommendation.sessionsConsidered, 3);
+  });
+
+  test(
+    'crates convert duplicate cosmetics into shards and advance pity',
+    () async {
+      final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+      await store.load();
+      store.crateInventory['cat_crate'] = 2;
+
+      final first = store.openCrate('cat_crate', random: _FixedRandom());
+      final second = store.openCrate('cat_crate', random: _FixedRandom());
+
+      expect(first?.id, 'rainbow_scarf');
+      expect(second?.id, 'rainbow_scarf');
+      expect(store.ownedCosmeticIds.contains('rainbow_scarf'), isTrue);
+      expect(store.shardWallet.shards, Rarity.common.shardValue);
+      expect(store.pityStates['cat_crate']?.opensSinceRare, 2);
+    },
+  );
+
+  test('season rewards respect free and premium tracks', () async {
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+    await store.load();
+    store.seasonProgress = store.seasonProgress.copyWith(focusMinutes: 320);
+
+    expect(store.claimSeasonReward('free_cat_crate_140'), isTrue);
+    expect(store.crateInventory['cat_crate'], 1);
+    expect(store.claimSeasonReward('plus_style_crate_60'), isFalse);
+
+    store.activatePremiumDemo();
+
+    expect(store.claimSeasonReward('plus_style_crate_60'), isTrue);
+    expect(store.crateInventory['style_crate'], 1);
+  });
+
+  test(
+    'buddy pass is monthly for sender and once per receiver lifetime',
+    () async {
+      final sender = CatudyDemoStore(storage: _MemoryStorage(null));
+      final receiver = CatudyDemoStore(storage: _MemoryStorage(null));
+
+      await sender.load();
+      await receiver.load();
+      sender.activatePremiumDemo();
+
+      final pass = sender.createBuddyPass();
+
+      expect(pass, isNotNull);
+      expect(sender.createBuddyPass(), isNull);
+      expect(receiver.redeemBuddyPass(pass!.code), isTrue);
+      expect(receiver.hasPremiumAccess, isTrue);
+
+      receiver.clearPremiumEntitlement();
+
+      expect(receiver.redeemBuddyPass('BUDDY-SECOND'), isFalse);
+    },
+  );
+
+  test(
+    'leaderboard profile uses real focus minutes as public metric',
+    () async {
+      final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+      await store.load();
+      store.focusPoints = 900;
+      store.activeSession = ActiveFocusSession(
+        categoryId: 'study',
+        durationMinutes: 15,
+        startedAt: DateTime.now().subtract(const Duration(minutes: 15)),
+        lobbyMode: false,
+      );
+      store.completeFocus();
+
+      expect(store.leaderboardProfiles.single.points, greaterThan(15));
+      expect(store.leaderboardProfiles.single.totalMinutes, 15);
+    },
+  );
 }
 
 class _MemoryStorage extends CatudyLocalStorage {
@@ -712,6 +866,17 @@ class _FakeAuthService extends CatudyAuthService {
     _session = null;
     _controller.add(null);
   }
+}
+
+class _FixedRandom implements Random {
+  @override
+  bool nextBool() => false;
+
+  @override
+  double nextDouble() => 0.95;
+
+  @override
+  int nextInt(int max) => 0;
 }
 
 SupabaseClient _testSupabaseClient() {

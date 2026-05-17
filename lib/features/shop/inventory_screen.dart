@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/demo/catudy_demo_store.dart';
+import '../../app/premium/catudy_premium_models.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/screen_scaffold.dart';
@@ -70,7 +71,78 @@ class InventoryScreen extends StatelessWidget {
             (i) => store.ownedItems.contains(i.id),
           ))
             _InventoryItemTile(store: store, item: item),
+          if (store.ownedCosmeticIds.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              store.t('inventory.premiumCosmetics'),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: CatudyColors.mutedFor(context),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 10),
+            for (final item in store.cosmeticItems.where(
+              (item) => store.ownedCosmeticIds.contains(item.id),
+            ))
+              _PremiumInventoryTile(store: store, item: item),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _PremiumInventoryTile extends StatelessWidget {
+  const _PremiumInventoryTile({required this.store, required this.item});
+
+  final CatudyDemoStore store;
+  final CosmeticItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEquipped = switch (item.slot) {
+      'pet_style' => store.selectedPetStyleId == item.id,
+      'room_effect' => store.selectedRoomEffectId == item.id,
+      'profile_theme' => store.selectedProfileThemeId == item.id,
+      'widget_theme' => store.selectedWidgetThemeId == item.id,
+      'dialogue_pack' => store.selectedDialoguePackId == item.id,
+      _ => false,
+    };
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: CatudyPanel(
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: item.accent.withValues(alpha: 0.14),
+              child: Icon(item.icon, color: item.accent),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  Text(
+                    store.t('inventory.cosmeticSlot.${item.slot}'),
+                    style: TextStyle(color: CatudyColors.mutedFor(context)),
+                  ),
+                ],
+              ),
+            ),
+            FilledButton(
+              onPressed: isEquipped ? null : () => store.equipCosmetic(item.id),
+              child: Text(
+                isEquipped
+                    ? store.t('common.selected')
+                    : store.t('inventory.equipped'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

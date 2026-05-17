@@ -53,6 +53,18 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
     'Unlock a new item and our room will look even sweeter.',
   ];
 
+  static const _storybookDialoguesTr = [
+    'Bir sayfa daha, sonra birlikte yıldızları sayarız.',
+    'Bugünün küçük gayreti yarının masalını biraz daha güzelleştirir.',
+    'Sen çalışırken ben de sessizce nöbet tutuyorum.',
+  ];
+
+  static const _storybookDialoguesEn = [
+    'One more page, then we can count the stars together.',
+    'A small effort today makes tomorrow’s story kinder.',
+    'While you study, I keep quiet watch beside you.',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -83,16 +95,35 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
           _schedulePetNameDialog(context, store);
         }
         final equippedItem = store.equippedPetItemForProfile(visited);
-        final equipped = equippedItem == null
-            ? store.t('pet.noCosmetic')
-            : store.itemName(equippedItem);
-        final dialogue = store.languageCode == 'en'
-            ? _dialoguesEn[_dialogueIndex % _dialoguesEn.length]
-            : _dialoguesTr[_dialogueIndex];
+        final premiumPetStyle = visited == null
+            ? store.cosmeticById(store.selectedPetStyleId)
+            : null;
+        final equipped =
+            premiumPetStyle?.name ??
+            (equippedItem == null
+                ? store.t('pet.noCosmetic')
+                : store.itemName(equippedItem));
+        final premiumDialogueActive =
+            visited == null &&
+            store.selectedDialoguePackId == 'storybook_dialogues' &&
+            store.ownedCosmeticIds.contains('storybook_dialogues');
+        final dialoguePool = store.languageCode == 'en'
+            ? [
+                ..._dialoguesEn,
+                if (premiumDialogueActive) ..._storybookDialoguesEn,
+              ]
+            : [
+                ..._dialoguesTr,
+                if (premiumDialogueActive) ..._storybookDialoguesTr,
+              ];
+        final dialogue = dialoguePool[_dialogueIndex % dialoguePool.length];
         final studyItem = store.roomItemForSlot('room_study', profile: visited);
         final bedItem = store.roomItemForSlot('room_bed', profile: visited);
         final decorItem = store.roomItemForSlot('room_decor', profile: visited);
         final shelfItem = store.roomItemForSlot('room_shelf', profile: visited);
+        final roomEffect = visited == null
+            ? store.cosmeticById(store.selectedRoomEffectId)
+            : null;
 
         return SizedBox.expand(
           child: _RoomScene(
@@ -112,6 +143,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             bedItem: bedItem,
             decorItem: decorItem,
             shelfItem: shelfItem,
+            roomEffectAccent: roomEffect?.accent,
             maintenanceTitle: store.t('pet.roomMaintenanceTitle'),
             maintenanceBody: store.t('pet.roomMaintenanceBody'),
             visiting: visited != null,
@@ -248,6 +280,7 @@ class _RoomScene extends StatelessWidget {
     required this.bedItem,
     required this.decorItem,
     required this.shelfItem,
+    required this.roomEffectAccent,
     required this.maintenanceTitle,
     required this.maintenanceBody,
     required this.visiting,
@@ -272,6 +305,7 @@ class _RoomScene extends StatelessWidget {
   final ShopItem? bedItem;
   final ShopItem? decorItem;
   final ShopItem? shelfItem;
+  final Color? roomEffectAccent;
   final String maintenanceTitle;
   final String maintenanceBody;
   final bool visiting;
@@ -358,6 +392,23 @@ class _RoomScene extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               const Positioned.fill(child: _RoomBackground()),
+              if (roomEffectAccent != null)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: Alignment.topCenter,
+                          radius: 1.15,
+                          colors: [
+                            roomEffectAccent!.withValues(alpha: 0.24),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               window.positioned(
                 child: _RoomWindow(
                   width: window.resolvedWidth,
