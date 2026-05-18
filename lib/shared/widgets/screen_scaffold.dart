@@ -28,7 +28,7 @@ class ScreenScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -54,6 +54,7 @@ class ScreenScaffold extends StatelessWidget {
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: CatudyColors.blueFor(context),
                     fontWeight: FontWeight.w900,
+                    height: 1.08,
                   ),
                 ),
               ),

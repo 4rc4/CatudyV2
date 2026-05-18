@@ -30,18 +30,18 @@ class CatudyPanel extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: dark
-                ? Colors.black.withValues(alpha: 0.24)
-                : CatudyColors.violet.withValues(alpha: 0.13),
-            blurRadius: 22,
-            offset: const Offset(0, 9),
+                ? Colors.black.withValues(alpha: 0.22)
+                : CatudyColors.violet.withValues(alpha: 0.10),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
           if (!dark)
             BoxShadow(
-              color: Colors.white.withValues(alpha: 0.78),
+              color: Colors.white.withValues(alpha: 0.70),
               blurRadius: 2,
               offset: const Offset(0, -1),
             ),
@@ -51,12 +51,12 @@ class CatudyPanel extends StatelessWidget {
         width: double.infinity,
         padding: padding,
         decoration: BoxDecoration(
-          color: panelColor.withValues(alpha: dark ? 0.92 : 0.95),
+          color: panelColor.withValues(alpha: dark ? 0.94 : 0.97),
           border: Border.all(
-            color: borderColor.withValues(alpha: 0.24),
-            width: 1.5,
+            color: borderColor.withValues(alpha: dark ? 0.26 : 0.18),
+            width: 1.2,
           ),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
         ),
         child: child,
       ),

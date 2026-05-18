@@ -49,6 +49,32 @@ class CatudyTheme {
           fontVariations: _headingFontVariations,
         ),
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor:
+            (dark ? CatudyColors.darkSurfaceStrong : CatudyColors.surface)
+                .withValues(alpha: dark ? 0.72 : 0.88),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        prefixIconColor: dark ? CatudyColors.darkMuted : CatudyColors.muted,
+        labelStyle: TextStyle(
+          color: dark ? CatudyColors.darkMuted : CatudyColors.muted,
+          fontWeight: FontWeight.w700,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(
+            color: CatudyColors.violet.withValues(alpha: dark ? 0.26 : 0.18),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: CatudyColors.violet, width: 1.5),
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
+      ),
       cardTheme: CardThemeData(
         color: dark ? CatudyColors.darkSurface : CatudyColors.surface,
         elevation: 0,
@@ -82,6 +108,15 @@ class CatudyTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(textStyle: _buttonTextStyle),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          backgroundColor:
+              (dark ? CatudyColors.darkSurface : CatudyColors.surface)
+                  .withValues(alpha: dark ? 0.88 : 0.96),
+          foregroundColor: dark ? CatudyColors.darkMuted : CatudyColors.muted,
+          minimumSize: const Size(44, 44),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(textStyle: _buttonTextStyle),

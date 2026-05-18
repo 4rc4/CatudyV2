@@ -182,43 +182,55 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 14),
             _PlusCollectionCard(store: store),
             const SizedBox(height: 14),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      _EquippedItemsCard(items: owned),
-                      const SizedBox(height: 12),
-                      _WeeklySummaryCard(records: store.history),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    children: [
-                      const _PetPreviewCard(),
-                      const SizedBox(height: 12),
-                      CatudyPanel(
-                        accentColor: CatudyColors.teal,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _CardTitle(
-                              icon: Icons.star_rounded,
-                              title: store.t('profile.favoriteCategory'),
-                              color: CatudyColors.teal,
-                            ),
-                            const SizedBox(height: 12),
-                            _FavoriteCategoryTile(category: favorite),
-                          ],
-                        ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 380;
+                final leftColumn = Column(
+                  children: [
+                    _EquippedItemsCard(items: owned),
+                    const SizedBox(height: 12),
+                    _WeeklySummaryCard(records: store.history),
+                  ],
+                );
+                final rightColumn = Column(
+                  children: [
+                    const _PetPreviewCard(),
+                    const SizedBox(height: 12),
+                    CatudyPanel(
+                      accentColor: CatudyColors.teal,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _CardTitle(
+                            icon: Icons.star_rounded,
+                            title: store.t('profile.favoriteCategory'),
+                            color: CatudyColors.teal,
+                          ),
+                          const SizedBox(height: 12),
+                          _FavoriteCategoryTile(category: favorite),
+                        ],
                       ),
+                    ),
+                  ],
+                );
+                if (compact) {
+                  return Column(
+                    children: [
+                      leftColumn,
+                      const SizedBox(height: 12),
+                      rightColumn,
                     ],
-                  ),
-                ),
-              ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: leftColumn),
+                    const SizedBox(width: 12),
+                    Expanded(child: rightColumn),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 14),
             Row(

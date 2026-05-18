@@ -328,7 +328,7 @@ begin
   end if;
 
   loop
-    generated_code := 'PLUS-' || upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 8));
+    generated_code := 'PLUS-' || upper(substr(encode(extensions.gen_random_bytes(6), 'hex'), 1, 8));
     exit when not exists (
       select 1
       from public.catudy_buddy_passes p
