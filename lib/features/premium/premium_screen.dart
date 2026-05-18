@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +19,14 @@ class PremiumScreen extends StatefulWidget {
 
 class _PremiumScreenState extends State<PremiumScreen> {
   final _buddyController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(catudyDemoStore.refreshPremiumNow());
+    });
+  }
 
   @override
   void dispose() {
@@ -97,6 +107,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
           const SizedBox(height: 14),
           _QuickLinks(store: store),
+          const SizedBox(height: 14),
+          _PremiumSyncPanel(store: store),
           if (store.premiumError != null) ...[
             const SizedBox(height: 10),
             Text(
@@ -111,6 +123,74 @@ class _PremiumScreenState extends State<PremiumScreen> {
           _BuddyPassPanel(store: store, controller: _buddyController),
           const SizedBox(height: 14),
           _WidgetThemePanel(store: store),
+        ],
+      ),
+    );
+  }
+}
+
+class _PremiumSyncPanel extends StatelessWidget {
+  const _PremiumSyncPanel({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final accountLabel =
+        store.authEmail ?? store.authUserId ?? store.t('premium.notSignedIn');
+    final statusLabel = store.hasPremiumAccess
+        ? store.t('premium.statusActive')
+        : store.t('premium.statusInactive');
+    return CatudyPanel(
+      accentColor: CatudyColors.blue,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            store.t('premium.backendTitle'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            store.canSyncPremiumOnline
+                ? store.t('premium.backendOnline')
+                : store.t('premium.backendOffline'),
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${store.t('premium.account')}: $accountLabel',
+            style: TextStyle(color: CatudyColors.mutedFor(context)),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${store.t('premium.status')}: $statusLabel',
+            style: TextStyle(color: CatudyColors.mutedFor(context)),
+          ),
+          if (store.authUserId != null) ...[
+            const SizedBox(height: 4),
+            SelectableText(
+              store.authUserId!,
+              style: TextStyle(
+                color: CatudyColors.blueFor(context),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: store.canSyncPremiumOnline && !store.premiumBusy
+                ? store.refreshPremiumNow
+                : null,
+            icon: const Icon(Icons.sync_rounded),
+            label: Text(store.t('premium.refresh')),
+          ),
         ],
       ),
     );
@@ -172,6 +252,14 @@ class _BuddyPassPanel extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             store.t('buddy.body'),
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            store.t('buddy.requirements'),
             style: TextStyle(
               color: CatudyColors.mutedFor(context),
               fontWeight: FontWeight.w700,

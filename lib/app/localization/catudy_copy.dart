@@ -387,10 +387,22 @@ class CatudyCopy {
     'premium.widgetClassic': 'Klasik widget',
     'premium.widgetPreview': '{done}/{goal} dk bugün',
     'premium.syncError': 'Plus durumu şu an senkronize edilemedi.',
+    'premium.backendTitle': 'Plus senkron durumu',
+    'premium.backendOnline': 'Online hesap bağlı; Plus sunucudan okunuyor.',
+    'premium.backendOffline':
+        'Online hesap bağlı değil; şu an yalnızca yerel demo durumu geçerli.',
+    'premium.account': 'Hesap',
+    'premium.notSignedIn': 'Giriş yapılmadı',
+    'premium.status': 'Durum',
+    'premium.statusActive': 'Aktif',
+    'premium.statusInactive': 'Aktif değil',
+    'premium.refresh': 'Plus durumunu yenile',
 
     'buddy.title': 'Buddy Pass',
     'buddy.body':
         'Her aktif Plus hesabı ayda 1 kez 30 günlük pass gönderebilir. Alıcı yeni kullanıcı olmak zorunda değildir; her hesap yalnızca 1 kez kullanabilir. Arkadaşın 180 gerçek odak dakikasına ulaşırsa Buddy Moon Pin rozeti kazanırsın.',
+    'buddy.requirements':
+        'Kullanmak için farklı, şu an Plus olmayan bir hesap gerekir.',
     'buddy.copy': 'Kopyala',
     'buddy.copied': 'Buddy Pass kodu kopyalandı.',
     'buddy.create': 'Buddy Pass oluştur',
@@ -925,10 +937,23 @@ class CatudyCopy {
     'premium.widgetClassic': 'Classic widget',
     'premium.widgetPreview': '{done}/{goal} min today',
     'premium.syncError': 'Plus state could not be synced right now.',
+    'premium.backendTitle': 'Plus sync status',
+    'premium.backendOnline':
+        'Online account connected; Plus is read from server.',
+    'premium.backendOffline':
+        'No online account connected; only local demo state is active right now.',
+    'premium.account': 'Account',
+    'premium.notSignedIn': 'Not signed in',
+    'premium.status': 'Status',
+    'premium.statusActive': 'Active',
+    'premium.statusInactive': 'Inactive',
+    'premium.refresh': 'Refresh Plus status',
 
     'buddy.title': 'Buddy Pass',
     'buddy.body':
         'Each active Plus account can send one 30-day pass per month. The receiver does not need to be new; each account can redeem only once. If your friend reaches 180 real focus minutes, you earn the Buddy Moon Pin badge.',
+    'buddy.requirements':
+        'Redeeming requires a different account that is not already Plus.',
     'buddy.copy': 'Copy',
     'buddy.copied': 'Buddy Pass code copied.',
     'buddy.create': 'Create Buddy Pass',

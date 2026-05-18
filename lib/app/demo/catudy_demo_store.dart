@@ -1099,6 +1099,8 @@ class CatudyDemoStore extends ChangeNotifier {
 
   bool get isAuthenticated => authUserId != null;
 
+  bool get canSyncPremiumOnline => onlinePremiumAvailable && isAuthenticated;
+
   String get publicUserId => _currentLeaderboardUserId;
 
   String get publicUserCode => displayUserId(_currentLeaderboardUserId);
@@ -2631,6 +2633,11 @@ class CatudyDemoStore extends ChangeNotifier {
     ownedCosmeticIds.addAll(snapshot.grantedCosmeticIds);
     _normalizeCosmeticSelections();
     _commit();
+  }
+
+  Future<void> refreshPremiumNow() async {
+    _refreshPremiumState();
+    await _premiumRefreshFuture;
   }
 
   bool buyCosmetic(String id) {
