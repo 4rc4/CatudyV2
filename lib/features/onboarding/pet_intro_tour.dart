@@ -209,7 +209,7 @@ class _FirstRunOnboardingState extends State<_FirstRunOnboarding> {
 
   void _startFirstFocus() {
     _finish();
-    widget.router.go('/focus/category');
+    widget.router.go('/focus/start');
   }
 }
 

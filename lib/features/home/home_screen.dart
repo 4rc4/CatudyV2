@@ -41,12 +41,12 @@ class HomeScreen extends StatelessWidget {
                 coachRecommendation: coachRecommendation,
                 category: recommendationCategory,
               ),
-              const SizedBox(height: 18),
-              _PetCompanionCard(store: store),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
               _DailyGoalPanel(store: store),
               const SizedBox(height: 14),
-              _QuickActionStrip(store: store),
+              _PetCompanionCard(store: store),
+              const SizedBox(height: 14),
+              _SecondaryHomePanel(store: store),
               const SizedBox(height: 14),
               CatudyPanel(
                 accentColor: CatudyColors.teal,
@@ -72,60 +72,6 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
-              CatudyPanel(
-                accentColor: CatudyColors.violet,
-                child: Column(
-                  children: [
-                    Text(
-                      store.t('home.todaySummary'),
-                      style: textTheme.titleLarge?.copyWith(
-                        color: CatudyColors.mutedFor(context),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _SummaryText(
-                          label: store.t('home.focus'),
-                          value:
-                              '${store.todayMinutes}${store.t('common.minutesShort')}',
-                          info: store.languageCode == 'en'
-                              ? 'Total duration of real and manual focus records completed today.'
-                              : 'Bugün tamamlanan gerçek ve manuel odak kayıtlarının toplam süresi.',
-                        ),
-                        _SummaryText(
-                          label: store.t('home.streak'),
-                          icon: Icons.local_fire_department_rounded,
-                          value:
-                              '${store.streakDays}${store.t('common.daysShort')}',
-                          info: store.languageCode == 'en'
-                              ? 'Shows consecutive focus days. A longer streak makes momentum easier to track.'
-                              : 'Art arda odak yapılan günleri gösterir. Seri ilerledikçe motivasyon takibi kolaylaşır.',
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 22),
-                    Text(
-                      store.history.isEmpty
-                          ? store.t('home.noSessions')
-                          : store.t('home.lastSession', {
-                              'minutes': store.history.first.minutes,
-                            }),
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: CatudyColors.mutedFor(context),
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              _SeasonPassPreview(store: store),
-              const SizedBox(height: 14),
-              _AchievementPreview(store: store),
             ],
           ),
         );
@@ -242,44 +188,24 @@ class _FocusHeroCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      store.t('home.focusTime'),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: CatudyColors.mutedFor(context),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      store.t('home.focusSuggestion', {
-                        'minutes': minutes,
-                        'category': category,
-                      }),
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: CatudyColors.blueFor(context),
-                            fontWeight: FontWeight.w900,
-                            height: 1.06,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              _FocusLaunchButton(
-                onPressed: () {
-                  final focusRoute = store.consumeFocusNavigationRoute();
-                  context.go(focusRoute ?? '/focus/category');
-                },
-              ),
-            ],
+          Text(
+            store.t('home.focusTime'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            store.t('home.focusSuggestion', {
+              'minutes': minutes,
+              'category': category,
+            }),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+              height: 1.06,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
@@ -291,17 +217,31 @@ class _FocusHeroCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          _FocusLaunchButton(
+            minutes: minutes,
+            onPressed: () {
+              final focusRoute = store.consumeFocusNavigationRoute();
+              if (focusRoute != null) {
+                context.go(focusRoute);
+                return;
+              }
+              store.prepareRecommendedFocus();
+              store.startFocus();
+              context.go('/focus/timer');
+            },
+          ),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              FilledButton.icon(
+              OutlinedButton.icon(
                 onPressed: () {
                   store.prepareRecommendedFocus();
-                  context.go('/focus/category');
+                  context.go('/focus/start');
                 },
-                icon: const Icon(Icons.playlist_add_check_rounded),
-                label: Text(store.t('home.prepareFocusPlan')),
+                icon: const Icon(Icons.tune_rounded),
+                label: Text(store.t('home.adjustFocus')),
               ),
               if (!premiumActive)
                 OutlinedButton.icon(
@@ -324,48 +264,88 @@ class _PetCompanionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nextPets =
+        store.unlockablePets
+            .where((pet) => !store.unlockedPetIds.contains(pet.id))
+            .toList()
+          ..sort((a, b) => a.requiredPoints.compareTo(b.requiredPoints));
+    final nextPet = nextPets.isEmpty ? null : nextPets.first;
+    final remainingPoints = nextPet == null
+        ? 0
+        : (nextPet.requiredPoints - store.focusPoints).clamp(0, 999999);
+
     return CatudyPanel(
       padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
       color: CatudyColors.cream,
       accentColor: CatudyColors.teal,
-      child: Row(
+      child: Column(
         children: [
-          const FloatingMascot(width: 72, height: 72),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 6,
-              children: [
-                _PetStatusChip(
+          Row(
+            children: [
+              const FloatingMascot(width: 72, height: 72),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      store.t('home.petWhisperTitle', {
+                        'pet': store.petDisplayName,
+                      }),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: CatudyColors.blueFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      nextPet == null
+                          ? store.t('home.petAllUnlocked')
+                          : store.t('home.petNextUnlock', {
+                              'pet': nextPet.name,
+                              'points': remainingPoints,
+                            }),
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              FilledButton.tonal(
+                onPressed: () => context.go('/pet-room'),
+                child: Text(store.t('home.petButton')),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _PetStatusChip(
                   icon: Icons.sentiment_satisfied_rounded,
                   label:
                       '${store.t('home.happiness')}: ${store.petMood > 70 ? store.t('home.good') : store.t('home.normal')}',
                   infoTitle: store.t('home.happiness'),
                   infoMessage: store.languageCode == 'en'
                       ? 'Mochi gets happier with focus sessions and favorite items. High happiness makes the room feel more lively.'
-                      : 'Mochi odak seansları ve sevdiği eşyalarla daha mutlu olur. Mutluluk yüksekken oda daha canlı hissettirir.',
+                      : 'Mochi odak seanslar? ve sevdi?i e?yalarla daha mutlu olur. Mutluluk y?ksekken oda daha canl? hissettirir.',
                 ),
-                _PetStatusChip(
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _PetStatusChip(
                   icon: Icons.local_cafe_rounded,
                   label:
                       '${store.t('home.hunger')}: ${store.petHunger < 35 ? store.t('home.full') : store.t('home.hungry')}',
                   infoTitle: store.t('home.hunger'),
                   infoMessage: store.languageCode == 'en'
                       ? 'Hunger rises over time. Regular focus and care keep your pet balanced.'
-                      : 'Açlık zamanla yükselir. Düzenli odak ve bakım petin dengesini korur.',
+                      : 'A?l?k zamanla y?kselir. D?zenli odak ve bak?m petin dengesini korur.',
                 ),
-              ],
-            ),
-          ),
-          FilledButton(
-            onPressed: () => context.go('/pet-room'),
-            style: FilledButton.styleFrom(
-              backgroundColor: CatudyColors.violet,
-              minimumSize: const Size(0, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-            ),
-            child: Text(store.t('home.petButton')),
+              ),
+            ],
           ),
         ],
       ),
@@ -373,60 +353,129 @@ class _PetCompanionCard extends StatelessWidget {
   }
 }
 
-class _QuickActionStrip extends StatelessWidget {
-  const _QuickActionStrip({required this.store});
+class _SecondaryHomePanel extends StatelessWidget {
+  const _SecondaryHomePanel({required this.store});
 
   final CatudyDemoStore store;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 370;
-        final tileWidth = compact
-            ? constraints.maxWidth
-            : (constraints.maxWidth - 10) / 2;
-        return Wrap(
-          spacing: 10,
-          runSpacing: 10,
+    final unlockedAchievements = store.achievements
+        .where((achievement) => achievement.unlocked)
+        .length;
+    return CatudyPanel(
+      accentColor: CatudyColors.violet,
+      child: Column(
+        children: [
+          _HomeLinkRow(
+            icon: Icons.groups_rounded,
+            title: store.t('community.title'),
+            subtitle: store.t('home.communityShortcut'),
+            onTap: () => context.go('/community?tab=friends'),
+          ),
+          const Divider(height: 20),
+          _HomeLinkRow(
+            icon: Icons.emoji_events_rounded,
+            title: store.t('leaderboard.title'),
+            subtitle: store.t('home.rankingShortcut'),
+            onTap: () => context.go('/community?tab=ranking'),
+          ),
+          const Divider(height: 20),
+          _HomeLinkRow(
+            icon: Icons.workspace_premium_rounded,
+            title: store.t('season.previewTitle'),
+            subtitle: store.t('home.collectionShortcut', {
+              'count': unlockedAchievements,
+            }),
+            onTap: () => context.go('/season'),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.go('/lobby/create'),
+                  icon: const Icon(Icons.add_home_rounded),
+                  label: Text(store.t('home.createLobby')),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.go('/lobby/join'),
+                  icon: const Icon(Icons.login_rounded),
+                  label: Text(store.t('home.joinLobby')),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeLinkRow extends StatelessWidget {
+  const _HomeLinkRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
           children: [
-            SizedBox(
-              width: tileWidth,
-              child: _ActionButton(
-                label: store.t('home.createLobby'),
-                icon: Icons.home_rounded,
-                color: CatudyColors.violet,
-                onPressed: () => context.go('/lobby/create'),
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: CatudyColors.violet.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(icon, color: CatudyColors.violet),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: CatudyColors.blueFor(context),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: CatudyColors.mutedFor(context),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(
-              width: tileWidth,
-              child: _ActionButton(
-                label: store.t('home.joinLobby'),
-                icon: Icons.groups_rounded,
-                color: CatudyColors.teal,
-                onPressed: () => context.go('/lobby/join'),
-              ),
-            ),
-            SizedBox(
-              width: tileWidth,
-              child: OutlinedButton.icon(
-                onPressed: () => context.go('/leaderboard'),
-                icon: const Icon(Icons.emoji_events_rounded),
-                label: Text(store.t('leaderboard.title')),
-              ),
-            ),
-            SizedBox(
-              width: tileWidth,
-              child: OutlinedButton.icon(
-                onPressed: () => context.go('/social'),
-                icon: const Icon(Icons.forum_rounded),
-                label: Text(store.t('social.title')),
-              ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: CatudyColors.mutedFor(context),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -524,66 +573,6 @@ class _DailyGoalPanel extends StatelessWidget {
   }
 }
 
-class _AchievementPreview extends StatelessWidget {
-  const _AchievementPreview({required this.store});
-
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    final achievements = store.achievements.take(3).toList();
-    return CatudyPanel(
-      accentColor: CatudyColors.violet,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            store.t('achievements.title'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 10),
-          for (final achievement in achievements)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 9),
-              child: Row(
-                children: [
-                  Icon(
-                    achievement.unlocked
-                        ? Icons.verified_rounded
-                        : achievement.icon,
-                    color: achievement.unlocked
-                        ? CatudyColors.teal
-                        : CatudyColors.violet,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      achievement.title,
-                      style: TextStyle(
-                        color: CatudyColors.blueFor(context),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '${achievement.progress.clamp(0, achievement.target)}/${achievement.target}',
-                    style: TextStyle(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _HomeTodoTile extends StatelessWidget {
   const _HomeTodoTile({required this.todo});
 
@@ -642,64 +631,6 @@ class _HomeTodoTile extends StatelessWidget {
   }
 }
 
-class _SeasonPassPreview extends StatelessWidget {
-  const _SeasonPassPreview({required this.store});
-
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    final progress = store.seasonProgress.focusMinutes;
-    return CatudyPanel(
-      color: CatudyColors.cream,
-      accentColor: CatudyColors.coral,
-      child: Row(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: CatudyColors.coral.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Icon(
-              Icons.emoji_events_rounded,
-              color: CatudyColors.coral,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  store.t('season.previewTitle'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: CatudyColors.blueFor(context),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  store.t('season.previewBody', {'minutes': progress}),
-                  style: TextStyle(
-                    color: CatudyColors.mutedFor(context),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () => context.go('/season'),
-            child: Text(store.t('season.open')),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _PetStatusChip extends StatelessWidget {
   const _PetStatusChip({
     required this.icon,
@@ -741,8 +672,9 @@ class _PetStatusChip extends StatelessWidget {
 }
 
 class _FocusLaunchButton extends StatefulWidget {
-  const _FocusLaunchButton({required this.onPressed});
+  const _FocusLaunchButton({required this.minutes, required this.onPressed});
 
+  final int minutes;
   final VoidCallback onPressed;
 
   @override
@@ -765,13 +697,13 @@ class _FocusLaunchButtonState extends State<_FocusLaunchButton> {
         child: AnimatedScale(
           duration: const Duration(milliseconds: 110),
           curve: Curves.easeOut,
-          scale: _pressed ? 0.94 : 1,
+          scale: _pressed ? 0.985 : 1,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
-            width: 104,
-            height: 104,
+            height: 76,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(28),
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -796,98 +728,56 @@ class _FocusLaunchButtonState extends State<_FocusLaunchButton> {
                 width: 2,
               ),
             ),
-            child: const Icon(
-              Icons.schedule_rounded,
-              color: Colors.white,
-              size: 48,
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.play_arrow_rounded,
+                    color: CatudyColors.violet,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        catudyDemoStore.t('focus.start'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.minutes}${catudyDemoStore.t('common.minutesShort')}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.84),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white.withValues(alpha: 0.92),
+                  size: 18,
+                ),
+              ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: FilledButton.icon(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor: color,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-        ),
-        icon: Icon(icon, size: 22),
-        label: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            label,
-            maxLines: 1,
-            style: const TextStyle(fontWeight: FontWeight.w900),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryText extends StatelessWidget {
-  const _SummaryText({
-    required this.label,
-    required this.value,
-    required this.info,
-    this.icon,
-  });
-
-  final String label;
-  final String value;
-  final String info;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return CatudyInfoTap(
-      title: label,
-      message: info,
-      child: Column(
-        children: [
-          Text(label, style: TextStyle(color: CatudyColors.mutedFor(context))),
-          const SizedBox(height: 3),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, color: CatudyColors.coral, size: 22),
-                const SizedBox(width: 3),
-              ],
-              Text(
-                value,
-                style: TextStyle(
-                  color: CatudyColors.blueFor(context),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

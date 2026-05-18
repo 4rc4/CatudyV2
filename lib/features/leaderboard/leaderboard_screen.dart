@@ -8,60 +8,73 @@ import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
+enum _LeaderboardAction { room, profile }
+
 class LeaderboardScreen extends StatelessWidget {
   const LeaderboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return StoreBuilder(
+      builder: (context, store) => ScreenScaffold(
+        title: store.t('leaderboard.title'),
+        showBack: true,
+        fallbackBackPath: '/',
+        children: const [LeaderboardContent()],
+      ),
+    );
+  }
+}
+
+class LeaderboardContent extends StatelessWidget {
+  const LeaderboardContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StoreBuilder(
       builder: (context, store) {
         final profiles = store.leaderboardProfiles;
-        return ScreenScaffold(
-          title: store.t('leaderboard.title'),
-          showBack: true,
-          fallbackBackPath: '/',
+        final currentUserIndex = profiles.indexWhere(
+          (profile) => profile.currentUser,
+        );
+        final currentUser = currentUserIndex == -1
+            ? null
+            : profiles[currentUserIndex];
+
+        return Column(
           children: [
             CatudyPanel(
-              color: CatudyColors.cream,
-              accentColor: CatudyColors.teal,
-              child: Row(
+              accentColor: CatudyColors.violet,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: CatudyColors.teal.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(18),
+                  _LeaderboardHeader(store: store),
+                  const SizedBox(height: 14),
+                  for (var index = 0; index < profiles.length; index++) ...[
+                    _LeaderboardListRow(
+                      rank: index + 1,
+                      profile: profiles[index],
+                      store: store,
                     ),
-                    child: const Icon(
-                      Icons.emoji_events_rounded,
-                      color: CatudyColors.teal,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      store.t('leaderboard.body'),
-                      style: TextStyle(
-                        color: CatudyColors.mutedFor(context),
-                        height: 1.35,
-                        fontWeight: FontWeight.w800,
+                    if (index != profiles.length - 1)
+                      Divider(
+                        height: 22,
+                        color: CatudyColors.lineFor(
+                          context,
+                        ).withValues(alpha: 0.75),
                       ),
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-            for (var index = 0; index < profiles.length; index++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _LeaderboardRow(
-                  rank: index + 1,
-                  profile: profiles[index],
-                  store: store,
-                ),
+            if (currentUser != null) ...[
+              const SizedBox(height: 12),
+              _CurrentUserStrip(
+                rank: currentUserIndex + 1,
+                profile: currentUser,
+                store: store,
               ),
+            ],
           ],
         );
       },
@@ -69,8 +82,70 @@ class LeaderboardScreen extends StatelessWidget {
   }
 }
 
-class _LeaderboardRow extends StatelessWidget {
-  const _LeaderboardRow({
+class _LeaderboardHeader extends StatelessWidget {
+  const _LeaderboardHeader({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                store.t('leaderboard.focusTimeRanking'),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: CatudyColors.blueFor(context),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: CatudyColors.lavenderSoft,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                store.t('leaderboard.overall'),
+                style: const TextStyle(
+                  color: CatudyColors.violet,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            const Icon(
+              Icons.emoji_events_rounded,
+              color: CatudyColors.teal,
+              size: 18,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                store.t('leaderboard.realMinutesOnly'),
+                style: TextStyle(
+                  color: CatudyColors.mutedFor(context),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _LeaderboardListRow extends StatelessWidget {
+  const _LeaderboardListRow({
     required this.rank,
     required this.profile,
     required this.store,
@@ -86,112 +161,167 @@ class _LeaderboardRow extends StatelessWidget {
       (item) => item.id == profile.petId,
       orElse: () => store.unlockablePets.first,
     );
-    return CatudyPanel(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      color: profile.currentUser
-          ? CatudyColors.lavenderSoft
-          : CatudyColors.surfaceFor(context),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: profile.currentUser
+            ? CatudyColors.lavenderSoft.withValues(alpha: 0.76)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+      ),
       child: Row(
         children: [
-          SizedBox(
-            width: 30,
+          SizedBox(width: 34, child: _RankMark(rank: rank)),
+          const SizedBox(width: 8),
+          _PetBadge(accent: pet.accent),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    profile.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: CatudyColors.blueFor(context),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                if (profile.currentUser) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    store.t('leaderboard.you'),
+                    style: const TextStyle(
+                      color: CatudyColors.teal,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            '${profile.totalMinutes}${store.t('common.minutesShort')}',
+            style: TextStyle(
+              color: CatudyColors.coral,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          if (!profile.currentUser) ...[
+            const SizedBox(width: 4),
+            PopupMenuButton<_LeaderboardAction>(
+              tooltip: store.t('social.moreActions'),
+              onSelected: (action) {
+                switch (action) {
+                  case _LeaderboardAction.room:
+                    store.visitPetRoom(profile.userId);
+                    context.go('/pet-room');
+                  case _LeaderboardAction.profile:
+                    store.visitProfile(profile.userId);
+                    context.go('/public-profile');
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: _LeaderboardAction.room,
+                  child: Text(store.t('social.visitPetRoom')),
+                ),
+                PopupMenuItem(
+                  value: _LeaderboardAction.profile,
+                  child: Text(store.t('social.visitProfile')),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CurrentUserStrip extends StatelessWidget {
+  const _CurrentUserStrip({
+    required this.rank,
+    required this.profile,
+    required this.store,
+  });
+
+  final int rank;
+  final LeaderboardProfile profile;
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final pet = store.unlockablePets.firstWhere(
+      (item) => item.id == profile.petId,
+      orElse: () => store.unlockablePets.first,
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: CatudyColors.coral,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '$rank',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(width: 12),
+          _PetBadge(accent: pet.accent),
+          const SizedBox(width: 12),
+          Expanded(
             child: Text(
-              '#$rank',
-              style: TextStyle(
-                color: rank == 1
-                    ? CatudyColors.yellow
-                    : CatudyColors.mutedFor(context),
+              profile.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
                 fontWeight: FontWeight.w900,
               ),
             ),
           ),
-          _PetBadge(accent: pet.accent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        profile.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: CatudyColors.blueFor(context),
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                    if (profile.currentUser)
-                      Text(
-                        store.t('leaderboard.you'),
-                        style: const TextStyle(
-                          color: CatudyColors.teal,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  store.t('leaderboard.roomSoon'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: CatudyColors.mutedFor(context),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+          Text(
+            '${profile.totalMinutes}${store.t('common.minutesShort')}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${profile.totalMinutes}',
-                style: TextStyle(
-                  color: CatudyColors.blueFor(context),
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text(
-                store.t('leaderboard.minutes'),
-                style: TextStyle(
-                  color: CatudyColors.mutedFor(context),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 6),
-          IconButton(
-            tooltip: store.t('leaderboard.visitSoon'),
-            onPressed: profile.currentUser
-                ? null
-                : () {
-                    store.visitPetRoom(profile.userId);
-                    context.go('/pet-room');
-                  },
-            icon: const Icon(Icons.meeting_room_rounded),
-          ),
-          IconButton(
-            tooltip: store.t('social.visitProfile'),
-            onPressed: profile.currentUser
-                ? null
-                : () {
-                    store.visitProfile(profile.userId);
-                    context.go('/public-profile');
-                  },
-            icon: const Icon(Icons.visibility_rounded),
-          ),
         ],
+      ),
+    );
+  }
+}
+
+class _RankMark extends StatelessWidget {
+  const _RankMark({required this.rank});
+
+  final int rank;
+
+  @override
+  Widget build(BuildContext context) {
+    if (rank <= 3) {
+      final color = switch (rank) {
+        1 => CatudyColors.yellow,
+        2 => CatudyColors.blue,
+        _ => CatudyColors.coral,
+      };
+      return Icon(Icons.emoji_events_rounded, color: color, size: 22);
+    }
+    return Text(
+      '$rank',
+      style: TextStyle(
+        color: CatudyColors.mutedFor(context),
+        fontWeight: FontWeight.w900,
       ),
     );
   }
@@ -205,8 +335,8 @@ class _PetBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 46,
-      height: 46,
+      width: 42,
+      height: 42,
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.16),

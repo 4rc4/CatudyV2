@@ -177,11 +177,11 @@ class _ShopScreenState extends State<ShopScreen> {
         title: store.t('shop.petUnlocks'),
         icon: Icons.pets_rounded,
         accentColor: CatudyColors.coral,
-          children: [
-            for (final pet in store.unlockablePets)
-              _PetUnlockCard(
-                name: pet.name,
-                description: pet.description,
+        children: [
+          for (final pet in store.unlockablePets)
+            _PetUnlockCard(
+              name: pet.name,
+              description: pet.description,
               accent: pet.accent,
               requiredPoints: pet.requiredPoints,
               currentPoints: store.focusPoints,
@@ -196,7 +196,8 @@ class _ShopScreenState extends State<ShopScreen> {
           icon: Icons.checkroom_rounded,
           accentColor: CatudyColors.teal,
           children: [
-            for (final item in petItems) _ShopItemCard(store: store, item: item),
+            for (final item in petItems)
+              _ShopItemCard(store: store, item: item),
           ],
         ),
         const SizedBox(height: 12),
@@ -453,8 +454,17 @@ class _ShopItemCard extends StatelessWidget {
         _MetaChip(label: '${item.price} ${store.t('common.gold')}'),
       ],
       action: FilledButton(
-        onPressed: owned ? null : () => store.buyItem(item.id),
-        child: Text(owned ? store.t('shop.owned') : store.t('shop.buy')),
+        onPressed: owned
+            ? () =>
+                  context.go(item.isRoomFurniture ? '/pet-room' : '/inventory')
+            : () => store.buyItem(item.id),
+        child: Text(
+          owned
+              ? item.isRoomFurniture
+                    ? store.t('profile.petRoom')
+                    : store.t('pet.inventory')
+              : store.t('shop.buy'),
+        ),
       ),
     );
   }
@@ -482,10 +492,14 @@ class _PremiumCosmeticCard extends StatelessWidget {
           _MetaChip(label: '${item.directPrice} ${store.t('common.gold')}'),
       ],
       action: FilledButton(
-        onPressed: owned || locked ? null : () => store.buyCosmetic(item.id),
+        onPressed: owned
+            ? () => context.go('/inventory')
+            : locked
+            ? null
+            : () => store.buyCosmetic(item.id),
         child: Text(
           owned
-              ? store.t('shop.owned')
+              ? store.t('pet.inventory')
               : locked
               ? store.t('shop.plusOnly')
               : store.t('shop.buy'),
@@ -625,66 +639,65 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 0.78,
-      child: Container(
-        padding: const EdgeInsets.all(11),
-        decoration: BoxDecoration(
-          color: CatudyColors.surfaceFor(context),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: accent.withValues(alpha: 0.14)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Center(child: art),
+    return Container(
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AspectRatio(
+            aspectRatio: 1,
+            child: Container(
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(18),
               ),
+              child: Center(child: art),
             ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: CatudyColors.blueFor(context),
-                fontWeight: FontWeight.w900,
-              ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
             ),
-            const SizedBox(height: 3),
-            Text(
-              body,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: CatudyColors.mutedFor(context),
-                fontSize: 12,
-                height: 1.18,
-              ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            body,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontSize: 12,
+              height: 1.18,
             ),
-            if (progress != null) ...[
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 7,
-                  color: accent,
-                  backgroundColor: CatudyColors.surfaceStrongFor(context),
-                ),
-              ),
-            ],
+          ),
+          if (progress != null) ...[
             const SizedBox(height: 8),
-            Wrap(spacing: 5, runSpacing: 5, children: chips),
-            const SizedBox(height: 8),
-            SizedBox(height: 38, child: action),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 7,
+                color: accent,
+                backgroundColor: CatudyColors.surfaceStrongFor(context),
+              ),
+            ),
           ],
-        ),
+          const SizedBox(height: 8),
+          Wrap(spacing: 5, runSpacing: 5, children: chips),
+          const SizedBox(height: 8),
+          SizedBox(height: 38, child: action),
+        ],
       ),
     );
   }

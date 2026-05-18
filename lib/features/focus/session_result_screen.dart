@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/floating_mascot.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -61,18 +63,7 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 54,
-                        height: 54,
-                        decoration: BoxDecoration(
-                          color: CatudyColors.teal.withValues(alpha: 0.16),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: const Icon(
-                          Icons.check_circle_rounded,
-                          color: CatudyColors.teal,
-                        ),
-                      ),
+                      const FloatingMascot(width: 68, height: 68),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -147,6 +138,8 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
               ),
             ),
             const SizedBox(height: 14),
+            _NextRewardPanel(store: store),
+            const SizedBox(height: 14),
             CatudyPanel(
               accentColor: CatudyColors.teal,
               child: Column(
@@ -192,24 +185,18 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            FilledButton.icon(
-              onPressed: () => context.go('/focus/category'),
-              icon: const Icon(Icons.replay_rounded),
-              label: Text(store.t('focus.focusAgain')),
-            ),
-            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => context.go('/stats'),
-                    icon: const Icon(Icons.query_stats_rounded),
-                    label: Text(store.t('focus.seeStats')),
+                  child: FilledButton.icon(
+                    onPressed: () => context.go('/focus/start'),
+                    icon: const Icon(Icons.replay_rounded),
+                    label: Text(store.t('focus.focusAgain')),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: FilledButton.tonalIcon(
                     onPressed: () => context.go('/pet-room'),
                     icon: const Icon(Icons.pets_rounded),
                     label: Text(store.t('profile.petRoom')),
@@ -217,9 +204,96 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => context.go('/stats'),
+              icon: const Icon(Icons.query_stats_rounded),
+              label: Text(store.t('focus.seeStats')),
+            ),
           ],
         );
       },
+    );
+  }
+}
+
+class _NextRewardPanel extends StatelessWidget {
+  const _NextRewardPanel({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final nextPets =
+        store.unlockablePets
+            .where((pet) => !store.unlockedPetIds.contains(pet.id))
+            .toList()
+          ..sort((a, b) => a.requiredPoints.compareTo(b.requiredPoints));
+    final nextPet = nextPets.isEmpty ? null : nextPets.first;
+    final currentPoints = store.focusPoints;
+    final progress = nextPet == null
+        ? 1.0
+        : (currentPoints / nextPet.requiredPoints).clamp(0.0, 1.0);
+    final remaining = nextPet == null
+        ? 0
+        : (nextPet.requiredPoints - currentPoints).clamp(0, 999999);
+
+    return CatudyPanel(
+      color: CatudyColors.cream,
+      accentColor: CatudyColors.coral,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            store.t('focus.nextRewardTitle'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            nextPet == null
+                ? store.t('focus.allPetsUnlocked')
+                : store.t('focus.nextRewardBody', {
+                    'pet': nextPet.name,
+                    'points': remaining,
+                  }),
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(999),
+            backgroundColor: CatudyColors.surfaceFor(context),
+            color: CatudyColors.coral,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.go('/inventory'),
+                  icon: const Icon(Icons.inventory_2_rounded),
+                  label: Text(store.t('pet.inventory')),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.go('/shop'),
+                  icon: const Icon(Icons.storefront_rounded),
+                  label: Text(store.t('pet.shop')),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

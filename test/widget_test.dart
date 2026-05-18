@@ -22,17 +22,41 @@ void main() {
     expect(find.text('Profile'), findsNothing);
   });
 
-  testWidgets('renders social friends and visit actions', (tester) async {
+  testWidgets('redirects social into community friends surface', (
+    tester,
+  ) async {
     await _pumpCatudy(tester, initialLocation: '/social');
 
-    expect(find.text('Sosyal'), findsOneWidget);
+    expect(find.text('Topluluk'), findsOneWidget);
+    expect(find.text('Sıralama'), findsOneWidget);
     expect(find.text('Kod ile arkadaş ekle'), findsOneWidget);
     expect(find.text('Kullanıcı kodu'), findsOneWidget);
-    expect(find.text('Arkadaşlar'), findsOneWidget);
+    expect(find.text('Arkadaşlar'), findsWidgets);
     expect(find.text('Odak panosu'), findsNothing);
     expect(find.byIcon(Icons.meeting_room_rounded), findsNothing);
     expect(find.byIcon(Icons.visibility_rounded), findsNothing);
     expect(find.byIcon(Icons.send_rounded), findsOneWidget);
+  });
+
+  testWidgets('redirects leaderboard into community ranking surface', (
+    tester,
+  ) async {
+    await _pumpCatudy(tester, initialLocation: '/leaderboard');
+
+    expect(find.text('Topluluk'), findsOneWidget);
+    expect(find.text('Odak Süresi Sıralaması'), findsOneWidget);
+    expect(find.text('Arkadaşlar'), findsOneWidget);
+    expect(find.text('Sıralama'), findsOneWidget);
+  });
+
+  testWidgets('renders one-surface focus composer', (tester) async {
+    await _pumpCatudy(tester, initialLocation: '/focus/start');
+
+    expect(find.text('Odağı Başlat'), findsOneWidget);
+    expect(find.text('Başlamaya hazır'), findsOneWidget);
+    expect(find.text('Kategori Seç'), findsOneWidget);
+    expect(find.text('Süre Seç'), findsOneWidget);
+    expect(find.text('Daha fazla ayar'), findsOneWidget);
   });
 
   testWidgets('renders Stats range controls', (tester) async {

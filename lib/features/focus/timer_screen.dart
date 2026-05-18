@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/floating_mascot.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -75,10 +76,16 @@ class _TimerScreenState extends State<TimerScreen> {
               ? store.t('focus.lobbyTimerTitle')
               : store.t('focus.timerTitle'),
           showBack: false,
+          showInfoAction: false,
+          showSettingsAction: false,
           children: [
             CatudyPanel(
+              color: CatudyColors.lavenderSoft,
+              accentColor: CatudyColors.violet,
               child: Column(
                 children: [
+                  const FloatingMascot(width: 86, height: 86),
+                  const SizedBox(height: 10),
                   Text(
                     store.categoryName(
                       session?.categoryId ?? store.selectedCategoryId,
@@ -90,7 +97,20 @@ class _TimerScreenState extends State<TimerScreen> {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 6),
+                  Text(
+                    session?.todoId == null
+                        ? store.t('focus.noTaskSelected')
+                        : store.selectedFocusTodo?.title ??
+                              store.t('focus.noTaskSelected'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: CatudyColors.mutedFor(context),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
                   Stack(
                     alignment: Alignment.center,
                     children: [
@@ -125,6 +145,17 @@ class _TimerScreenState extends State<TimerScreen> {
                       ),
                     ),
                   ],
+                  if (session != null) ...[
+                    const SizedBox(height: 18),
+                    Text(
+                      store.t('focus.ritualBody'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -137,7 +168,7 @@ class _TimerScreenState extends State<TimerScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () => context.go('/focus/category'),
+                  onPressed: () => context.go('/focus/start'),
                   icon: const Icon(Icons.timer_rounded),
                   label: Text(store.t('focus.start')),
                 ),

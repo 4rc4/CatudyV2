@@ -6,10 +6,10 @@ import '../features/auth/auth_screen.dart';
 import '../features/calendar/manual_entry_screen.dart';
 import '../features/focus/category_screen.dart';
 import '../features/focus/duration_screen.dart';
+import '../features/focus/focus_start_screen.dart';
 import '../features/focus/session_result_screen.dart';
 import '../features/focus/timer_screen.dart';
 import '../features/home/home_screen.dart';
-import '../features/leaderboard/leaderboard_screen.dart';
 import '../features/lobby/lobby_screen.dart';
 import '../features/pet/pet_room_screen.dart';
 import '../features/premium/crates_screen.dart';
@@ -21,8 +21,8 @@ import '../features/settings/settings_screen.dart';
 import '../features/shell/catudy_shell.dart';
 import '../features/shop/inventory_screen.dart';
 import '../features/shop/shop_screen.dart';
-import '../features/social/social_screen.dart';
 import '../features/stats/stats_screen.dart';
+import '../features/community/community_screen.dart';
 
 class CatudyRouter {
   const CatudyRouter._();
@@ -61,13 +61,22 @@ class CatudyRouter {
           ),
           GoRoute(
             path: '/leaderboard',
-            pageBuilder: (context, state) =>
-                _animatedPage(state, const LeaderboardScreen()),
+            redirect: (context, state) => '/community?tab=ranking',
           ),
           GoRoute(
             path: '/social',
-            pageBuilder: (context, state) =>
-                _animatedPage(state, const SocialScreen()),
+            redirect: (context, state) => '/community?tab=friends',
+          ),
+          GoRoute(
+            path: '/community',
+            pageBuilder: (context, state) => _animatedPage(
+              state,
+              CommunityScreen(
+                initialTab: state.uri.queryParameters['tab'] == 'ranking'
+                    ? CommunityTab.ranking
+                    : CommunityTab.friends,
+              ),
+            ),
           ),
           GoRoute(
             path: '/pet-room',
@@ -93,6 +102,11 @@ class CatudyRouter {
             path: '/crates',
             pageBuilder: (context, state) =>
                 _animatedPage(state, const CratesScreen()),
+          ),
+          GoRoute(
+            path: '/focus/start',
+            pageBuilder: (context, state) =>
+                _animatedPage(state, const FocusStartScreen()),
           ),
           GoRoute(
             path: '/focus/category',

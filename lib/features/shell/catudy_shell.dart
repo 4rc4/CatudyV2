@@ -275,11 +275,14 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path.startsWith('/manual-entry')) {
       return '/calendar';
     }
+    if (path.startsWith('/focus/start')) {
+      return '/';
+    }
     if (path.startsWith('/focus/duration')) {
       return '/focus/category';
     }
     if (path.startsWith('/focus/timer')) {
-      return '/focus/duration';
+      return '/focus/start';
     }
     if (path.startsWith('/focus/result')) {
       return '/';

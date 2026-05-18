@@ -18,6 +18,28 @@ class SocialScreen extends StatefulWidget {
 }
 
 class _SocialScreenState extends State<SocialScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return StoreBuilder(
+      builder: (context, store) => ScreenScaffold(
+        title: store.t('social.title'),
+        showBack: true,
+        fallbackBackPath: '/',
+        children: const [FriendsCommunitySection()],
+      ),
+    );
+  }
+}
+
+class FriendsCommunitySection extends StatefulWidget {
+  const FriendsCommunitySection({super.key});
+
+  @override
+  State<FriendsCommunitySection> createState() =>
+      _FriendsCommunitySectionState();
+}
+
+class _FriendsCommunitySectionState extends State<FriendsCommunitySection> {
   late final TextEditingController _friendController;
 
   @override
@@ -38,72 +60,15 @@ class _SocialScreenState extends State<SocialScreen> {
       builder: (context, store) {
         final challenge = store.weeklySocialChallenge;
         final friends = store.friendProfiles;
-        return ScreenScaffold(
-          title: store.t('social.title'),
-          showBack: true,
-          fallbackBackPath: '/',
+        return Column(
           children: [
-            CatudyPanel(
-              color: CatudyColors.cream,
-              accentColor: CatudyColors.teal,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.groups_rounded,
-                        color: CatudyColors.teal,
-                        size: 30,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          challenge.title,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: CatudyColors.blueFor(context),
-                                fontWeight: FontWeight.w900,
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    challenge.description,
-                    style: TextStyle(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w700,
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  LinearProgressIndicator(
-                    value: challenge.ratio,
-                    minHeight: 10,
-                    borderRadius: BorderRadius.circular(999),
-                    backgroundColor: CatudyColors.surfaceFor(context),
-                    color: challenge.completed
-                        ? CatudyColors.teal
-                        : CatudyColors.violet,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    store.t('social.challengeProgress', {
-                      'done': challenge.currentMinutes,
-                      'goal': challenge.targetMinutes,
-                      'left': challenge.remainingMinutes,
-                      'people': challenge.participants,
-                    }),
-                    style: TextStyle(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
+            _SocialHero(
+              store: store,
+              challenge: challenge,
+              friendCount: friends.length,
             ),
+            const SizedBox(height: 14),
+            _LobbyActions(store: store),
             const SizedBox(height: 14),
             CatudyPanel(
               accentColor: CatudyColors.violet,
@@ -166,40 +131,6 @@ class _SocialScreenState extends State<SocialScreen> {
             const SizedBox(height: 14),
             _FriendRequestsPanel(store: store),
             const SizedBox(height: 14),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final createButton = FilledButton.icon(
-                  onPressed: () => context.go('/lobby/create'),
-                  icon: const Icon(Icons.add_home_rounded),
-                  label: Text(store.t('home.createLobby')),
-                );
-                final joinButton = FilledButton.tonalIcon(
-                  onPressed: () => context.go('/lobby/join'),
-                  icon: const Icon(Icons.login_rounded),
-                  label: Text(store.t('home.joinLobby')),
-                );
-
-                if (constraints.maxWidth < 360) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      createButton,
-                      const SizedBox(height: 10),
-                      joinButton,
-                    ],
-                  );
-                }
-
-                return Row(
-                  children: [
-                    Expanded(child: createButton),
-                    const SizedBox(width: 10),
-                    Expanded(child: joinButton),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 14),
             CatudyPanel(
               accentColor: CatudyColors.teal,
               child: Column(
@@ -217,8 +148,12 @@ class _SocialScreenState extends State<SocialScreen> {
                       style: TextStyle(color: CatudyColors.mutedFor(context)),
                     )
                   else
-                    for (var index = 0; index < friends.length; index++)
-                      _SocialProfileRow(profile: friends[index], store: store),
+                    _FriendGrid(
+                      children: [
+                        for (final profile in friends)
+                          _SocialProfileCard(profile: profile, store: store),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -245,6 +180,181 @@ class _SocialScreenState extends State<SocialScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(store.t(messageKey))));
+  }
+}
+
+class _SocialHero extends StatelessWidget {
+  const _SocialHero({
+    required this.store,
+    required this.challenge,
+    required this.friendCount,
+  });
+
+  final CatudyDemoStore store;
+  final SocialChallenge challenge;
+  final int friendCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final requestCount =
+        store.incomingFriendRequests.length +
+        store.outgoingFriendRequests.length;
+    return CatudyPanel(
+      color: CatudyColors.cream,
+      accentColor: CatudyColors.teal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CatudySectionHeader(
+            title: challenge.title,
+            subtitle: challenge.description,
+            icon: Icons.groups_rounded,
+            accentColor: CatudyColors.teal,
+          ),
+          const SizedBox(height: 14),
+          LinearProgressIndicator(
+            value: challenge.ratio,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(999),
+            backgroundColor: CatudyColors.surfaceFor(context),
+            color: challenge.completed
+                ? CatudyColors.teal
+                : CatudyColors.violet,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            store.t('social.challengeProgress', {
+              'done': challenge.currentMinutes,
+              'goal': challenge.targetMinutes,
+              'left': challenge.remainingMinutes,
+              'people': challenge.participants,
+            }),
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _SocialMetric(
+                  icon: Icons.people_alt_rounded,
+                  value: '$friendCount',
+                  label: store.t('social.friendCount'),
+                  color: CatudyColors.teal,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SocialMetric(
+                  icon: Icons.mark_email_unread_rounded,
+                  value: '$requestCount',
+                  label: store.t('social.friendRequests'),
+                  color: CatudyColors.coral,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SocialMetric(
+                  icon: Icons.groups_rounded,
+                  value: '${challenge.participants}',
+                  label: store.t('social.participants'),
+                  color: CatudyColors.violet,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SocialMetric extends StatelessWidget {
+  const _SocialMetric({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            style: TextStyle(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LobbyActions extends StatelessWidget {
+  const _LobbyActions({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final createButton = FilledButton.icon(
+          onPressed: () => context.go('/lobby/create'),
+          icon: const Icon(Icons.add_home_rounded),
+          label: Text(store.t('home.createLobby')),
+        );
+        final joinButton = FilledButton.tonalIcon(
+          onPressed: () => context.go('/lobby/join'),
+          icon: const Icon(Icons.login_rounded),
+          label: Text(store.t('home.joinLobby')),
+        );
+
+        if (constraints.maxWidth < 360) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [createButton, const SizedBox(height: 10), joinButton],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: createButton),
+            const SizedBox(width: 10),
+            Expanded(child: joinButton),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -368,8 +478,33 @@ class _FriendRequestRow extends StatelessWidget {
 
 enum _SocialAction { remove, block, report }
 
-class _SocialProfileRow extends StatelessWidget {
-  const _SocialProfileRow({required this.profile, required this.store});
+class _FriendGrid extends StatelessWidget {
+  const _FriendGrid({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 10.0;
+        final columns = constraints.maxWidth >= 620 ? 2 : 1;
+        final width =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final child in children) SizedBox(width: width, child: child),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SocialProfileCard extends StatelessWidget {
+  const _SocialProfileCard({required this.profile, required this.store});
 
   final LeaderboardProfile profile;
   final CatudyDemoStore store;
@@ -377,8 +512,7 @@ class _SocialProfileRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: profile.currentUser
             ? CatudyColors.lavenderSoft
@@ -387,29 +521,41 @@ class _SocialProfileRow extends StatelessWidget {
         border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.12)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.person_rounded, color: CatudyColors.teal),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  profile.currentUser
-                      ? '${profile.name} (${store.t('leaderboard.you')})'
-                      : profile.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: CatudyColors.blueFor(context),
-                    fontWeight: FontWeight.w900,
-                  ),
+              CircleAvatar(
+                backgroundColor: CatudyColors.teal.withValues(alpha: 0.16),
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: CatudyColors.teal,
                 ),
               ),
-              Text(
-                '${profile.totalMinutes}${store.t('common.minutesShort')}',
-                style: TextStyle(
-                  color: CatudyColors.mutedFor(context),
-                  fontWeight: FontWeight.w800,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile.currentUser
+                          ? '${profile.name} (${store.t('leaderboard.you')})'
+                          : profile.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: CatudyColors.blueFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      '${profile.totalMinutes}${store.t('common.minutesShort')}',
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (!profile.currentUser)
@@ -451,41 +597,35 @@ class _SocialProfileRow extends StatelessWidget {
             ],
           ),
           if (!profile.currentUser) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  OutlinedButton.icon(
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
                     onPressed: () => _inviteToLobby(context),
                     icon: const Icon(Icons.ios_share_rounded, size: 18),
                     label: Text(store.t('social.inviteToLobby')),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(0, 38),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                    ),
                   ),
-                  IconButton.filledTonal(
-                    tooltip: store.t('social.visitPetRoom'),
-                    onPressed: () {
-                      store.visitPetRoom(profile.userId);
-                      context.go('/pet-room');
-                    },
-                    icon: const Icon(Icons.meeting_room_rounded),
-                  ),
-                  IconButton(
-                    tooltip: store.t('social.visitProfile'),
-                    onPressed: () {
-                      store.visitProfile(profile.userId);
-                      context.go('/public-profile');
-                    },
-                    icon: const Icon(Icons.visibility_rounded),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                IconButton.filledTonal(
+                  tooltip: store.t('social.visitPetRoom'),
+                  onPressed: () {
+                    store.visitPetRoom(profile.userId);
+                    context.go('/pet-room');
+                  },
+                  icon: const Icon(Icons.meeting_room_rounded),
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: store.t('social.visitProfile'),
+                  onPressed: () {
+                    store.visitProfile(profile.userId);
+                    context.go('/public-profile');
+                  },
+                  icon: const Icon(Icons.visibility_rounded),
+                ),
+              ],
             ),
           ],
         ],

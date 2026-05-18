@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -34,7 +35,18 @@ Future<void> main() async {
   catudyDemoStore.configureNotificationSync(_scheduleLocalizedNotifications);
   await _initializeOnlineLobby();
   await _scheduleLocalizedNotifications();
-  runApp(const ProviderScope(child: CatudyApp()));
+  runApp(ProviderScope(child: CatudyApp(initialLocation: _initialLocation())));
+}
+
+String _initialLocation() {
+  if (!kIsWeb) {
+    return '/';
+  }
+
+  final uri = Uri.base;
+  final path = uri.path.isEmpty ? '/' : uri.path;
+  final query = uri.hasQuery ? '?${uri.query}' : '';
+  return '$path$query';
 }
 
 Future<void> _scheduleLocalizedNotifications() async {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/premium/catudy_premium_models.dart';
@@ -188,10 +189,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
         title: store.t('inventory.pets'),
         icon: Icons.pets_rounded,
         accentColor: CatudyColors.coral,
-          children: [
-            for (final pet in store.unlockablePets)
-              _PetSelectionCard(store: store, pet: pet),
-          ],
+        children: [
+          for (final pet in store.unlockablePets)
+            _PetSelectionCard(store: store, pet: pet),
+        ],
       ),
       if (petItems.isNotEmpty) ...[
         const SizedBox(height: 12),
@@ -561,10 +562,12 @@ class _InventoryItemCard extends StatelessWidget {
       title: store.itemName(item),
       body: status,
       action: FilledButton(
-        onPressed: isEquipped ? null : () => store.equipItem(item.id),
+        onPressed: isEquipped
+            ? () => context.go('/pet-room')
+            : () => store.equipItem(item.id),
         child: Text(
           isEquipped
-              ? store.t('common.selected')
+              ? store.t('profile.petRoom')
               : store.t('inventory.equipped'),
         ),
       ),
@@ -594,10 +597,12 @@ class _PremiumInventoryCard extends StatelessWidget {
       title: item.name,
       body: store.t('inventory.cosmeticSlot.${item.slot}'),
       action: FilledButton(
-        onPressed: isEquipped ? null : () => store.equipCosmetic(item.id),
+        onPressed: isEquipped
+            ? () => context.go('/pet-room')
+            : () => store.equipCosmetic(item.id),
         child: Text(
           isEquipped
-              ? store.t('common.selected')
+              ? store.t('profile.petRoom')
               : store.t('inventory.equipped'),
         ),
       ),
@@ -651,52 +656,51 @@ class _InventoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 0.84,
-      child: Container(
-        padding: const EdgeInsets.all(11),
-        decoration: BoxDecoration(
-          color: CatudyColors.surfaceFor(context),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: accent.withValues(alpha: 0.14)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Center(child: art),
+    return Container(
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AspectRatio(
+            aspectRatio: 1,
+            child: Container(
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(18),
               ),
+              child: Center(child: art),
             ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: CatudyColors.blueFor(context),
-                fontWeight: FontWeight.w900,
-              ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
             ),
-            const SizedBox(height: 3),
-            Text(
-              body,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: CatudyColors.mutedFor(context),
-                fontSize: 12,
-                height: 1.18,
-              ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            body,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontSize: 12,
+              height: 1.18,
             ),
-            const SizedBox(height: 8),
-            SizedBox(height: 38, child: action),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(height: 38, child: action),
+        ],
       ),
     );
   }
