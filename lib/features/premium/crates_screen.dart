@@ -6,6 +6,7 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/premium/catudy_premium_models.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -68,12 +69,10 @@ class CratesScreen extends StatelessWidget {
               child: _CrateTile(crate: crate, store: store),
             ),
           const SizedBox(height: 6),
-          Text(
-            store.t('crates.collection'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w900,
-            ),
+          CatudySectionHeader(
+            title: store.t('crates.collection'),
+            icon: Icons.collections_bookmark_rounded,
+            accentColor: CatudyColors.violet,
           ),
           const SizedBox(height: 10),
           for (final item in store.cosmeticItems)
@@ -131,42 +130,59 @@ class _CrateTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               Chip(label: Text(store.t('crates.owned', {'count': count}))),
-              const SizedBox(width: 8),
               if (crate.price > 0)
                 Chip(
                   label: Text(store.t('crates.price', {'gold': crate.price})),
                 ),
-              if (locked) ...[
-                const SizedBox(width: 8),
-                Chip(label: Text(store.t('crates.plusOnly'))),
-              ],
+              if (locked) Chip(label: Text(store.t('crates.plusOnly'))),
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              if (crate.price > 0)
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: locked ? null : () => store.buyCrate(crate.id),
-                    icon: const Icon(Icons.add_shopping_cart_rounded),
-                    label: Text(store.t('crates.buy')),
-                  ),
-                ),
-              if (crate.price > 0) const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: count > 0 && !locked
-                      ? () => _openCrate(context, store, crate.id)
-                      : null,
-                  icon: const Icon(Icons.inventory_2_rounded),
-                  label: Text(store.t('crates.open')),
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final buyButton = crate.price > 0
+                  ? OutlinedButton.icon(
+                      onPressed: locked ? null : () => store.buyCrate(crate.id),
+                      icon: const Icon(Icons.add_shopping_cart_rounded),
+                      label: Text(store.t('crates.buy')),
+                    )
+                  : null;
+              final openButton = FilledButton.icon(
+                onPressed: count > 0 && !locked
+                    ? () => _openCrate(context, store, crate.id)
+                    : null,
+                icon: const Icon(Icons.inventory_2_rounded),
+                label: Text(store.t('crates.open')),
+              );
+
+              if (constraints.maxWidth < 360) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (buyButton != null) ...[
+                      buyButton,
+                      const SizedBox(height: 10),
+                    ],
+                    openButton,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  if (buyButton != null) ...[
+                    Expanded(child: buyButton),
+                    const SizedBox(width: 10),
+                  ],
+                  Expanded(child: openButton),
+                ],
+              );
+            },
           ),
         ],
       ),

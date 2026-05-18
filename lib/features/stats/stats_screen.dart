@@ -7,6 +7,7 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -86,12 +87,10 @@ class _StatsScreenState extends State<StatsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    store.t('stats.categoryDistribution'),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
+                  CatudySectionHeader(
+                    title: store.t('stats.categoryDistribution'),
+                    icon: Icons.donut_large_rounded,
+                    accentColor: CatudyColors.teal,
                   ),
                   const SizedBox(height: 14),
                   if (categorySlices.isEmpty)
@@ -625,31 +624,10 @@ class _StatsHero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: CatudyColors.teal.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: const Icon(
-                  Icons.query_stats_rounded,
-                  color: CatudyColors.teal,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  store.t('stats.focusGarden'),
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: CatudyColors.blueFor(context),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
+          CatudySectionHeader(
+            title: store.t('stats.focusGarden'),
+            icon: Icons.query_stats_rounded,
+            accentColor: CatudyColors.teal,
           ),
           const SizedBox(height: 16),
           Row(

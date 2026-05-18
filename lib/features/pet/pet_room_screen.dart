@@ -518,30 +518,6 @@ class _RoomScene extends StatelessWidget {
                             child: SizedBox(
                               height: 42,
                               child: FilledButton.icon(
-                                onPressed: onShop,
-                                style: FilledButton.styleFrom(
-                                  minimumSize: const Size(0, 42),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.storefront_rounded,
-                                  size: 19,
-                                ),
-                                label: Text(catudyDemoStore.t('pet.shop')),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SizedBox(
-                              height: 42,
-                              child: FilledButton.icon(
                                 onPressed: onInventory,
                                 style: FilledButton.styleFrom(
                                   backgroundColor: CatudyColors.tealDark,
@@ -559,6 +535,30 @@ class _RoomScene extends StatelessWidget {
                                   size: 19,
                                 ),
                                 label: Text(catudyDemoStore.t('pet.inventory')),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 42,
+                              child: FilledButton.tonalIcon(
+                                onPressed: onShop,
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(0, 42),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                icon: const Icon(
+                                  Icons.storefront_rounded,
+                                  size: 19,
+                                ),
+                                label: Text(catudyDemoStore.t('pet.shop')),
                               ),
                             ),
                           ),

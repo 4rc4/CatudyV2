@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -48,26 +49,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.workspace_premium_rounded,
-                      color: CatudyColors.violet,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        store.hasPremiumAccess
-                            ? store.t('premium.active')
-                            : store.t('premium.pitch'),
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: CatudyColors.blueFor(context),
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
+                CatudySectionHeader(
+                  title: store.hasPremiumAccess
+                      ? store.t('premium.active')
+                      : store.t('premium.pitch'),
+                  icon: Icons.workspace_premium_rounded,
+                  accentColor: CatudyColors.violet,
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -146,12 +133,10 @@ class _PremiumSyncPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            store.t('premium.backendTitle'),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: CatudyColors.blueFor(context),
-              fontWeight: FontWeight.w900,
-            ),
+          CatudySectionHeader(
+            title: store.t('premium.backendTitle'),
+            icon: Icons.cloud_sync_rounded,
+            accentColor: CatudyColors.blue,
           ),
           const SizedBox(height: 8),
           Text(
@@ -204,24 +189,36 @@ class _QuickLinks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: FilledButton.tonalIcon(
-            onPressed: () => context.go('/season'),
-            icon: const Icon(Icons.emoji_events_rounded),
-            label: Text(store.t('premium.openSeason')),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: FilledButton.tonalIcon(
-            onPressed: () => context.go('/crates'),
-            icon: const Icon(Icons.inventory_2_rounded),
-            label: Text(store.t('premium.openCrates')),
-          ),
-        ),
-      ],
+    final buttons = [
+      FilledButton.tonalIcon(
+        onPressed: () => context.go('/season'),
+        icon: const Icon(Icons.emoji_events_rounded),
+        label: Text(store.t('premium.openSeason')),
+      ),
+      FilledButton.tonalIcon(
+        onPressed: () => context.go('/crates'),
+        icon: const Icon(Icons.inventory_2_rounded),
+        label: Text(store.t('premium.openCrates')),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 360) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [buttons[0], const SizedBox(height: 10), buttons[1]],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: buttons[0]),
+            const SizedBox(width: 10),
+            Expanded(child: buttons[1]),
+          ],
+        );
+      },
     );
   }
 }
@@ -242,12 +239,10 @@ class _BuddyPassPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            store.t('buddy.title'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w900,
-            ),
+          CatudySectionHeader(
+            title: store.t('buddy.title'),
+            icon: Icons.card_giftcard_rounded,
+            accentColor: CatudyColors.teal,
           ),
           const SizedBox(height: 8),
           Text(
@@ -361,12 +356,10 @@ class _WidgetThemePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            store.t('premium.widgetThemes'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w900,
-            ),
+          CatudySectionHeader(
+            title: store.t('premium.widgetThemes'),
+            icon: Icons.widgets_rounded,
+            accentColor: CatudyColors.coral,
           ),
           const SizedBox(height: 10),
           _WidgetPreview(store: store),

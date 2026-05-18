@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -109,32 +110,26 @@ class _SocialScreenState extends State<SocialScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    store.t('social.addByNameTitle'),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
+                  CatudySectionHeader(
+                    title: store.t('social.addByNameTitle'),
+                    icon: Icons.person_add_alt_1_rounded,
+                    accentColor: CatudyColors.violet,
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _friendController,
-                          textInputAction: TextInputAction.done,
-                          decoration: InputDecoration(
-                            labelText: store.t('social.friendSearchLabel'),
-                            hintText: store.t('social.friendSearchHint'),
-                            border: const OutlineInputBorder(),
-                            prefixIcon: const Icon(Icons.badge_rounded),
-                          ),
-                          onSubmitted: (_) =>
-                              _sendFriendRequest(context, store),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final field = TextField(
+                        controller: _friendController,
+                        textInputAction: TextInputAction.done,
+                        decoration: InputDecoration(
+                          labelText: store.t('social.friendSearchLabel'),
+                          hintText: store.t('social.friendSearchHint'),
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.badge_rounded),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      SizedBox(
+                        onSubmitted: (_) => _sendFriendRequest(context, store),
+                      );
+                      final button = SizedBox(
                         height: 56,
                         child: FilledButton.icon(
                           onPressed: () => _sendFriendRequest(context, store),
@@ -147,8 +142,23 @@ class _SocialScreenState extends State<SocialScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                           ),
                         ),
-                      ),
-                    ],
+                      );
+
+                      if (constraints.maxWidth < 420) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [field, const SizedBox(height: 10), button],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(child: field),
+                          const SizedBox(width: 10),
+                          button,
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -156,24 +166,38 @@ class _SocialScreenState extends State<SocialScreen> {
             const SizedBox(height: 14),
             _FriendRequestsPanel(store: store),
             const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () => context.go('/lobby/create'),
-                    icon: const Icon(Icons.add_home_rounded),
-                    label: Text(store.t('home.createLobby')),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    onPressed: () => context.go('/lobby/join'),
-                    icon: const Icon(Icons.login_rounded),
-                    label: Text(store.t('home.joinLobby')),
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final createButton = FilledButton.icon(
+                  onPressed: () => context.go('/lobby/create'),
+                  icon: const Icon(Icons.add_home_rounded),
+                  label: Text(store.t('home.createLobby')),
+                );
+                final joinButton = FilledButton.tonalIcon(
+                  onPressed: () => context.go('/lobby/join'),
+                  icon: const Icon(Icons.login_rounded),
+                  label: Text(store.t('home.joinLobby')),
+                );
+
+                if (constraints.maxWidth < 360) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      createButton,
+                      const SizedBox(height: 10),
+                      joinButton,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: createButton),
+                    const SizedBox(width: 10),
+                    Expanded(child: joinButton),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 14),
             CatudyPanel(
@@ -181,12 +205,10 @@ class _SocialScreenState extends State<SocialScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    store.t('social.friends'),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
+                  CatudySectionHeader(
+                    title: store.t('social.friends'),
+                    icon: Icons.people_alt_rounded,
+                    accentColor: CatudyColors.teal,
                   ),
                   const SizedBox(height: 10),
                   if (friends.isEmpty)
@@ -240,12 +262,10 @@ class _FriendRequestsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            store.t('social.friendRequests'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w900,
-            ),
+          CatudySectionHeader(
+            title: store.t('social.friendRequests'),
+            icon: Icons.mark_email_unread_rounded,
+            accentColor: CatudyColors.coral,
           ),
           const SizedBox(height: 10),
           if (incoming.isEmpty && outgoing.isEmpty)

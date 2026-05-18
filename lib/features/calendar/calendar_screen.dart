@@ -7,6 +7,7 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -111,110 +112,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            CatudyPanel(
-              color: CatudyColors.cream,
-              accentColor: CatudyColors.teal,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _dayTitle(selected, store.languageCode),
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: CatudyColors.muted,
-                                fontWeight: FontWeight.w900,
-                              ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    switch (relation) {
-                      _DayRelation.past => store.t('calendar.pastInfo'),
-                      _DayRelation.today => store.t('calendar.todayInfo'),
-                      _DayRelation.future => store.t('calendar.futureInfo'),
-                    },
-                    style: const TextStyle(
-                      color: CatudyColors.muted,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      if (relation != _DayRelation.future)
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: () => context.go('/manual-entry'),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: CatudyColors.violet,
-                            ),
-                            icon: const Icon(Icons.edit_note_rounded),
-                            label: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(store.t('calendar.manualAdd')),
-                            ),
-                          ),
-                        ),
-                      if (relation == _DayRelation.today)
-                        const SizedBox(width: 10),
-                      if (relation != _DayRelation.past)
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: () =>
-                                _addReminder(context, store, selected),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: CatudyColors.violet,
-                            ),
-                            icon: const Icon(Icons.alarm_add_rounded),
-                            label: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(store.t('calendar.reminderAdd')),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    store.t('calendar.reminders'),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: CatudyColors.blue,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (selectedTodos.isEmpty)
-                    Text(
-                      store.t('calendar.noReminders'),
-                      style: TextStyle(color: CatudyColors.muted),
-                    )
-                  else
-                    for (final todo in selectedTodos)
-                      _TodoTile(todo: todo, store: store),
-                  const Divider(height: 24),
-                  Text(
-                    store.t('calendar.records'),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: CatudyColors.blue,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (selectedRecords.isEmpty)
-                    Text(
-                      store.t('calendar.noRecords'),
-                      style: TextStyle(color: CatudyColors.muted),
-                    )
-                  else
-                    for (final record in selectedRecords)
-                      _RecordTile(record: record, store: store),
-                ],
-              ),
+            _SelectedDaySummaryCard(
+              store: store,
+              title: _dayTitle(selected, store.languageCode),
+              relation: relation,
+              todos: selectedTodos,
+              records: selectedRecords,
+              onAddReminder: () => _addReminder(context, store, selected),
+            ),
+            const SizedBox(height: 14),
+            _SelectedDayDetailsPanel(
+              store: store,
+              todos: selectedTodos,
+              records: selectedRecords,
             ),
           ],
         );
@@ -307,6 +217,193 @@ class _CalendarScreenState extends State<CalendarScreen> {
 }
 
 enum _DayRelation { past, today, future }
+
+class _SelectedDaySummaryCard extends StatelessWidget {
+  const _SelectedDaySummaryCard({
+    required this.store,
+    required this.title,
+    required this.relation,
+    required this.todos,
+    required this.records,
+    required this.onAddReminder,
+  });
+
+  final CatudyDemoStore store;
+  final String title;
+  final _DayRelation relation;
+  final List<CalendarTodo> todos;
+  final List<FocusRecord> records;
+  final VoidCallback onAddReminder;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalMinutes = records.fold(0, (sum, item) => sum + item.minutes);
+    final actionButtons = <Widget>[
+      if (relation != _DayRelation.future)
+        FilledButton.icon(
+          onPressed: () => context.go('/manual-entry'),
+          style: FilledButton.styleFrom(backgroundColor: CatudyColors.violet),
+          icon: const Icon(Icons.edit_note_rounded),
+          label: Text(store.t('calendar.manualAdd')),
+        ),
+      if (relation != _DayRelation.past)
+        FilledButton.icon(
+          onPressed: onAddReminder,
+          style: FilledButton.styleFrom(backgroundColor: CatudyColors.violet),
+          icon: const Icon(Icons.alarm_add_rounded),
+          label: Text(store.t('calendar.reminderAdd')),
+        ),
+    ];
+
+    return CatudyPanel(
+      color: CatudyColors.cream,
+      accentColor: CatudyColors.teal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CatudySectionHeader(
+            title: title,
+            subtitle: switch (relation) {
+              _DayRelation.past => store.t('calendar.pastInfo'),
+              _DayRelation.today => store.t('calendar.todayInfo'),
+              _DayRelation.future => store.t('calendar.futureInfo'),
+            },
+            icon: Icons.event_note_rounded,
+            accentColor: CatudyColors.teal,
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _DayMetricPill(
+                  icon: Icons.timer_rounded,
+                  value: '$totalMinutes${store.t('common.minutesShort')}',
+                  label: store.t('calendar.records'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _DayMetricPill(
+                  icon: Icons.notifications_active_rounded,
+                  value: '${todos.length}',
+                  label: store.t('calendar.reminders'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(spacing: 10, runSpacing: 10, children: actionButtons),
+        ],
+      ),
+    );
+  }
+}
+
+class _SelectedDayDetailsPanel extends StatelessWidget {
+  const _SelectedDayDetailsPanel({
+    required this.store,
+    required this.todos,
+    required this.records,
+  });
+
+  final CatudyDemoStore store;
+  final List<CalendarTodo> todos;
+  final List<FocusRecord> records;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      accentColor: CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CatudySectionHeader(
+            title: store.t('calendar.reminders'),
+            icon: Icons.notifications_none_rounded,
+            accentColor: CatudyColors.violet,
+          ),
+          const SizedBox(height: 10),
+          if (todos.isEmpty)
+            Text(
+              store.t('calendar.noReminders'),
+              style: TextStyle(color: CatudyColors.mutedFor(context)),
+            )
+          else
+            for (final todo in todos) _TodoTile(todo: todo, store: store),
+          const Divider(height: 26),
+          CatudySectionHeader(
+            title: store.t('calendar.records'),
+            icon: Icons.history_rounded,
+            accentColor: CatudyColors.teal,
+          ),
+          const SizedBox(height: 10),
+          if (records.isEmpty)
+            Text(
+              store.t('calendar.noRecords'),
+              style: TextStyle(color: CatudyColors.mutedFor(context)),
+            )
+          else
+            for (final record in records)
+              _RecordTile(record: record, store: store),
+        ],
+      ),
+    );
+  }
+}
+
+class _DayMetricPill extends StatelessWidget {
+  const _DayMetricPill({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: CatudyColors.teal.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: CatudyColors.teal),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _ReminderDraft {
   const _ReminderDraft({required this.title, required this.time});
