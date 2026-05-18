@@ -2549,13 +2549,25 @@ class CatudyDemoStore extends ChangeNotifier {
       try {
         final pass = await service.createBuddyPass();
         if (pass == null) {
+          await _refreshPremiumStateAfterMutation();
+          if (issuedBuddyPasses.isNotEmpty) {
+            return issuedBuddyPasses.last;
+          }
+          premiumError = t('buddy.createFailed');
           return null;
         }
         issuedBuddyPasses.add(pass);
         await _refreshPremiumStateAfterMutation();
         return pass;
-      } catch (_) {
-        premiumError = t('buddy.invalid');
+      } catch (error) {
+        await _refreshPremiumStateAfterMutation();
+        if (issuedBuddyPasses.isNotEmpty) {
+          return issuedBuddyPasses.last;
+        }
+        premiumError = _premiumActionErrorMessage(
+          error,
+          fallbackKey: 'buddy.createFailed',
+        );
         return null;
       } finally {
         premiumBusy = false;
@@ -2596,8 +2608,11 @@ class CatudyDemoStore extends ChangeNotifier {
         }
         await _refreshPremiumStateAfterMutation();
         return hasPremiumAccess;
-      } catch (_) {
-        premiumError = t('buddy.invalid');
+      } catch (error) {
+        premiumError = _premiumActionErrorMessage(
+          error,
+          fallbackKey: 'buddy.invalid',
+        );
         return false;
       } finally {
         premiumBusy = false;
@@ -4334,6 +4349,23 @@ class CatudyDemoStore extends ChangeNotifier {
     if (!ownedCosmeticIds.contains(selectedDialoguePackId)) {
       selectedDialoguePackId = '';
     }
+  }
+
+  String _premiumActionErrorMessage(
+    Object error, {
+    required String fallbackKey,
+  }) {
+    final normalized = error.toString().toLowerCase();
+    if (normalized.contains('monthly buddy pass already used')) {
+      return t('buddy.monthlyUsed');
+    }
+    if (normalized.contains('active premium required')) {
+      return t('buddy.activePremiumRequired');
+    }
+    if (normalized.contains('authentication required')) {
+      return t('buddy.authenticationRequired');
+    }
+    return t(fallbackKey);
   }
 
   FocusCategory _categoryById(String id) {

@@ -407,6 +407,12 @@ class CatudyCopy {
     'buddy.copied': 'Buddy Pass kodu kopyalandı.',
     'buddy.create': 'Buddy Pass oluştur',
     'buddy.created': 'Buddy Pass hazır.',
+    'buddy.createFailed': 'Buddy Pass oluşturulamadı.',
+    'buddy.monthlyUsed': 'Bu ayın Buddy Pass hakkı zaten kullanılmış.',
+    'buddy.activePremiumRequired':
+        'Buddy Pass göndermek için aktif Plus gerekiyor.',
+    'buddy.authenticationRequired':
+        'Buddy Pass için online hesaba giriş yapmalısın.',
     'buddy.redeemLabel': 'Buddy Pass kodu',
     'buddy.redeem': 'Kullan',
     'buddy.redeemed': 'Buddy Pass kullanıldı.',
@@ -958,6 +964,12 @@ class CatudyCopy {
     'buddy.copied': 'Buddy Pass code copied.',
     'buddy.create': 'Create Buddy Pass',
     'buddy.created': 'Buddy Pass is ready.',
+    'buddy.createFailed': 'Buddy Pass could not be created.',
+    'buddy.monthlyUsed': 'This month’s Buddy Pass has already been used.',
+    'buddy.activePremiumRequired':
+        'Active Plus is required to send a Buddy Pass.',
+    'buddy.authenticationRequired':
+        'You need to sign in online to use Buddy Pass.',
     'buddy.redeemLabel': 'Buddy Pass code',
     'buddy.redeem': 'Redeem',
     'buddy.redeemed': 'Buddy Pass redeemed.',

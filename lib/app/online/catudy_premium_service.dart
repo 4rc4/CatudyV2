@@ -80,11 +80,17 @@ class CatudyPremiumService {
     if (currentUserId == null) {
       return null;
     }
-    final rows = await _client.rpc('catudy_create_buddy_pass');
-    if (rows is! List || rows.isEmpty || rows.first is! Map) {
+    final result = await _client.rpc('catudy_create_buddy_pass');
+    final row = switch (result) {
+      final List rows when rows.isNotEmpty && rows.first is Map =>
+        rows.first as Map,
+      final Map row => row,
+      _ => null,
+    };
+    if (row == null) {
       return null;
     }
-    return BuddyPass.fromJson(_normalizeBuddyPassRow(rows.first as Map));
+    return BuddyPass.fromJson(_normalizeBuddyPassRow(row));
   }
 
   Future<bool> redeemBuddyPass(String code) async {
