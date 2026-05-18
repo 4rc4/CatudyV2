@@ -10,6 +10,7 @@ import '../features/focus/focus_start_screen.dart';
 import '../features/focus/session_result_screen.dart';
 import '../features/focus/timer_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/leaderboard/leaderboard_screen.dart';
 import '../features/lobby/lobby_screen.dart';
 import '../features/pet/pet_room_screen.dart';
 import '../features/premium/crates_screen.dart';
@@ -58,6 +59,11 @@ class CatudyRouter {
             path: '/calendar',
             pageBuilder: (context, state) =>
                 _animatedPage(state, const CalendarScreen()),
+          ),
+          GoRoute(
+            path: '/leaderboard/full',
+            pageBuilder: (context, state) =>
+                _animatedPage(state, const LeaderboardScreen(full: true)),
           ),
           GoRoute(
             path: '/leaderboard',

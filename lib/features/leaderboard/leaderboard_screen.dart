@@ -11,7 +11,9 @@ import '../../shared/widgets/store_builder.dart';
 enum _LeaderboardAction { room, profile }
 
 class LeaderboardScreen extends StatelessWidget {
-  const LeaderboardScreen({super.key});
+  const LeaderboardScreen({this.full = false, super.key});
+
+  final bool full;
 
   @override
   Widget build(BuildContext context) {
@@ -20,14 +22,16 @@ class LeaderboardScreen extends StatelessWidget {
         title: store.t('leaderboard.title'),
         showBack: true,
         fallbackBackPath: '/',
-        children: const [LeaderboardContent()],
+        children: [LeaderboardContent(full: full)],
       ),
     );
   }
 }
 
 class LeaderboardContent extends StatelessWidget {
-  const LeaderboardContent({super.key});
+  const LeaderboardContent({this.full = false, super.key});
+
+  final bool full;
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +44,8 @@ class LeaderboardContent extends StatelessWidget {
         final currentUser = currentUserIndex == -1
             ? null
             : profiles[currentUserIndex];
+        final visibleProfiles = full ? profiles : profiles.take(10).toList();
+        final hiddenCount = profiles.length - visibleProfiles.length;
 
         return Column(
           children: [
@@ -50,19 +56,34 @@ class LeaderboardContent extends StatelessWidget {
                 children: [
                   _LeaderboardHeader(store: store),
                   const SizedBox(height: 14),
-                  for (var index = 0; index < profiles.length; index++) ...[
+                  for (
+                    var index = 0;
+                    index < visibleProfiles.length;
+                    index++
+                  ) ...[
                     _LeaderboardListRow(
                       rank: index + 1,
-                      profile: profiles[index],
+                      profile: visibleProfiles[index],
                       store: store,
                     ),
-                    if (index != profiles.length - 1)
+                    if (index != visibleProfiles.length - 1)
                       Divider(
                         height: 22,
                         color: CatudyColors.lineFor(
                           context,
                         ).withValues(alpha: 0.75),
                       ),
+                  ],
+                  if (!full && hiddenCount > 0) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.go('/leaderboard/full'),
+                        icon: const Icon(Icons.open_in_full_rounded),
+                        label: Text(store.t('leaderboard.viewAll')),
+                      ),
+                    ),
                   ],
                 ],
               ),

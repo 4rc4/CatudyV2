@@ -43,136 +43,107 @@ class CatudyStagePanel extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            CatudyColors.surfaceStrongFor(context).withValues(alpha: 0.98),
-            Color.lerp(
-              CatudyColors.surfaceFor(context),
-              accentColor,
-              dark ? 0.20 : 0.08,
-            )!,
-            Color.lerp(
-              CatudyColors.surfaceFor(context),
-              secondaryColor,
-              dark ? 0.15 : 0.06,
-            )!,
-          ],
+        color: CatudyColors.surfaceStrongFor(context),
+        border: Border.all(
+          color: CatudyColors.violet.withValues(alpha: dark ? 0.30 : 0.24),
         ),
-        border: Border.all(color: accentColor.withValues(alpha: 0.24)),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withValues(alpha: dark ? 0.20 : 0.16),
-            blurRadius: 30,
-            offset: const Offset(0, 16),
+            color: Colors.black.withValues(alpha: dark ? 0.20 : 0.06),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: dark ? 0.04 : 0.60),
-            blurRadius: 3,
-            offset: const Offset(0, -1),
-          ),
+          if (!dark)
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.58),
+              blurRadius: 2,
+              offset: const Offset(0, -1),
+            ),
         ],
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Positioned(
-            right: -36,
-            top: -46,
-            child: _GlowOrb(color: secondaryColor, size: 132),
-          ),
-          Positioned(
-            right: 18,
-            bottom: -52,
-            child: _GlowOrb(color: accentColor, size: 106),
-          ),
-          Column(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (icon != null) ...[
-                    CatudyAssetSlot(
-                      icon: icon,
-                      accentColor: accentColor,
-                      size: 48,
-                      compact: true,
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (eyebrow != null) ...[
-                          Text(
-                            eyebrow!,
-                            style: TextStyle(
-                              color: secondaryColor,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                        ],
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                color: CatudyColors.blueFor(context),
-                                fontWeight: FontWeight.w900,
-                                height: 1.04,
-                              ),
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            subtitle!,
-                            style: TextStyle(
-                              color: CatudyColors.mutedFor(context),
-                              fontWeight: FontWeight.w800,
-                              height: 1.28,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  if (art != null) ...[const SizedBox(width: 12), art!],
-                ],
-              ),
-              if (progress != null) ...[
-                const SizedBox(height: 16),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: progress!.clamp(0.0, 1.0),
-                    minHeight: 12,
-                    color: secondaryColor,
-                    backgroundColor: CatudyColors.surfaceFor(
-                      context,
-                    ).withValues(alpha: 0.72),
-                  ),
+              if (icon != null) ...[
+                CatudyAssetSlot(
+                  icon: icon,
+                  accentColor: accentColor,
+                  size: 48,
+                  compact: true,
                 ),
-                if (progressLabel != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    progressLabel!,
-                    style: TextStyle(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w900,
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (eyebrow != null) ...[
+                      Text(
+                        eyebrow!,
+                        style: TextStyle(
+                          color: secondaryColor,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                    ],
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: CatudyColors.blueFor(context),
+                            fontWeight: FontWeight.w900,
+                            height: 1.04,
+                          ),
                     ),
-                  ),
-                ],
-              ],
-              if (actions.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Wrap(spacing: 10, runSpacing: 10, children: actions),
-              ],
-              if (footer != null) ...[const SizedBox(height: 14), footer!],
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle!,
+                        style: TextStyle(
+                          color: CatudyColors.mutedFor(context),
+                          fontWeight: FontWeight.w800,
+                          height: 1.28,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (art != null) ...[const SizedBox(width: 12), art!],
             ],
           ),
+          if (progress != null) ...[
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: progress!.clamp(0.0, 1.0),
+                minHeight: 12,
+                color: secondaryColor,
+                backgroundColor: CatudyColors.surfaceFor(context),
+              ),
+            ),
+            if (progressLabel != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                progressLabel!,
+                style: TextStyle(
+                  color: CatudyColors.mutedFor(context),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ],
+          if (actions.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Wrap(spacing: 10, runSpacing: 10, children: actions),
+          ],
+          if (footer != null) ...[const SizedBox(height: 14), footer!],
         ],
       ),
     );
@@ -206,15 +177,8 @@ class CatudyAssetSlot extends StatelessWidget {
       padding: EdgeInsets.all(compact ? 9 : 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accentColor.withValues(alpha: 0.22),
-            CatudyColors.surfaceFor(context).withValues(alpha: 0.72),
-          ],
-        ),
-        border: Border.all(color: accentColor.withValues(alpha: 0.22)),
+        color: CatudyColors.surfaceFor(context),
+        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.24)),
         boxShadow: [
           BoxShadow(
             color: accentColor.withValues(alpha: 0.16),
@@ -259,9 +223,9 @@ class CatudyMetricTile extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(dense ? 10 : 12),
       decoration: BoxDecoration(
-        color: CatudyColors.surfaceFor(context).withValues(alpha: 0.86),
+        color: CatudyColors.surfaceFor(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
+        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.24)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,9 +306,9 @@ class CatudyVisualTabs<T> extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: CatudyColors.surfaceFor(context).withValues(alpha: 0.82),
+        color: CatudyColors.surfaceFor(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: accentColor.withValues(alpha: 0.18)),
+        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.24)),
       ),
       child: Row(
         children: [
@@ -477,10 +441,10 @@ class _RewardRailCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: CatudyColors.surfaceFor(context).withValues(alpha: 0.86),
+          color: CatudyColors.surfaceFor(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: item.color.withValues(alpha: item.unlocked ? 0.36 : 0.14),
+            color: CatudyColors.violet.withValues(alpha: 0.24),
           ),
         ),
         child: Column(
@@ -683,29 +647,6 @@ class _VisualTabButton<T> extends StatelessWidget {
               ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.color, required this.size});
-
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color.withValues(alpha: 0.18), Colors.transparent],
-          ),
         ),
       ),
     );

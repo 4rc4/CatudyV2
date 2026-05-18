@@ -50,7 +50,6 @@ class _LobbiesCommunitySectionState extends State<LobbiesCommunitySection> {
             CatudyStagePanel(
               title: store.t('community.lobbiesTitle'),
               subtitle: store.t('community.lobbiesBody'),
-              icon: Icons.groups_2_rounded,
               art: const CatudyMascotBadge(
                 size: 92,
                 accent: CatudyColors.violet,

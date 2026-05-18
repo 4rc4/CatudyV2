@@ -10,6 +10,7 @@ import '../../app/premium/catudy_premium_models.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_visual_system.dart';
 import '../../shared/widgets/floating_mascot.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -24,11 +25,6 @@ class HomeScreen extends StatelessWidget {
       builder: (context, store) {
         final basicRecommendation = store.focusRecommendation;
         final coachRecommendation = store.coachRecommendation;
-        final recommendationCategory = store.categoryName(
-          store.hasPremiumAccess
-              ? coachRecommendation.categoryId
-              : basicRecommendation.categoryId,
-        );
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
           child: Column(
@@ -39,7 +35,6 @@ class HomeScreen extends StatelessWidget {
                 store: store,
                 basicRecommendation: basicRecommendation,
                 coachRecommendation: coachRecommendation,
-                category: recommendationCategory,
               ),
               const SizedBox(height: 14),
               _DailyGoalPanel(store: store),
@@ -159,13 +154,11 @@ class _FocusHeroCard extends StatelessWidget {
     required this.store,
     required this.basicRecommendation,
     required this.coachRecommendation,
-    required this.category,
   });
 
   final CatudyDemoStore store;
   final FocusRecommendation basicRecommendation;
   final CoachRecommendation coachRecommendation;
-  final String category;
 
   @override
   Widget build(BuildContext context) {
@@ -173,50 +166,61 @@ class _FocusHeroCard extends StatelessWidget {
     final minutes = premiumActive
         ? coachRecommendation.minutes
         : basicRecommendation.minutes;
-    final reason = premiumActive
-        ? '${coachRecommendation.headline} ${coachRecommendation.reason}'
-        : basicRecommendation.basedOnHistory
-        ? store.t('home.focusSuggestionReason', {
-            'sessions': basicRecommendation.sessionsConsidered,
-          })
-        : store.t('home.focusSuggestionStarter');
 
     return CatudyPanel(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       color: CatudyColors.lavenderSoft,
       accentColor: CatudyColors.violet,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            store.t('home.focusTime'),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w900,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: CatudyColors.violet.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: CatudyColors.violet.withValues(alpha: 0.24),
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            store.t('home.focusSuggestion', {
-              'minutes': minutes,
-              'category': category,
-            }),
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: CatudyColors.blueFor(context),
-              fontWeight: FontWeight.w900,
-              height: 1.06,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.timer_rounded,
+                  color: CatudyColors.violet,
+                  size: 16,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  store.t('home.focusTime'),
+                  style: const TextStyle(
+                    color: CatudyColors.violet,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            reason,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: CatudyColors.mutedFor(context),
-              height: 1.32,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  store.t('home.heroStudyTitle', {'minutes': minutes}),
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                    height: 1.02,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              CatudyMascotBadge(size: 106, accent: CatudyColors.teal),
+            ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           _FocusLaunchButton(
             minutes: minutes,
             onPressed: () {
@@ -226,29 +230,29 @@ class _FocusHeroCard extends StatelessWidget {
                 return;
               }
               store.prepareRecommendedFocus();
-              store.startFocus();
-              context.go('/focus/timer');
+              context.go('/focus/start');
             },
           ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          const SizedBox(height: 10),
+          Row(
             children: [
-              OutlinedButton.icon(
-                onPressed: () {
-                  store.prepareRecommendedFocus();
-                  context.go('/focus/start');
-                },
-                icon: const Icon(Icons.tune_rounded),
-                label: Text(store.t('home.adjustFocus')),
-              ),
-              if (!premiumActive)
-                OutlinedButton.icon(
-                  onPressed: () => context.go('/plus'),
-                  icon: const Icon(Icons.auto_awesome_rounded),
-                  label: Text(store.t('home.unlockCoach')),
+              Expanded(
+                child: _LobbyQuickButton(
+                  icon: Icons.add_home_work_rounded,
+                  label: store.t('home.createLobby'),
+                  color: CatudyColors.violet,
+                  onTap: () => context.go('/lobby/create'),
                 ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _LobbyQuickButton(
+                  icon: Icons.login_rounded,
+                  label: store.t('home.joinLobby'),
+                  color: CatudyColors.tealDark,
+                  onTap: () => context.go('/lobby/join'),
+                ),
+              ),
             ],
           ),
         ],
@@ -360,54 +364,36 @@ class _SecondaryHomePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unlockedAchievements = store.achievements
-        .where((achievement) => achievement.unlocked)
-        .length;
     return CatudyPanel(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       accentColor: CatudyColors.violet,
-      child: Column(
+      child: Row(
         children: [
-          _HomeLinkRow(
-            icon: Icons.groups_rounded,
-            title: store.t('community.title'),
-            subtitle: store.t('home.communityShortcut'),
-            onTap: () => context.go('/community?tab=friends'),
+          Expanded(
+            child: _HomeShortcutButton(
+              icon: Icons.groups_rounded,
+              label: store.t('community.title'),
+              color: CatudyColors.violet,
+              onTap: () => context.go('/community?tab=friends'),
+            ),
           ),
-          const Divider(height: 20),
-          _HomeLinkRow(
-            icon: Icons.emoji_events_rounded,
-            title: store.t('leaderboard.title'),
-            subtitle: store.t('home.rankingShortcut'),
-            onTap: () => context.go('/community?tab=ranking'),
+          _ShortcutDivider(),
+          Expanded(
+            child: _HomeShortcutButton(
+              icon: Icons.workspace_premium_rounded,
+              label: store.t('season.previewTitle'),
+              color: CatudyColors.teal,
+              onTap: () => context.go('/season'),
+            ),
           ),
-          const Divider(height: 20),
-          _HomeLinkRow(
-            icon: Icons.workspace_premium_rounded,
-            title: store.t('season.previewTitle'),
-            subtitle: store.t('home.collectionShortcut', {
-              'count': unlockedAchievements,
-            }),
-            onTap: () => context.go('/season'),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => context.go('/community?tab=lobbies'),
-                  icon: const Icon(Icons.add_home_rounded),
-                  label: Text(store.t('home.createLobby')),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => context.go('/community?tab=lobbies'),
-                  icon: const Icon(Icons.login_rounded),
-                  label: Text(store.t('home.joinLobby')),
-                ),
-              ),
-            ],
+          _ShortcutDivider(),
+          Expanded(
+            child: _HomeShortcutButton(
+              icon: Icons.emoji_events_rounded,
+              label: store.t('leaderboard.title'),
+              color: CatudyColors.coral,
+              onTap: () => context.go('/community?tab=ranking'),
+            ),
           ),
         ],
       ),
@@ -415,17 +401,17 @@ class _SecondaryHomePanel extends StatelessWidget {
   }
 }
 
-class _HomeLinkRow extends StatelessWidget {
-  const _HomeLinkRow({
+class _HomeShortcutButton extends StatelessWidget {
+  const _HomeShortcutButton({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.label,
+    required this.color,
     required this.onTap,
   });
 
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String label;
+  final Color color;
   final VoidCallback onTap;
 
   @override
@@ -434,44 +420,88 @@ class _HomeLinkRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: CatudyColors.violet.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Icon(icon, color: CatudyColors.violet),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: CatudyColors.blueFor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+            Icon(icon, color: color, size: 27),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: CatudyColors.mutedFor(context),
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: CatudyColors.mutedFor(context),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShortcutDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 54,
+      color: CatudyColors.lineFor(context).withValues(alpha: 0.7),
+    );
+  }
+}
+
+class _LobbyQuickButton extends StatelessWidget {
+  const _LobbyQuickButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        height: 46,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.34)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.25),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 19),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ],
         ),

@@ -967,6 +967,7 @@ class CatudyDemoStore extends ChangeNotifier {
   String languageCode = 'tr';
   String themeModeCode = 'system';
   int dailyGoalMinutes = 90;
+  int monthlyGoalMinutes = 1800;
   int dailyGoalReminderHour = 18;
   int dailyGoalReminderMinute = 0;
   String? selectedTodoId;
@@ -2401,6 +2402,11 @@ class CatudyDemoStore extends ChangeNotifier {
 
   void updateDailyGoal(int minutes) {
     dailyGoalMinutes = minutes.clamp(15, 720).toInt();
+    _commit();
+  }
+
+  void updateMonthlyGoal(int minutes) {
+    monthlyGoalMinutes = minutes.clamp(60, 43200).toInt();
     _commit();
   }
 
@@ -4004,6 +4010,7 @@ class CatudyDemoStore extends ChangeNotifier {
     introTourSeen = false;
     themeModeCode = 'system';
     dailyGoalMinutes = 90;
+    monthlyGoalMinutes = 1800;
     dailyGoalReminderHour = 18;
     dailyGoalReminderMinute = 0;
     selectedTodoId = null;
@@ -4124,6 +4131,11 @@ class CatudyDemoStore extends ChangeNotifier {
       'dailyGoalMinutes',
       90,
     ).clamp(15, 720).toInt();
+    monthlyGoalMinutes = _readInt(
+      json,
+      'monthlyGoalMinutes',
+      1800,
+    ).clamp(60, 43200).toInt();
     dailyGoalReminderHour = _readInt(
       json,
       'dailyGoalReminderHour',
@@ -4303,6 +4315,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'languageCode': languageCode,
     'themeModeCode': themeModeCode,
     'dailyGoalMinutes': dailyGoalMinutes,
+    'monthlyGoalMinutes': monthlyGoalMinutes,
     'dailyGoalReminderHour': dailyGoalReminderHour,
     'dailyGoalReminderMinute': dailyGoalReminderMinute,
     'selectedTodoId': selectedTodoId,

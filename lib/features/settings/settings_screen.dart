@@ -19,6 +19,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _profileShareUrlController;
+  late final TextEditingController _monthlyGoalController;
   bool _dnd = true;
   bool _notifications = true;
   bool _dailyGoalReminderEnabled = true;
@@ -34,6 +35,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _profileShareUrlController = TextEditingController(
       text: store.profileShareBaseUrl,
     );
+    _monthlyGoalController = TextEditingController(
+      text: store.monthlyGoalMinutes.toString(),
+    );
     _dnd = store.dndReminder;
     _notifications = store.notifications;
     _dailyGoalReminderEnabled = store.dailyGoalReminderEnabled;
@@ -46,6 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     _nameController.dispose();
     _profileShareUrlController.dispose();
+    _monthlyGoalController.dispose();
     super.dispose();
   }
 
@@ -182,6 +187,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: const Icon(Icons.schedule_rounded),
                     label: Text(store.t('settings.changeReminderTime')),
                   ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _monthlyGoalController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: store.t('settings.monthlyGoal'),
+                    helperText: store.t('settings.monthlyGoalBody'),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.calendar_month_rounded),
+                  ),
+                  onChanged: (value) {
+                    final minutes = int.tryParse(value);
+                    if (minutes != null) {
+                      store.updateMonthlyGoal(minutes);
+                    }
+                  },
                 ),
               ],
             ),

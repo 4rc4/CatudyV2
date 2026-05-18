@@ -86,18 +86,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               ),
                         ),
                       ),
-                      TextButton(
-                        onPressed: () {
-                          final today = DateTime.now();
-                          setState(
-                            () => _visibleMonth = DateTime(
-                              today.year,
-                              today.month,
-                            ),
-                          );
-                          store.selectCalendarDate(today);
-                        },
-                        child: Text(store.t('calendar.todayBadge')),
+                      IconButton(
+                        onPressed: () => setState(
+                          () => _visibleMonth = DateTime(
+                            _visibleMonth.year,
+                            _visibleMonth.month + 1,
+                          ),
+                        ),
+                        icon: const Icon(Icons.chevron_right_rounded),
                       ),
                     ],
                   ),

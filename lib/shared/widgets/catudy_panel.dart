@@ -18,7 +18,7 @@ class CatudyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = accentColor ?? CatudyColors.violet;
+    final borderColor = CatudyColors.violet;
     final dark = CatudyColors.isDark(context);
     final panelColor = color == CatudyColors.surface
         ? CatudyColors.surfaceFor(context)
@@ -51,9 +51,9 @@ class CatudyPanel extends StatelessWidget {
         width: double.infinity,
         padding: padding,
         decoration: BoxDecoration(
-          color: panelColor.withValues(alpha: dark ? 0.94 : 0.97),
+          color: panelColor,
           border: Border.all(
-            color: borderColor.withValues(alpha: dark ? 0.26 : 0.18),
+            color: borderColor.withValues(alpha: dark ? 0.30 : 0.24),
             width: 1.2,
           ),
           borderRadius: BorderRadius.circular(24),

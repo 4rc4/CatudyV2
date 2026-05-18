@@ -66,6 +66,7 @@ class CatudyCopy {
     'home.greeting': 'İyi günler!',
     'home.petButton': 'Pet',
     'home.focusTime': 'Odak Zamanı',
+    'home.heroStudyTitle': '{minutes} dakika çalış',
     'home.createLobby': 'Lobi Kur',
     'home.joinLobby': 'Lobiye Katıl',
     'home.todaySummary': 'Bugünün Özeti',
@@ -226,6 +227,7 @@ class CatudyCopy {
     'leaderboard.minutes': 'odak dk',
     'leaderboard.roomSoon': 'Pet odasını ziyaret et',
     'leaderboard.visitSoon': 'Pet odasını ziyaret et',
+    'leaderboard.viewAll': 'Sonrasını görüntüle',
 
     'calendar.title': 'Takvim',
     'calendar.manualAdd': 'Manuel Ekle',
@@ -590,6 +592,9 @@ class CatudyCopy {
     'settings.dailyGoalReminder': 'Günlük hedef hatırlatması',
     'settings.dailyGoalReminderBody': 'Her gün {time} saatinde hatırlat.',
     'settings.changeReminderTime': 'Hatırlatma saatini değiştir',
+    'settings.monthlyGoal': 'Aylık hedef',
+    'settings.monthlyGoalBody':
+        'Profildeki Bu Ay ilerlemesi için dakika hedefi.',
     'settings.save': 'Ayarları kaydet',
     'settings.saved': 'Ayarlar kaydedildi',
     'settings.offline':
@@ -735,6 +740,7 @@ class CatudyCopy {
     'home.greeting': 'Have a good day!',
     'home.petButton': 'Pet',
     'home.focusTime': 'Focus Time',
+    'home.heroStudyTitle': 'Study for {minutes} minutes',
     'home.createLobby': 'Create Lobby',
     'home.joinLobby': 'Join Lobby',
     'home.todaySummary': "Today's Summary",
@@ -899,6 +905,7 @@ class CatudyCopy {
     'leaderboard.minutes': 'focus min',
     'leaderboard.roomSoon': 'Visit pet room',
     'leaderboard.visitSoon': 'Visit pet room',
+    'leaderboard.viewAll': 'View the rest',
 
     'calendar.title': 'Calendar',
     'calendar.manualAdd': 'Add Manual',
@@ -1263,6 +1270,9 @@ class CatudyCopy {
     'settings.dailyGoalReminder': 'Daily target reminder',
     'settings.dailyGoalReminderBody': 'Remind every day at {time}.',
     'settings.changeReminderTime': 'Change reminder time',
+    'settings.monthlyGoal': 'Monthly goal',
+    'settings.monthlyGoalBody':
+        'Minute target for This Month progress on the profile.',
     'settings.save': 'Save settings',
     'settings.saved': 'Settings saved',
     'settings.offline': 'Offline use is on. Data is kept on this device.',

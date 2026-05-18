@@ -127,7 +127,7 @@ void main() {
 
     await _pumpCatudy(tester, initialLocation: '/profile');
     expect(find.text('Profil'), findsOneWidget);
-    expect(find.text('İlgi Alanları / Kategoriler'), findsOneWidget);
+    expect(find.text('İlgi Alanları / Kategoriler'), findsNothing);
     expect(find.text('Koleksiyon'), findsOneWidget);
     expect(find.text('Bu Ay'), findsOneWidget);
   });

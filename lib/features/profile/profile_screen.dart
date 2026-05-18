@@ -27,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
           0,
           (sum, item) => sum + item.minutes,
         );
-        final monthTarget = store.dailyGoalMinutes * 20;
+        final monthTarget = store.monthlyGoalMinutes;
         final unlockedAchievements = store.unlockedAchievements
             .take(5)
             .toList();
@@ -76,7 +76,6 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              icon: Icons.person_rounded,
               footer: Row(
                 children: [
                   Expanded(
@@ -114,8 +113,6 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             _AchievementShelf(achievements: unlockedAchievements, store: store),
-            const SizedBox(height: 14),
-            _CategoryInterestCard(store: store),
             const SizedBox(height: 14),
             _CollectionShelf(
               store: store,
@@ -381,44 +378,6 @@ class _AchievementShelf extends StatelessWidget {
   }
 }
 
-class _CategoryInterestCard extends StatelessWidget {
-  const _CategoryInterestCard({required this.store});
-
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    final total = store.history.fold(0, (sum, item) => sum + item.minutes);
-    return CatudyPanel(
-      accentColor: CatudyColors.teal,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionRow(
-            icon: Icons.favorite_rounded,
-            title: store.t('profile.interests'),
-          ),
-          const SizedBox(height: 12),
-          for (final category in store.categories.take(4))
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _CategoryLine(
-                name: category.name,
-                color: category.color,
-                ratio: total == 0
-                    ? 0
-                    : store.history
-                              .where((item) => item.categoryId == category.id)
-                              .fold(0, (sum, item) => sum + item.minutes) /
-                          total,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _CollectionShelf extends StatelessWidget {
   const _CollectionShelf({
     required this.store,
@@ -569,59 +528,6 @@ class _SectionRow extends StatelessWidget {
         ),
         if (action != null && onTap != null)
           TextButton(onPressed: onTap, child: Text(action!)),
-      ],
-    );
-  }
-}
-
-class _CategoryLine extends StatelessWidget {
-  const _CategoryLine({
-    required this.name,
-    required this.color,
-    required this.ratio,
-  });
-
-  final String name;
-  final Color color;
-  final double ratio;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(Icons.menu_book_rounded, color: color),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 84,
-          child: Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.blueFor(context),
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: ratio.clamp(0.0, 1.0),
-              minHeight: 8,
-              color: color,
-              backgroundColor: CatudyColors.surfaceStrongFor(context),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '${(ratio * 100).round()}%',
-          style: TextStyle(
-            color: CatudyColors.mutedFor(context),
-            fontWeight: FontWeight.w900,
-          ),
-        ),
       ],
     );
   }
