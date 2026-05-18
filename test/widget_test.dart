@@ -33,7 +33,7 @@ void main() {
     expect(find.text('Kullanıcı kodu'), findsOneWidget);
     expect(find.text('Arkadaşlar'), findsWidgets);
     expect(find.text('Odak panosu'), findsNothing);
-    expect(find.byIcon(Icons.meeting_room_rounded), findsNothing);
+    expect(find.byIcon(Icons.meeting_room_rounded), findsOneWidget);
     expect(find.byIcon(Icons.visibility_rounded), findsNothing);
     expect(find.byIcon(Icons.send_rounded), findsOneWidget);
   });
@@ -47,6 +47,23 @@ void main() {
     expect(find.text('Odak Süresi Sıralaması'), findsOneWidget);
     expect(find.text('Arkadaşlar'), findsOneWidget);
     expect(find.text('Sıralama'), findsOneWidget);
+  });
+
+  testWidgets('renders community lobbies and preserves lobby redirect', (
+    tester,
+  ) async {
+    await _pumpCatudy(tester, initialLocation: '/community?tab=lobbies');
+
+    expect(find.text('Topluluk'), findsOneWidget);
+    expect(find.text('Lobiler'), findsOneWidget);
+    expect(find.text('Lobi kur veya katıl'), findsOneWidget);
+    expect(find.text('Online lobi kur'), findsWidgets);
+    expect(find.text('Koda katıl'), findsWidgets);
+
+    await _pumpCatudy(tester, initialLocation: '/lobby');
+
+    expect(find.text('Topluluk'), findsOneWidget);
+    expect(find.text('Lobi kur veya katıl'), findsOneWidget);
   });
 
   testWidgets('renders one-surface focus composer', (tester) async {
@@ -110,8 +127,9 @@ void main() {
 
     await _pumpCatudy(tester, initialLocation: '/profile');
     expect(find.text('Profil'), findsOneWidget);
-    expect(find.text('Takılı Eşyalar'), findsOneWidget);
-    expect(find.text('Haftalık Özet'), findsOneWidget);
+    expect(find.text('İlgi Alanları / Kategoriler'), findsOneWidget);
+    expect(find.text('Koleksiyon'), findsOneWidget);
+    expect(find.text('Bu Ay'), findsOneWidget);
   });
 
   testWidgets('renders settings with language support', (tester) async {
@@ -153,7 +171,7 @@ void main() {
     expect(find.text('Buddy Pass'), findsOneWidget);
 
     await _pumpCatudy(tester, initialLocation: '/season');
-    expect(find.text('Sezon Pass'), findsOneWidget);
+    expect(find.text('Focus Pass'), findsOneWidget);
     expect(find.text('Ücretsiz yol'), findsOneWidget);
 
     await _pumpCatudy(tester, initialLocation: '/crates');

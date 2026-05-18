@@ -3,14 +3,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
-import '../../shared/widgets/catudy_filter_tabs.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_visual_system.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 import '../leaderboard/leaderboard_screen.dart';
+import '../lobby/lobby_screen.dart';
 import '../social/social_screen.dart';
 
-enum CommunityTab { friends, ranking }
+enum CommunityTab { friends, ranking, lobbies }
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({required this.initialTab, super.key});
@@ -46,26 +47,27 @@ class _CommunityScreenState extends State<CommunityScreen> {
           children: [
             _CommunityOverview(store: store, requestCount: requestCount),
             const SizedBox(height: 14),
-            CatudyFilterTabs<CommunityTab>(
+            CatudyVisualTabs<CommunityTab>(
               selected: _tab,
               onChanged: (tab) {
                 setState(() => _tab = tab);
-                context.go(
-                  '/community?tab=${tab == CommunityTab.ranking ? 'ranking' : 'friends'}',
-                );
+                context.go('/community?tab=${_tabCode(tab)}');
               },
               tabs: [
-                CatudyFilterTab(
+                CatudyVisualTab(
                   value: CommunityTab.friends,
                   label: store.t('community.friendsTab'),
                   icon: Icons.people_alt_rounded,
-                  count: store.friendProfiles.length,
                 ),
-                CatudyFilterTab(
+                CatudyVisualTab(
                   value: CommunityTab.ranking,
                   label: store.t('community.rankingTab'),
                   icon: Icons.emoji_events_rounded,
-                  count: store.leaderboardProfiles.length,
+                ),
+                CatudyVisualTab(
+                  value: CommunityTab.lobbies,
+                  label: store.t('community.lobbiesTab'),
+                  icon: Icons.meeting_room_rounded,
                 ),
               ],
             ),
@@ -83,6 +85,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   key: ValueKey('ranking'),
                   children: [LeaderboardContent()],
                 ),
+                CommunityTab.lobbies => const Column(
+                  key: ValueKey('lobbies'),
+                  children: [LobbiesCommunitySection()],
+                ),
               },
             ),
           ],
@@ -90,6 +96,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
       },
     );
   }
+
+  String _tabCode(CommunityTab tab) => switch (tab) {
+    CommunityTab.friends => 'friends',
+    CommunityTab.ranking => 'ranking',
+    CommunityTab.lobbies => 'lobbies',
+  };
 }
 
 class _CommunityOverview extends StatelessWidget {

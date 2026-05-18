@@ -9,7 +9,9 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../features/onboarding/pet_intro_tour.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
+import '../../shared/widgets/catudy_visual_system.dart';
 import '../../shared/widgets/floating_mascot.dart';
+import '../../shared/widgets/shop_item_art.dart';
 import '../../shared/widgets/store_builder.dart';
 
 class PetRoomScreen extends StatefulWidget {
@@ -28,16 +30,16 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
   bool _petNameDialogOpen = false;
 
   static const _dialoguesTr = [
-    'Burada olduğunu bilmiyordum! Odayı biraz daha güzelleştirelim mi?',
-    'Ders çalışmaya hazır mısın? Ben bugün masanın yanında bekliyorum.',
-    'Bir odak seansı yaparsan battaniyemi kabartıp seni alkışlarım.',
-    'Bugün biraz sakinim. Kısa bir çalışma ritmi iyi gelebilir.',
-    'Masadaki ışık tam yerinde. Başlamak için güzel bir gün.',
-    'Ben buradayım. Sen odaklanırken odaya göz kulak olurum.',
-    'Koltuk çok rahat ama önce küçük bir odak turu yapalım mı?',
-    'Yatağıma zıplamadım. Tamam, belki biraz zıplamış olabilirim.',
-    'Bugün oda çok sakin. Bir süre çalışırsan ben de burada beklerim.',
-    'Yeni bir eşya açınca odamız daha tatlı görünecek, söz.',
+    'Burada olduÄŸunu bilmiyordum! OdayÄ± biraz daha gÃ¼zelleÅŸtirelim mi?',
+    'Ders Ã§alÄ±ÅŸmaya hazÄ±r mÄ±sÄ±n? Ben bugÃ¼n masanÄ±n yanÄ±nda bekliyorum.',
+    'Bir odak seansÄ± yaparsan battaniyemi kabartÄ±p seni alkÄ±ÅŸlarÄ±m.',
+    'BugÃ¼n biraz sakinim. KÄ±sa bir Ã§alÄ±ÅŸma ritmi iyi gelebilir.',
+    'Masadaki Ä±ÅŸÄ±k tam yerinde. BaÅŸlamak iÃ§in gÃ¼zel bir gÃ¼n.',
+    'Ben buradayÄ±m. Sen odaklanÄ±rken odaya gÃ¶z kulak olurum.',
+    'Koltuk Ã§ok rahat ama Ã¶nce kÃ¼Ã§Ã¼k bir odak turu yapalÄ±m mÄ±?',
+    'YataÄŸÄ±ma zÄ±plamadÄ±m. Tamam, belki biraz zÄ±plamÄ±ÅŸ olabilirim.',
+    'BugÃ¼n oda Ã§ok sakin. Bir sÃ¼re Ã§alÄ±ÅŸÄ±rsan ben de burada beklerim.',
+    'Yeni bir eÅŸya aÃ§Ä±nca odamÄ±z daha tatlÄ± gÃ¶rÃ¼necek, sÃ¶z.',
   ];
 
   static const _dialoguesEn = [
@@ -54,14 +56,14 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
   ];
 
   static const _storybookDialoguesTr = [
-    'Bir sayfa daha, sonra birlikte yıldızları sayarız.',
-    'Bugünün küçük gayreti yarının masalını biraz daha güzelleştirir.',
-    'Sen çalışırken ben de sessizce nöbet tutuyorum.',
+    'Bir sayfa daha, sonra birlikte yÄ±ldÄ±zlarÄ± sayarÄ±z.',
+    'BugÃ¼nÃ¼n kÃ¼Ã§Ã¼k gayreti yarÄ±nÄ±n masalÄ±nÄ± biraz daha gÃ¼zelleÅŸtirir.',
+    'Sen Ã§alÄ±ÅŸÄ±rken ben de sessizce nÃ¶bet tutuyorum.',
   ];
 
   static const _storybookDialoguesEn = [
     'One more page, then we can count the stars together.',
-    'A small effort today makes tomorrow’s story kinder.',
+    'A small effort today makes tomorrowâ€™s story kinder.',
     'While you study, I keep quiet watch beside you.',
   ];
 
@@ -512,57 +514,9 @@ class _RoomScene extends StatelessWidget {
                         ),
                       )
                     else
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 42,
-                              child: FilledButton.icon(
-                                onPressed: onInventory,
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: CatudyColors.tealDark,
-                                  minimumSize: const Size(0, 42),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.inventory_2_rounded,
-                                  size: 19,
-                                ),
-                                label: Text(catudyDemoStore.t('pet.inventory')),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SizedBox(
-                              height: 42,
-                              child: FilledButton.tonalIcon(
-                                onPressed: onShop,
-                                style: FilledButton.styleFrom(
-                                  minimumSize: const Size(0, 42),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.storefront_rounded,
-                                  size: 19,
-                                ),
-                                label: Text(catudyDemoStore.t('pet.shop')),
-                              ),
-                            ),
-                          ),
-                        ],
+                      _RoomCustomizeStrip(
+                        onInventory: onInventory,
+                        onShop: onShop,
                       ),
                   ],
                 ),
@@ -1074,12 +1028,21 @@ class _CarePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final store = catudyDemoStore;
+    final level = (store.focusPoints ~/ 120) + 1;
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       decoration: BoxDecoration(
-        color: CatudyColors.surfaceFor(context).withValues(alpha: 0.70),
-        borderRadius: BorderRadius.circular(20),
+        color: CatudyColors.surfaceFor(context).withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: CatudyColors.teal.withValues(alpha: 0.22)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -1105,33 +1068,307 @@ class _CarePanel extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 9),
+          Row(
+            children: [
+              Expanded(
+                child: _CareStatTile(
+                  icon: Icons.sentiment_satisfied_rounded,
+                  label: store.t('pet.mood'),
+                  value: mood,
+                  color: CatudyColors.tealDark,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: _CareStatTile(
+                  icon: Icons.local_cafe_rounded,
+                  label: store.t('home.hunger'),
+                  value: 100 - hunger,
+                  color: CatudyColors.violet,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: _CareStatTile(
+                  icon: Icons.bolt_rounded,
+                  label: store.t('pet.energy'),
+                  value: energy,
+                  color: CatudyColors.yellow,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: _CareStatTile(
+                  icon: Icons.star_rounded,
+                  label: store.t('pet.level'),
+                  value: (level * 10).clamp(0, 100),
+                  valueLabel: '$level',
+                  color: CatudyColors.coral,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _CareActionButton(
+                  icon: Icons.cake_rounded,
+                  label: store.t('pet.feed'),
+                  color: CatudyColors.teal,
+                  onTap: store.feedPet,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: _CareActionButton(
+                  icon: Icons.sports_esports_rounded,
+                  label: store.t('pet.play'),
+                  color: CatudyColors.violet,
+                  onTap: store.playWithPet,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: _CareActionButton(
+                  icon: Icons.nightlight_round,
+                  label: store.t('pet.sleep'),
+                  color: CatudyColors.lavender,
+                  onTap: store.restPet,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: _CareActionButton(
+                  icon: Icons.favorite_rounded,
+                  label: store.t('pet.love'),
+                  color: CatudyColors.coral,
+                  onTap: store.petPet,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CareStatTile extends StatelessWidget {
+  const _CareStatTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    this.valueLabel,
+  });
+
+  final IconData icon;
+  final String label;
+  final int value;
+  final Color color;
+  final String? valueLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 8),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceStrongFor(context).withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 16),
           const SizedBox(height: 5),
-          _PetMeter(
-            label: catudyDemoStore.t('pet.mood'),
-            value: mood,
-            color: CatudyColors.tealDark,
-            info: catudyDemoStore.languageCode == 'en'
-                ? 'Happiness rises with regular focus and items bought for your pet. A happy pet looks livelier in the room.'
-                : 'Mutluluk, düzenli odaklanma ve pet için alınan eşyalarla artar. Mutlu pet odada daha canlı görünür.',
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w900,
+              fontSize: 10,
+            ),
           ),
-          const SizedBox(height: 4),
-          _PetMeter(
-            label: catudyDemoStore.t('home.hunger'),
-            value: hunger,
-            color: CatudyColors.violet,
-            inverse: true,
-            info: catudyDemoStore.languageCode == 'en'
-                ? 'As hunger rises, care balance drops. Later this can be managed in more detail with food and furniture systems.'
-                : 'Açlık yükseldikçe bakım dengesi düşer. İleride yiyecek ve mobilya sistemleriyle daha ayrıntılı yönetilecek.',
+          const SizedBox(height: 5),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: value.clamp(0, 100) / 100,
+              minHeight: 6,
+              color: color,
+              backgroundColor: CatudyColors.surfaceFor(context),
+            ),
           ),
-          const SizedBox(height: 4),
-          _PetMeter(
-            label: catudyDemoStore.t('pet.energy'),
-            value: energy,
-            color: CatudyColors.teal,
-            info: catudyDemoStore.languageCode == 'en'
-                ? 'Energy shows your pet’s study rhythm. Focus sessions spend energy; a steady rhythm keeps your pet balanced.'
-                : 'Enerji, petin çalışma temposunu gösterir. Odak seansları enerji harcar; iyi ritim peti dengede tutar.',
+          const SizedBox(height: 3),
+          Text(
+            valueLabel ?? '${value.clamp(0, 100)}/100',
+            style: TextStyle(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CareActionButton extends StatelessWidget {
+  const _CareActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: color.withValues(alpha: 0.24)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: CatudyColors.blueFor(context),
+                fontWeight: FontWeight.w900,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RoomCustomizeStrip extends StatelessWidget {
+  const _RoomCustomizeStrip({required this.onInventory, required this.onShop});
+
+  final VoidCallback onInventory;
+  final VoidCallback onShop;
+
+  @override
+  Widget build(BuildContext context) {
+    final store = catudyDemoStore;
+    final items = store.equippedRoomItems.toList();
+    return Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context).withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: onInventory,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: 108,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: CatudyColors.violet.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.weekend_rounded,
+                    color: CatudyColors.violet,
+                    size: 19,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          store.t('pet.customizeTitle'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: CatudyColors.mutedFor(context),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 9,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          store.t('inventory.title'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: CatudyColors.blueFor(context),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            height: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: items.isEmpty
+                ? OutlinedButton.icon(
+                    onPressed: onShop,
+                    icon: const Icon(Icons.storefront_rounded),
+                    label: Text(store.t('pet.shop')),
+                  )
+                : ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return InkWell(
+                        onTap: onInventory,
+                        borderRadius: BorderRadius.circular(16),
+                        child: CatudyAssetSlot(
+                          size: 54,
+                          accentColor: item.accent,
+                          child: ShopItemArt(item: item, size: 44),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          const SizedBox(width: 8),
+          IconButton.filledTonal(
+            onPressed: onShop,
+            icon: const Icon(Icons.storefront_rounded),
+            tooltip: store.t('pet.shop'),
           ),
         ],
       ),
@@ -2031,18 +2268,16 @@ class _PetMeter extends StatelessWidget {
     required this.value,
     required this.color,
     required this.info,
-    this.inverse = false,
   });
 
   final String label;
   final int value;
   final Color color;
   final String info;
-  final bool inverse;
 
   @override
   Widget build(BuildContext context) {
-    final displayValue = inverse ? 100 - value : value;
+    final displayValue = value;
     return CatudyInfoTap(
       title: label,
       message: info,

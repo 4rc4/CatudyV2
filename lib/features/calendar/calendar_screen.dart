@@ -7,7 +7,7 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
-import '../../shared/widgets/catudy_section_header.dart';
+import '../../shared/widgets/catudy_visual_system.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -44,17 +44,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
             store.selectCalendarDate(today);
           });
         }
+
         final selected = store.selectedCalendarDate;
-        final selectedRecords = store.recordsForDay(selected);
-        final selectedTodos = store.todosForDay(selected);
+        final records = store.recordsForDay(selected);
+        final todos = store.todosForDay(selected);
+        final totalMinutes = records.fold(0, (sum, item) => sum + item.minutes);
         final relation = _dayRelation(selected);
 
         return ScreenScaffold(
           title: store.t('calendar.title'),
           actions: [
-            IconButton(
+            IconButton.filledTonal(
               onPressed: () => context.go('/manual-entry'),
-              icon: const Icon(Icons.add_rounded),
+              icon: const Icon(Icons.add_chart_rounded),
             ),
           ],
           children: [
@@ -79,27 +81,41 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
-                                color: CatudyColors.blue,
+                                color: CatudyColors.blueFor(context),
                                 fontWeight: FontWeight.w900,
                               ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => setState(
-                          () => _visibleMonth = DateTime(
-                            _visibleMonth.year,
-                            _visibleMonth.month + 1,
-                          ),
-                        ),
-                        icon: const Icon(Icons.chevron_right_rounded),
+                      TextButton(
+                        onPressed: () {
+                          final today = DateTime.now();
+                          setState(
+                            () => _visibleMonth = DateTime(
+                              today.year,
+                              today.month,
+                            ),
+                          );
+                          store.selectCalendarDate(today);
+                        },
+                        child: Text(store.t('calendar.todayBadge')),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       for (final label in _weekdayLabels(store.languageCode))
-                        _WeekdayLabel(label),
+                        Expanded(
+                          child: Text(
+                            label,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: CatudyColors.mutedFor(context),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -108,24 +124,77 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     selectedDay: selected,
                     store: store,
                   ),
+                  const SizedBox(height: 10),
+                  _CalendarLegend(store: store),
                 ],
               ),
             ),
             const SizedBox(height: 14),
-            _SelectedDaySummaryCard(
-              store: store,
-              title: _dayTitle(selected, store.languageCode),
-              relation: relation,
-              todos: selectedTodos,
-              records: selectedRecords,
-              onAddReminder: () => _addReminder(context, store, selected),
+            CatudyStagePanel(
+              eyebrow: _dayTitle(selected, store.languageCode),
+              title: store.t('calendar.focusCompleted', {
+                'minutes': totalMinutes,
+              }),
+              subtitle: _relationCopy(store, relation),
+              icon: Icons.nightlight_round,
+              art: const CatudyMascotBadge(
+                size: 104,
+                accent: CatudyColors.teal,
+              ),
+              progress: store.todayGoalProgress.goalMinutes == 0
+                  ? 0
+                  : (totalMinutes / store.todayGoalProgress.goalMinutes).clamp(
+                      0.0,
+                      1.0,
+                    ),
+              progressLabel: store.t('home.dailyGoalProgress', {
+                'done': totalMinutes,
+                'goal': store.todayGoalProgress.goalMinutes,
+                'left': (store.todayGoalProgress.goalMinutes - totalMinutes)
+                    .clamp(0, 999999),
+              }),
+              footer: Row(
+                children: [
+                  Expanded(
+                    child: CatudyMetricTile(
+                      icon: Icons.star_rounded,
+                      label: store.t('season.focusXp'),
+                      value: '+$totalMinutes',
+                      color: CatudyColors.yellow,
+                      dense: true,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CatudyMetricTile(
+                      icon: Icons.monetization_on_rounded,
+                      label: store.t('common.gold'),
+                      value: '+${totalMinutes ~/ 5}',
+                      color: CatudyColors.coral,
+                      dense: true,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                if (relation != _DayRelation.future)
+                  FilledButton.icon(
+                    onPressed: () => context.go('/manual-entry'),
+                    icon: const Icon(Icons.edit_note_rounded),
+                    label: Text(store.t('calendar.manualAdd')),
+                  ),
+                if (relation != _DayRelation.past)
+                  OutlinedButton.icon(
+                    onPressed: () => _addReminder(context, store, selected),
+                    icon: const Icon(Icons.alarm_add_rounded),
+                    label: Text(store.t('calendar.reminderAdd')),
+                  ),
+              ],
             ),
             const SizedBox(height: 14),
-            _SelectedDayDetailsPanel(
-              store: store,
-              todos: selectedTodos,
-              records: selectedRecords,
-            ),
+            _SessionTimeline(records: records, store: store),
+            const SizedBox(height: 14),
+            _ReminderPanel(todos: todos, store: store),
           ],
         );
       },
@@ -143,6 +212,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
       return _DayRelation.future;
     }
     return _DayRelation.today;
+  }
+
+  String _relationCopy(CatudyDemoStore store, _DayRelation relation) {
+    return switch (relation) {
+      _DayRelation.past => store.t('calendar.pastInfo'),
+      _DayRelation.today => store.t('calendar.todayInfo'),
+      _DayRelation.future => store.t('calendar.futureInfo'),
+    };
   }
 
   Future<void> _addReminder(
@@ -218,97 +295,246 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
 enum _DayRelation { past, today, future }
 
-class _SelectedDaySummaryCard extends StatelessWidget {
-  const _SelectedDaySummaryCard({
+class _MonthGrid extends StatelessWidget {
+  const _MonthGrid({
+    required this.visibleMonth,
+    required this.selectedDay,
     required this.store,
-    required this.title,
-    required this.relation,
-    required this.todos,
-    required this.records,
-    required this.onAddReminder,
   });
 
+  final DateTime visibleMonth;
+  final DateTime selectedDay;
   final CatudyDemoStore store;
-  final String title;
-  final _DayRelation relation;
-  final List<CalendarTodo> todos;
-  final List<FocusRecord> records;
-  final VoidCallback onAddReminder;
 
   @override
   Widget build(BuildContext context) {
-    final totalMinutes = records.fold(0, (sum, item) => sum + item.minutes);
-    final actionButtons = <Widget>[
-      if (relation != _DayRelation.future)
-        FilledButton.icon(
-          onPressed: () => context.go('/manual-entry'),
-          style: FilledButton.styleFrom(backgroundColor: CatudyColors.violet),
-          icon: const Icon(Icons.edit_note_rounded),
-          label: Text(store.t('calendar.manualAdd')),
-        ),
-      if (relation != _DayRelation.past)
-        FilledButton.icon(
-          onPressed: onAddReminder,
-          style: FilledButton.styleFrom(backgroundColor: CatudyColors.violet),
-          icon: const Icon(Icons.alarm_add_rounded),
-          label: Text(store.t('calendar.reminderAdd')),
-        ),
-    ];
+    final first = DateTime(visibleMonth.year, visibleMonth.month);
+    final leading = first.weekday - 1;
+    final daysInMonth = DateUtils.getDaysInMonth(first.year, first.month);
+    final cells = leading + daysInMonth;
+    final rows = (cells / 7).ceil();
 
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: rows * 7,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 7,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 0.86,
+      ),
+      itemBuilder: (context, index) {
+        final dayNumber = index - leading + 1;
+        if (dayNumber < 1 || dayNumber > daysInMonth) {
+          return const SizedBox.shrink();
+        }
+        final date = DateTime(first.year, first.month, dayNumber);
+        final minutes = store.minutesForDay(date);
+        final selected = DateUtils.isSameDay(date, selectedDay);
+        final today = DateUtils.isSameDay(date, DateTime.now());
+        final todos = store.todosForDay(date);
+        final hasReward = todos.any((todo) => todo.done);
+        final level = minutes >= 120
+            ? 4
+            : minutes >= 60
+            ? 3
+            : minutes >= 25
+            ? 2
+            : minutes > 0
+            ? 1
+            : 0;
+        final color = switch (level) {
+          4 => CatudyColors.coral,
+          3 => CatudyColors.teal,
+          2 => CatudyColors.violet,
+          1 => CatudyColors.lavender,
+          _ => CatudyColors.surfaceFor(context),
+        };
+
+        return InkWell(
+          onTap: () => store.selectCalendarDate(date),
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 2),
+            decoration: BoxDecoration(
+              color: selected
+                  ? CatudyColors.violet.withValues(alpha: 0.24)
+                  : level > 0
+                  ? color.withValues(alpha: 0.26)
+                  : CatudyColors.surfaceFor(context).withValues(alpha: 0.68),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selected
+                    ? CatudyColors.teal
+                    : today
+                    ? CatudyColors.violet
+                    : color.withValues(alpha: level > 0 ? 0.38 : 0.16),
+                width: selected ? 2 : 1,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$dayNumber',
+                  style: TextStyle(
+                    color: selected
+                        ? CatudyColors.teal
+                        : CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                if (hasReward)
+                  const Icon(
+                    Icons.inventory_2_rounded,
+                    size: 13,
+                    color: CatudyColors.yellow,
+                  )
+                else if (selected)
+                  Image.asset(
+                    'assets/brand/catudy-mascot.png',
+                    width: 13,
+                    height: 13,
+                  )
+                else
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: level == 0 ? CatudyColors.lineFor(context) : color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CalendarLegend extends StatelessWidget {
+  const _CalendarLegend({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 9,
+      runSpacing: 8,
+      children: [
+        _LegendDot(
+          label: '0 ${store.t('common.minutesShort')}',
+          color: CatudyColors.lineFor(context),
+        ),
+        _LegendDot(
+          label: '1-25 ${store.t('common.minutesShort')}',
+          color: CatudyColors.lavender,
+        ),
+        _LegendDot(
+          label: '25-60 ${store.t('common.minutesShort')}',
+          color: CatudyColors.violet,
+        ),
+        _LegendDot(
+          label: '60-120 ${store.t('common.minutesShort')}',
+          color: CatudyColors.teal,
+        ),
+        _LegendDot(
+          label: '120+ ${store.t('common.minutesShort')}',
+          color: CatudyColors.coral,
+        ),
+        _LegendDot(
+          label: store.t('calendar.rewardDay'),
+          color: CatudyColors.yellow,
+          icon: Icons.inventory_2_rounded,
+        ),
+      ],
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.label, required this.color, this.icon});
+
+  final String label;
+  final Color color;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        icon == null
+            ? Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              )
+            : Icon(icon, size: 14, color: color),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: TextStyle(
+            color: CatudyColors.mutedFor(context),
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SessionTimeline extends StatelessWidget {
+  const _SessionTimeline({required this.records, required this.store});
+
+  final List<FocusRecord> records;
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
     return CatudyPanel(
-      color: CatudyColors.cream,
       accentColor: CatudyColors.teal,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CatudySectionHeader(
-            title: title,
-            subtitle: switch (relation) {
-              _DayRelation.past => store.t('calendar.pastInfo'),
-              _DayRelation.today => store.t('calendar.todayInfo'),
-              _DayRelation.future => store.t('calendar.futureInfo'),
-            },
-            icon: Icons.event_note_rounded,
-            accentColor: CatudyColors.teal,
+          Text(
+            store.t('calendar.sessions'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+            ),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _DayMetricPill(
-                  icon: Icons.timer_rounded,
-                  value: '$totalMinutes${store.t('common.minutesShort')}',
-                  label: store.t('calendar.records'),
-                ),
+          const SizedBox(height: 12),
+          if (records.isEmpty)
+            Text(
+              store.t('calendar.noRecords'),
+              style: TextStyle(color: CatudyColors.mutedFor(context)),
+            )
+          else
+            for (final record in records)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _RecordTile(record: record, store: store),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _DayMetricPill(
-                  icon: Icons.notifications_active_rounded,
-                  value: '${todos.length}',
-                  label: store.t('calendar.reminders'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(spacing: 10, runSpacing: 10, children: actionButtons),
         ],
       ),
     );
   }
 }
 
-class _SelectedDayDetailsPanel extends StatelessWidget {
-  const _SelectedDayDetailsPanel({
-    required this.store,
-    required this.todos,
-    required this.records,
-  });
+class _ReminderPanel extends StatelessWidget {
+  const _ReminderPanel({required this.todos, required this.store});
 
-  final CatudyDemoStore store;
   final List<CalendarTodo> todos;
-  final List<FocusRecord> records;
+  final CatudyDemoStore store;
 
   @override
   Widget build(BuildContext context) {
@@ -317,10 +543,12 @@ class _SelectedDayDetailsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CatudySectionHeader(
-            title: store.t('calendar.reminders'),
-            icon: Icons.notifications_none_rounded,
-            accentColor: CatudyColors.violet,
+          Text(
+            store.t('calendar.reminders'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 10),
           if (todos.isEmpty)
@@ -330,73 +558,121 @@ class _SelectedDayDetailsPanel extends StatelessWidget {
             )
           else
             for (final todo in todos) _TodoTile(todo: todo, store: store),
-          const Divider(height: 26),
-          CatudySectionHeader(
-            title: store.t('calendar.records'),
-            icon: Icons.history_rounded,
-            accentColor: CatudyColors.teal,
-          ),
-          const SizedBox(height: 10),
-          if (records.isEmpty)
-            Text(
-              store.t('calendar.noRecords'),
-              style: TextStyle(color: CatudyColors.mutedFor(context)),
-            )
-          else
-            for (final record in records)
-              _RecordTile(record: record, store: store),
         ],
       ),
     );
   }
 }
 
-class _DayMetricPill extends StatelessWidget {
-  const _DayMetricPill({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
+class _RecordTile extends StatelessWidget {
+  const _RecordTile({required this.record, required this.store});
 
-  final IconData icon;
-  final String value;
-  final String label;
+  final FocusRecord record;
+  final CatudyDemoStore store;
 
   @override
   Widget build(BuildContext context) {
+    final time =
+        '${record.createdAt.hour.toString().padLeft(2, '0')}:${record.createdAt.minute.toString().padLeft(2, '0')}';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: CatudyColors.surfaceFor(context),
+        color: CatudyColors.surfaceFor(context).withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: CatudyColors.teal.withValues(alpha: 0.14)),
       ),
       child: Row(
         children: [
-          Icon(icon, color: CatudyColors.teal),
-          const SizedBox(width: 8),
+          Icon(
+            record.manual ? Icons.edit_note_rounded : Icons.menu_book_rounded,
+            color: store.categoryColor(record.categoryId),
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  value,
+                  '$time · ${store.categoryName(record.categoryId)}',
                   style: TextStyle(
                     color: CatudyColors.blueFor(context),
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 Text(
-                  label,
+                  record.note,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: CatudyColors.mutedFor(context),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: CatudyColors.mutedFor(context)),
                 ),
               ],
+            ),
+          ),
+          Chip(
+            label: Text('${record.minutes} ${store.t('common.minutesShort')}'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodoTile extends StatelessWidget {
+  const _TodoTile({required this.todo, required this.store});
+
+  final CalendarTodo todo;
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context).withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        children: [
+          Checkbox(
+            value: todo.done,
+            onChanged: (_) {
+              store.toggleTodo(todo.id);
+              final updated = store.todos.firstWhere(
+                (item) => item.id == todo.id,
+                orElse: () => todo,
+              );
+              if (updated.done) {
+                unawaited(
+                  CatudyNotificationService.instance.cancelReminder(updated),
+                );
+              } else {
+                unawaited(
+                  CatudyNotificationService.instance.scheduleReminder(
+                    updated,
+                    languageCode: store.languageCode,
+                  ),
+                );
+              }
+            },
+          ),
+          Expanded(
+            child: Text(
+              todo.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: CatudyColors.blueFor(context),
+                fontWeight: FontWeight.w800,
+                decoration: todo.done ? TextDecoration.lineThrough : null,
+              ),
+            ),
+          ),
+          Text(
+            '${todo.hour.toString().padLeft(2, '0')}:${todo.minute.toString().padLeft(2, '0')}',
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
@@ -510,226 +786,5 @@ class _ReminderDialogState extends State<_ReminderDialog> {
       return;
     }
     Navigator.of(context).pop(_ReminderDraft(title: title, time: _time));
-  }
-}
-
-class _MonthGrid extends StatelessWidget {
-  const _MonthGrid({
-    required this.visibleMonth,
-    required this.selectedDay,
-    required this.store,
-  });
-
-  final DateTime visibleMonth;
-  final DateTime selectedDay;
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    final first = DateTime(visibleMonth.year, visibleMonth.month);
-    final leading = first.weekday - 1;
-    final daysInMonth = DateUtils.getDaysInMonth(first.year, first.month);
-    final cells = leading + daysInMonth;
-    final rows = (cells / 7).ceil();
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: rows * 7,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        mainAxisSpacing: 7,
-        crossAxisSpacing: 7,
-        childAspectRatio: 0.82,
-      ),
-      itemBuilder: (context, index) {
-        final dayNumber = index - leading + 1;
-        if (dayNumber < 1 || dayNumber > daysInMonth) {
-          return const SizedBox.shrink();
-        }
-        final date = DateTime(first.year, first.month, dayNumber);
-        final minutes = store.minutesForDay(date);
-        final selected = DateUtils.isSameDay(date, selectedDay);
-        final today = DateUtils.isSameDay(date, DateTime.now());
-        return InkWell(
-          onTap: () => store.selectCalendarDate(date),
-          borderRadius: BorderRadius.circular(14),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-            decoration: BoxDecoration(
-              color: selected
-                  ? CatudyColors.coral.withValues(alpha: 0.20)
-                  : minutes > 0
-                  ? CatudyColors.violet.withValues(alpha: 0.42)
-                  : CatudyColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: selected
-                    ? CatudyColors.coral
-                    : today
-                    ? CatudyColors.violet
-                    : minutes > 0
-                    ? CatudyColors.violet.withValues(alpha: 0.48)
-                    : CatudyColors.line,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$dayNumber',
-                  style: TextStyle(
-                    color: selected ? CatudyColors.coral : CatudyColors.blue,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    minutes == 0
-                        ? '-'
-                        : '$minutes${store.t('common.minutesShort')}',
-                    maxLines: 1,
-                    style: const TextStyle(
-                      color: CatudyColors.muted,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _WeekdayLabel extends StatelessWidget {
-  const _WeekdayLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Text(
-        label,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: CatudyColors.muted,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    );
-  }
-}
-
-class _RecordTile extends StatelessWidget {
-  const _RecordTile({required this.record, required this.store});
-
-  final FocusRecord record;
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: store.categoryColor(record.categoryId),
-            child: Icon(
-              record.manual ? Icons.edit_note_rounded : Icons.timer_rounded,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${store.categoryName(record.categoryId)} - ${record.minutes}${store.t('common.minutesShort')}',
-                  style: const TextStyle(fontWeight: FontWeight.w900),
-                ),
-                Text(
-                  record.manual ? 'Manuel - ${record.note}' : record.note,
-                  style: const TextStyle(color: CatudyColors.muted),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TodoTile extends StatelessWidget {
-  const _TodoTile({required this.todo, required this.store});
-
-  final CalendarTodo todo;
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: CatudyColors.surface.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.14)),
-      ),
-      child: Row(
-        children: [
-          Checkbox(
-            value: todo.done,
-            onChanged: (_) {
-              store.toggleTodo(todo.id);
-              final updated = store.todos.firstWhere(
-                (item) => item.id == todo.id,
-                orElse: () => todo,
-              );
-              if (updated.done) {
-                unawaited(
-                  CatudyNotificationService.instance.cancelReminder(updated),
-                );
-              } else {
-                unawaited(
-                  CatudyNotificationService.instance.scheduleReminder(
-                    updated,
-                    languageCode: store.languageCode,
-                  ),
-                );
-              }
-            },
-          ),
-          Expanded(
-            child: Text(
-              todo.title,
-              style: TextStyle(
-                color: CatudyColors.blue,
-                fontWeight: FontWeight.w800,
-                decoration: todo.done ? TextDecoration.lineThrough : null,
-              ),
-            ),
-          ),
-          Text(
-            '${todo.hour.toString().padLeft(2, '0')}:${todo.minute.toString().padLeft(2, '0')}',
-            style: const TextStyle(
-              color: CatudyColors.muted,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -288,10 +288,10 @@ class _CatudyShellState extends State<CatudyShell> {
       return '/';
     }
     if (path.startsWith('/lobby/create') || path.startsWith('/lobby/join')) {
-      return '/lobby';
+      return '/community?tab=lobbies';
     }
     if (path.startsWith('/lobby/room')) {
-      return '/lobby';
+      return '/community?tab=lobbies';
     }
     return '/';
   }

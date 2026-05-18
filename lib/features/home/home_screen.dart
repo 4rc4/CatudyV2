@@ -394,7 +394,7 @@ class _SecondaryHomePanel extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => context.go('/lobby/create'),
+                  onPressed: () => context.go('/community?tab=lobbies'),
                   icon: const Icon(Icons.add_home_rounded),
                   label: Text(store.t('home.createLobby')),
                 ),
@@ -402,7 +402,7 @@ class _SecondaryHomePanel extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => context.go('/lobby/join'),
+                  onPressed: () => context.go('/community?tab=lobbies'),
                   icon: const Icon(Icons.login_rounded),
                   label: Text(store.t('home.joinLobby')),
                 ),

@@ -156,6 +156,66 @@ class CatudyCopy {
     'community.supportingBody': 'Birlikte ilerle, ama odağın merkezde kalsın.',
     'community.pendingRequests': '{count} bekleyen arkadaşlık isteği var.',
 
+    'community.lobbiesTab': 'Lobiler',
+    'community.lobbiesTitle': 'Birlikte odaklanma odaları',
+    'community.lobbiesBody':
+        'Arkadaşlarınla aynı ritme gir; süreyi seç, kodla katıl veya sakin bir lobi kur.',
+    'community.lobbyComposerTitle': 'Lobi kur veya katıl',
+    'community.lobbyComposerBody':
+        'V1’de public keşif yok; güvenli akış kodla katılma ve mevcut lobidir.',
+    'community.currentLobbyTitle': 'Aktif lobi',
+    'community.noLobbyBody':
+        'Henüz aktif lobi yok. Bir lobi kurabilir veya arkadaşından gelen kodla katılabilirsin.',
+
+    'season.focusPassTitle': 'Focus Pass',
+    'season.heroTitle': 'Rainy Study Season',
+    'season.xpProgress': 'Season XP: {xp} / {target}',
+    'season.daysLeft': 'Gün kaldı',
+    'season.status': 'Durum',
+    'season.unlockAtXp': '{xp} XP’de açılır',
+    'season.premiumActiveBody':
+        'Premium ödül yolu aktif; açılan ödülleri claim etmeyi unutma.',
+    'season.upgradeTitle': 'Pass Yükselt',
+    'season.upgradeBody':
+        'Tüm premium ödülleri aç ve sezon koleksiyonunu tamamla.',
+    'season.upgradeCta': 'Pass Yükselt',
+    'season.dailyQuests': 'Günlük Görevler',
+    'season.dailyQuestsBody':
+        'Mevcut hedef ve hatırlatmalar sezon ritmini besler.',
+    'season.questFocusTitle': 'Günlük odak hedefini ilerlet',
+    'season.questReminderTitle': 'Bugünkü görevleri tamamla',
+    'season.focusXp': 'Season XP',
+
+    'calendar.todayBadge': 'Bugün',
+    'calendar.focusCompleted': '{minutes} dk odak tamamlandı',
+    'calendar.rewardDay': 'Görev ödülü',
+    'calendar.sessions': 'Seanslar',
+
+    'stats.dashboardTitle': '{minutes} dk odaklandı',
+    'stats.bestDayInsight': '{day} günü {minutes} dk ile öne çıktı.',
+    'stats.sessionsDelta': '+8 geçen aya göre',
+    'stats.averageDelta': '+6 dk geçen aya göre',
+    'stats.bestDay': 'En iyi gün',
+    'stats.focusTimeThisPeriod': 'Bu dönemin odak süresi',
+    'stats.emptyMochiInsight':
+        'Mochi veri topluyor; birkaç seans sonra ritmin daha görünür olacak.',
+    'stats.mochiBestInsight': '{day} günleri odak süren yüksek görünüyor.',
+
+    'profile.profileHeroBody': '{pet} senin en yakın odak dostun.',
+    'profile.level': 'Lv. {level}',
+    'profile.interests': 'İlgi Alanları / Kategoriler',
+    'profile.collection': 'Koleksiyon',
+    'profile.monthlyTitle': 'Bu Ay',
+    'profile.monthlyBody': '{minutes} dk / {target} dk ilerleme',
+    'profile.friendsBody':
+        '{count} arkadaşın var. Birlikte odaklanma lobilerini kontrol et.',
+
+    'pet.level': 'Seviye',
+    'pet.feed': 'Besle',
+    'pet.play': 'Oyna',
+    'pet.sleep': 'Uyu',
+    'pet.love': 'Sev',
+
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
         'Sıralama yalnızca gerçek odak dakikasına göre yapılır. Buradan profilleri ve pet odalarını ziyaret edebilirsin.',
@@ -768,6 +828,66 @@ class CatudyCopy {
     'community.rankingTab': 'Ranking',
     'community.supportingBody': 'Progress together without losing the focus.',
     'community.pendingRequests': '{count} pending friend requests.',
+
+    'community.lobbiesTab': 'Lobbies',
+    'community.lobbiesTitle': 'Focus rooms with friends',
+    'community.lobbiesBody':
+        'Enter the same rhythm with friends; pick a duration, join by code, or create a calm lobby.',
+    'community.lobbyComposerTitle': 'Create or join a lobby',
+    'community.lobbyComposerBody':
+        'V1 has no public discovery; the safe flow is code join and current lobby state.',
+    'community.currentLobbyTitle': 'Active lobby',
+    'community.noLobbyBody':
+        'No active lobby yet. Create one or join with a code from a friend.',
+
+    'season.focusPassTitle': 'Focus Pass',
+    'season.heroTitle': 'Rainy Study Season',
+    'season.xpProgress': 'Season XP: {xp} / {target}',
+    'season.daysLeft': 'Days left',
+    'season.status': 'Status',
+    'season.unlockAtXp': 'Unlocks at {xp} XP',
+    'season.premiumActiveBody':
+        'Premium reward track is active; remember to claim unlocked rewards.',
+    'season.upgradeTitle': 'Upgrade Pass',
+    'season.upgradeBody':
+        'Unlock every premium reward and complete the season collection.',
+    'season.upgradeCta': 'Upgrade Pass',
+    'season.dailyQuests': 'Daily Quests',
+    'season.dailyQuestsBody':
+        'Your current target and reminders feed the season rhythm.',
+    'season.questFocusTitle': 'Progress today?s focus target',
+    'season.questReminderTitle': 'Complete today?s tasks',
+    'season.focusXp': 'Season XP',
+
+    'calendar.todayBadge': 'Today',
+    'calendar.focusCompleted': '{minutes} min focus completed',
+    'calendar.rewardDay': 'Quest reward',
+    'calendar.sessions': 'Sessions',
+
+    'stats.dashboardTitle': '{minutes} min focused',
+    'stats.bestDayInsight': '{day} stands out with {minutes} min.',
+    'stats.sessionsDelta': '+8 vs last month',
+    'stats.averageDelta': '+6 min vs last month',
+    'stats.bestDay': 'Best day',
+    'stats.focusTimeThisPeriod': 'Focus time this period',
+    'stats.emptyMochiInsight':
+        'Mochi is gathering data; your rhythm will become clearer after a few sessions.',
+    'stats.mochiBestInsight': 'Your focus time looks strong on {day}.',
+
+    'profile.profileHeroBody': '{pet} is your closest focus buddy.',
+    'profile.level': 'Lv. {level}',
+    'profile.interests': 'Interests / Categories',
+    'profile.collection': 'Collection',
+    'profile.monthlyTitle': 'This Month',
+    'profile.monthlyBody': '{minutes} min / {target} min progress',
+    'profile.friendsBody':
+        'You have {count} friends. Check shared focus lobbies.',
+
+    'pet.level': 'Level',
+    'pet.feed': 'Feed',
+    'pet.play': 'Play',
+    'pet.sleep': 'Sleep',
+    'pet.love': 'Love',
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':

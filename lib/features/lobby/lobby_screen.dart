@@ -9,8 +9,270 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_section_header.dart';
+import '../../shared/widgets/catudy_visual_system.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
+
+class LobbiesCommunitySection extends StatefulWidget {
+  const LobbiesCommunitySection({super.key});
+
+  @override
+  State<LobbiesCommunitySection> createState() =>
+      _LobbiesCommunitySectionState();
+}
+
+class _LobbiesCommunitySectionState extends State<LobbiesCommunitySection> {
+  final _codeController = TextEditingController();
+  late final TextEditingController _minutesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _minutesController = TextEditingController(
+      text: catudyDemoStore.selectedDurationMinutes.toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _codeController.dispose();
+    _minutesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StoreBuilder(
+      builder: (context, store) {
+        return Column(
+          children: [
+            CatudyStagePanel(
+              title: store.t('community.lobbiesTitle'),
+              subtitle: store.t('community.lobbiesBody'),
+              icon: Icons.groups_2_rounded,
+              art: const CatudyMascotBadge(
+                size: 92,
+                accent: CatudyColors.violet,
+              ),
+              actions: [
+                FilledButton.icon(
+                  onPressed: store.lobbyBusy
+                      ? null
+                      : () => unawaited(store.createOnlineLobby()),
+                  icon: store.lobbyBusy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add_home_work_rounded),
+                  label: Text(store.t('lobby.create')),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/focus/start'),
+                  icon: const Icon(Icons.timer_rounded),
+                  label: Text(store.t('focus.start')),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _LobbyComposer(
+              store: store,
+              codeController: _codeController,
+              minutesController: _minutesController,
+            ),
+            const SizedBox(height: 14),
+            if (store.hasOnlineLobby)
+              _CurrentLobbyCard(store: store)
+            else
+              _NoLobbyCard(store: store),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _LobbyComposer extends StatelessWidget {
+  const _LobbyComposer({
+    required this.store,
+    required this.codeController,
+    required this.minutesController,
+  });
+
+  final CatudyDemoStore store;
+  final TextEditingController codeController;
+  final TextEditingController minutesController;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      accentColor: CatudyColors.teal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CatudySectionHeader(
+            title: store.t('community.lobbyComposerTitle'),
+            subtitle: store.t('community.lobbyComposerBody'),
+            icon: Icons.tune_rounded,
+            accentColor: CatudyColors.teal,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final minutes in store.durations)
+                ChoiceChip(
+                  label: Text('$minutes ${store.t('common.minutesShort')}'),
+                  selected: store.selectedDurationMinutes == minutes,
+                  onSelected: (_) {
+                    store.selectDuration(minutes);
+                    minutesController.text = '$minutes';
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: codeController,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: InputDecoration(
+                    labelText: store.t('lobby.joinCode'),
+                    prefixIcon: const Icon(Icons.key_rounded),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              FilledButton(
+                onPressed: store.lobbyBusy
+                    ? null
+                    : () =>
+                          unawaited(store.joinOnlineLobby(codeController.text)),
+                child: Text(store.t('lobby.join')),
+              ),
+            ],
+          ),
+          if (store.lobbyError != null) _LobbyError(store.lobbyError!),
+        ],
+      ),
+    );
+  }
+}
+
+class _CurrentLobbyCard extends StatelessWidget {
+  const _CurrentLobbyCard({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      accentColor: CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CatudySectionHeader(
+            title: store.t('community.currentLobbyTitle'),
+            subtitle: store.lobbyJoinCode == null
+                ? store.t('lobby.selectedDuration', {
+                    'minutes': store.selectedDurationMinutes,
+                  })
+                : store.t('lobby.code', {'code': store.lobbyJoinCode}),
+            icon: Icons.meeting_room_rounded,
+            accentColor: CatudyColors.violet,
+          ),
+          const SizedBox(height: 12),
+          for (final member in store.lobbyMembers)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _MemberTile(member: member, store: store),
+            ),
+          if (store.lobbyStartBlockReason != null) ...[
+            Text(
+              store.lobbyStartBlockReason!,
+              style: TextStyle(
+                color: CatudyColors.mutedFor(context),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: store.toggleReady,
+                  icon: Icon(
+                    store.currentUserReady
+                        ? Icons.close_rounded
+                        : Icons.check_rounded,
+                  ),
+                  label: Text(
+                    store.currentUserReady
+                        ? store.t('lobby.notReady')
+                        : store.t('lobby.ready'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: store.lobbyBusy || !store.canStartLobby
+                      ? null
+                      : store.startLobbySession,
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text(store.t('lobby.start')),
+                ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: store.leaveOnlineLobby,
+              icon: const Icon(Icons.logout_rounded),
+              label: Text(store.t('lobby.leave')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoLobbyCard extends StatelessWidget {
+  const _NoLobbyCard({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      color: CatudyColors.cream,
+      accentColor: CatudyColors.coral,
+      child: Row(
+        children: [
+          const Icon(Icons.lock_clock_rounded, color: CatudyColors.coral),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              store.t('community.noLobbyBody'),
+              style: TextStyle(
+                color: CatudyColors.mutedFor(context),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class LobbyScreen extends StatelessWidget {
   const LobbyScreen({super.key});

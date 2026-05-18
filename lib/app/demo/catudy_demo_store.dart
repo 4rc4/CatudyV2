@@ -2522,6 +2522,30 @@ class CatudyDemoStore extends ChangeNotifier {
     return true;
   }
 
+  void feedPet() {
+    petHunger = (petHunger - 18).clamp(0, 100);
+    petMood = (petMood + 2).clamp(0, 100);
+    _commit();
+  }
+
+  void playWithPet() {
+    petMood = (petMood + 8).clamp(0, 100);
+    petEnergy = (petEnergy - 8).clamp(0, 100);
+    petHunger = (petHunger + 4).clamp(0, 100);
+    _commit();
+  }
+
+  void restPet() {
+    petEnergy = (petEnergy + 16).clamp(0, 100);
+    petMood = (petMood + 2).clamp(0, 100);
+    _commit();
+  }
+
+  void petPet() {
+    petMood = (petMood + 5).clamp(0, 100);
+    _commit();
+  }
+
   void activatePremiumDemo({Duration duration = const Duration(days: 30)}) {
     final now = DateTime.now();
     premiumEntitlement = PremiumEntitlement(

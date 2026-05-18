@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -8,10 +7,11 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
+import '../../app/premium/catudy_premium_models.dart';
 import '../../app/theme/catudy_colors.dart';
-import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
-import '../../shared/widgets/floating_mascot.dart';
+import '../../shared/widgets/catudy_visual_system.dart';
+import '../../shared/widgets/shop_item_art.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -22,123 +22,134 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return StoreBuilder(
       builder: (context, store) {
-        final owned = store.shopItems
-            .where((item) => store.ownedItems.contains(item.id))
-            .take(3)
+        final monthRecords = _monthRecords(store.history);
+        final monthMinutes = monthRecords.fold(
+          0,
+          (sum, item) => sum + item.minutes,
+        );
+        final monthTarget = store.dailyGoalMinutes * 20;
+        final unlockedAchievements = store.unlockedAchievements
+            .take(5)
             .toList();
-        final favorite = store.favoriteCategory;
-        final profileTheme = store.cosmeticById(store.selectedProfileThemeId);
+        final collectionItems = store.shopItems
+            .where((item) => store.ownedItems.contains(item.id))
+            .take(4)
+            .toList();
+        final collectionCosmetics = store.cosmeticItems
+            .where((item) => store.ownedCosmeticIds.contains(item.id))
+            .take(4)
+            .toList();
 
         return ScreenScaffold(
           title: store.t('profile.title'),
+          actions: [
+            IconButton.filledTonal(
+              onPressed: () => _shareProfile(context, store),
+              icon: const Icon(Icons.ios_share_rounded),
+            ),
+            IconButton.filledTonal(
+              onPressed: () => _editProfile(context, store),
+              icon: const Icon(Icons.edit_rounded),
+            ),
+          ],
           children: [
-            CatudyPanel(
-              color:
-                  profileTheme?.accent.withValues(alpha: 0.10) ??
-                  CatudyColors.cream,
-              accentColor: profileTheme?.accent ?? CatudyColors.teal,
-              child: Column(
+            CatudyStagePanel(
+              eyebrow: store.t('profile.subtitle'),
+              title: store.displayName,
+              subtitle: store.t('profile.profileHeroBody', {
+                'pet': store.petDisplayName,
+              }),
+              art: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Stack(
-                        children: [
-                          _ProfileAvatar(store: store, size: 108),
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: CircleAvatar(
-                              radius: 19,
-                              backgroundColor: CatudyColors.surface,
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                onPressed: () => _editProfile(context, store),
-                                icon: const Icon(
-                                  Icons.edit_rounded,
-                                  size: 18,
-                                  color: CatudyColors.teal,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                  _ProfileAvatar(store: store, size: 112),
+                  Positioned(
+                    bottom: -5,
+                    left: 16,
+                    child: Chip(
+                      label: Text(
+                        store.t('profile.level', {
+                          'level': (store.focusPoints ~/ 120) + 1,
+                        }),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    store.displayName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(
-                                          color: CatudyColors.blue,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              store.t('profile.subtitle'),
-                              style: TextStyle(
-                                color: CatudyColors.muted,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _ProfileMetric(
-                          icon: Icons.hourglass_bottom_rounded,
-                          label: store.t('profile.totalFocus'),
-                          value: _formatMinutes(store.totalFocusMinutes, store),
-                          info: store.languageCode == 'en'
-                              ? 'Total duration of all focus records in this account.'
-                              : 'Hesaptaki tüm odak kayıtlarının toplam süresidir.',
-                        ),
-                      ),
-                      Expanded(
-                        child: _ProfileMetric(
-                          icon: Icons.local_fire_department_rounded,
-                          iconColor: CatudyColors.yellow,
-                          label: store.t('stats.streak'),
-                          value:
-                              '${store.streakDays}${store.t('common.daysShort')}',
-                          info: store.languageCode == 'en'
-                              ? 'Shows consecutive days with maintained focus.'
-                              : 'Art arda sürdürülen odak günlerini gösterir.',
-                        ),
-                      ),
-                      Expanded(
-                        child: _ProfileMetric(
-                          icon: Icons.track_changes_rounded,
-                          label: store.t('profile.sessions'),
-                          value: '${store.sessionsCount}',
-                          info: store.languageCode == 'en'
-                              ? 'Number of completed non-manual focus sessions.'
-                              : 'Manuel olmayan tamamlanmış odak seansı sayısıdır.',
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
+              icon: Icons.person_rounded,
+              footer: Row(
+                children: [
+                  Expanded(
+                    child: CatudyMetricTile(
+                      icon: Icons.schedule_rounded,
+                      label: store.t('profile.totalFocus'),
+                      value: _formatMinutes(store.totalFocusMinutes, store),
+                      color: CatudyColors.teal,
+                      dense: true,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CatudyMetricTile(
+                      icon: Icons.local_fire_department_rounded,
+                      label: store.t('stats.streak'),
+                      value:
+                          '${store.streakDays}${store.t('common.daysShort')}',
+                      color: CatudyColors.coral,
+                      dense: true,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CatudyMetricTile(
+                      icon: Icons.star_rounded,
+                      label: store.t('season.focusXp'),
+                      value: '+${store.seasonProgress.focusMinutes}',
+                      color: CatudyColors.yellow,
+                      dense: true,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _AchievementShelf(achievements: unlockedAchievements, store: store),
+            const SizedBox(height: 14),
+            _CategoryInterestCard(store: store),
+            const SizedBox(height: 14),
+            _CollectionShelf(
+              store: store,
+              items: collectionItems,
+              cosmetics: collectionCosmetics,
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 370;
+                final monthCard = _MonthSummaryCard(
+                  store: store,
+                  minutes: monthMinutes,
+                  target: monthTarget,
+                );
+                final friendsCard = _FriendsCard(store: store);
+                if (compact) {
+                  return Column(
+                    children: [
+                      monthCard,
+                      const SizedBox(height: 12),
+                      friendsCard,
+                    ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: monthCard),
+                    const SizedBox(width: 12),
+                    Expanded(child: friendsCard),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 14),
             CatudyPanel(
@@ -158,7 +169,6 @@ class ProfileScreen extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const SizedBox(height: 2),
                         SelectableText(
                           store.publicUserCode,
                           style: TextStyle(
@@ -177,95 +187,37 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-            _ProfileInsightsCard(store: store),
-            const SizedBox(height: 14),
-            _PlusCollectionCard(store: store),
-            const SizedBox(height: 14),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 380;
-                final leftColumn = Column(
-                  children: [
-                    _EquippedItemsCard(items: owned),
-                    const SizedBox(height: 12),
-                    _WeeklySummaryCard(records: store.history),
-                  ],
-                );
-                final rightColumn = Column(
-                  children: [
-                    const _PetPreviewCard(),
-                    const SizedBox(height: 12),
-                    CatudyPanel(
-                      accentColor: CatudyColors.teal,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _CardTitle(
-                            icon: Icons.star_rounded,
-                            title: store.t('profile.favoriteCategory'),
-                            color: CatudyColors.teal,
-                          ),
-                          const SizedBox(height: 12),
-                          _FavoriteCategoryTile(category: favorite),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-                if (compact) {
-                  return Column(
-                    children: [
-                      leftColumn,
-                      const SizedBox(height: 12),
-                      rightColumn,
-                    ],
-                  );
-                }
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: leftColumn),
-                    const SizedBox(width: 12),
-                    Expanded(child: rightColumn),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _editProfile(context, store),
-                    icon: const Icon(Icons.edit_rounded),
-                    label: Text(store.t('profile.edit')),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () => _shareProfile(context, store),
-                    icon: const Icon(Icons.share_rounded),
-                    label: Text(store.t('profile.share')),
-                  ),
-                ),
-              ],
-            ),
           ],
         );
       },
     );
   }
 
-  Future<void> _editProfile(BuildContext context, CatudyDemoStore store) async {
+  static List<FocusRecord> _monthRecords(List<FocusRecord> records) {
+    final now = DateTime.now();
+    return records
+        .where(
+          (item) =>
+              item.createdAt.year == now.year &&
+              item.createdAt.month == now.month,
+        )
+        .toList();
+  }
+
+  static Future<void> _editProfile(
+    BuildContext context,
+    CatudyDemoStore store,
+  ) async {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => _ProfileEditDialog(store: store),
     );
   }
 
-  Future<void> _copyUserId(BuildContext context, CatudyDemoStore store) async {
+  static Future<void> _copyUserId(
+    BuildContext context,
+    CatudyDemoStore store,
+  ) async {
     await Clipboard.setData(ClipboardData(text: store.publicUserCode));
     if (context.mounted) {
       ScaffoldMessenger.of(
@@ -274,7 +226,7 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _shareProfile(
+  static Future<void> _shareProfile(
     BuildContext context,
     CatudyDemoStore store,
   ) async {
@@ -307,7 +259,7 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  String _profileShareLink(CatudyDemoStore store) {
+  static String _profileShareLink(CatudyDemoStore store) {
     final userId = Uri.encodeComponent(store.authUserId ?? 'local');
     final configuredBase = _shareOriginFromText(store.profileShareBaseUrl);
     if (configuredBase != null) {
@@ -322,7 +274,7 @@ class ProfileScreen extends StatelessWidget {
     return 'catudy:///public-profile?user=$userId';
   }
 
-  String? _shareOriginFromText(String value) {
+  static String? _shareOriginFromText(String value) {
     final clean = value.trim();
     if (clean.isEmpty) {
       return null;
@@ -347,7 +299,7 @@ class ProfileScreen extends StatelessWidget {
     ).toString();
   }
 
-  String _formatMinutes(int minutes, CatudyDemoStore store) {
+  static String _formatMinutes(int minutes, CatudyDemoStore store) {
     final hours = minutes ~/ 60;
     final rest = minutes % 60;
     if (hours == 0) {
@@ -357,62 +309,359 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class _PlusCollectionCard extends StatelessWidget {
-  const _PlusCollectionCard({required this.store});
+class _AchievementShelf extends StatelessWidget {
+  const _AchievementShelf({required this.achievements, required this.store});
+
+  final List<CatudyAchievement> achievements;
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      accentColor: CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionRow(
+            icon: Icons.emoji_events_rounded,
+            title: store.t('achievements.title'),
+            action: store.t('profile.viewAll'),
+            onTap: () => context.go('/season'),
+          ),
+          const SizedBox(height: 12),
+          if (achievements.isEmpty)
+            Text(
+              store.t('profile.noBadges'),
+              style: TextStyle(color: CatudyColors.mutedFor(context)),
+            )
+          else
+            SizedBox(
+              height: 132,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: achievements.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  final achievement = achievements[index];
+                  return SizedBox(
+                    width: 118,
+                    child: CatudyAssetSlot(
+                      icon: achievement.icon,
+                      accentColor: CatudyColors.violet,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            achievement.icon,
+                            color: CatudyColors.violet,
+                            size: 34,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            achievement.title,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: CatudyColors.blueFor(context),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryInterestCard extends StatelessWidget {
+  const _CategoryInterestCard({required this.store});
 
   final CatudyDemoStore store;
 
   @override
   Widget build(BuildContext context) {
-    final theme = store.cosmeticById(store.selectedProfileThemeId);
+    final total = store.history.fold(0, (sum, item) => sum + item.minutes);
     return CatudyPanel(
-      accentColor: CatudyColors.violet,
-      child: Row(
+      accentColor: CatudyColors.teal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            backgroundColor: CatudyColors.violet.withValues(alpha: 0.14),
-            child: Icon(
-              store.hasPremiumAccess
-                  ? Icons.workspace_premium_rounded
-                  : Icons.workspace_premium_outlined,
-              color: CatudyColors.violet,
+          _SectionRow(
+            icon: Icons.favorite_rounded,
+            title: store.t('profile.interests'),
+          ),
+          const SizedBox(height: 12),
+          for (final category in store.categories.take(4))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _CategoryLine(
+                name: category.name,
+                color: category.color,
+                ratio: total == 0
+                    ? 0
+                    : store.history
+                              .where((item) => item.categoryId == category.id)
+                              .fold(0, (sum, item) => sum + item.minutes) /
+                          total,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CollectionShelf extends StatelessWidget {
+  const _CollectionShelf({
+    required this.store,
+    required this.items,
+    required this.cosmetics,
+  });
+
+  final CatudyDemoStore store;
+  final List<ShopItem> items;
+  final List<CosmeticItem> cosmetics;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = items.length + cosmetics.length;
+    return CatudyPanel(
+      accentColor: CatudyColors.coral,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionRow(
+            icon: Icons.collections_bookmark_rounded,
+            title: store.t('profile.collection'),
+            action: store.t('profile.viewAll'),
+            onTap: () => context.go('/inventory'),
+          ),
+          const SizedBox(height: 12),
+          if (total == 0)
+            Text(
+              store.t('profile.noItems'),
+              style: TextStyle(color: CatudyColors.mutedFor(context)),
+            )
+          else
+            SizedBox(
+              height: 124,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  for (final item in items) ...[
+                    _CollectionItem(
+                      title: store.itemName(item),
+                      color: item.accent,
+                      child: ShopItemArt(item: item, size: 70),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  for (final cosmetic in cosmetics) ...[
+                    _CollectionItem(
+                      title: cosmetic.name,
+                      color: cosmetic.accent,
+                      child: Icon(
+                        cosmetic.icon,
+                        color: cosmetic.accent,
+                        size: 42,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MonthSummaryCard extends StatelessWidget {
+  const _MonthSummaryCard({
+    required this.store,
+    required this.minutes,
+    required this.target,
+  });
+
+  final CatudyDemoStore store;
+  final int minutes;
+  final int target;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyStagePanel(
+      title: store.t('profile.monthlyTitle'),
+      subtitle: store.t('profile.monthlyBody', {
+        'minutes': minutes,
+        'target': target,
+      }),
+      icon: Icons.calendar_month_rounded,
+      progress: target == 0 ? 0 : (minutes / target).clamp(0.0, 1.0),
+      progressLabel: '${((target == 0 ? 0 : minutes / target) * 100).round()}%',
+      accentColor: CatudyColors.teal,
+      secondaryColor: CatudyColors.violet,
+    );
+  }
+}
+
+class _FriendsCard extends StatelessWidget {
+  const _FriendsCard({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyStagePanel(
+      title: store.t('social.friends'),
+      subtitle: store.t('profile.friendsBody', {
+        'count': store.friendProfiles.length,
+      }),
+      icon: Icons.groups_rounded,
+      accentColor: CatudyColors.violet,
+      secondaryColor: CatudyColors.teal,
+      actions: [
+        FilledButton.icon(
+          onPressed: () => context.go('/community?tab=friends'),
+          icon: const Icon(Icons.chevron_right_rounded),
+          label: Text(store.t('community.title')),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionRow extends StatelessWidget {
+  const _SectionRow({
+    required this.icon,
+    required this.title,
+    this.action,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? action;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: CatudyColors.violet),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(width: 10),
+        ),
+        if (action != null && onTap != null)
+          TextButton(onPressed: onTap, child: Text(action!)),
+      ],
+    );
+  }
+}
+
+class _CategoryLine extends StatelessWidget {
+  const _CategoryLine({
+    required this.name,
+    required this.color,
+    required this.ratio,
+  });
+
+  final String name;
+  final Color color;
+  final double ratio;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(Icons.menu_book_rounded, color: color),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 84,
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.blueFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: ratio.clamp(0.0, 1.0),
+              minHeight: 8,
+              color: color,
+              backgroundColor: CatudyColors.surfaceStrongFor(context),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '${(ratio * 100).round()}%',
+          style: TextStyle(
+            color: CatudyColors.mutedFor(context),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CollectionItem extends StatelessWidget {
+  const _CollectionItem({
+    required this.title,
+    required this.child,
+    required this.color,
+  });
+
+  final String title;
+  final Widget child;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 96,
+      child: Column(
+        children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  store.hasPremiumAccess
-                      ? store.t('profile.plusActive')
-                      : store.t('profile.plusLocked'),
-                  style: TextStyle(
-                    color: CatudyColors.blueFor(context),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  theme == null
-                      ? store.t('profile.collectionSummary', {
-                          'count': store.ownedCosmeticIds.length,
-                        })
-                      : store.t('profile.themeSummary', {
-                          'theme': theme.name,
-                          'count': store.ownedCosmeticIds.length,
-                        }),
-                  style: TextStyle(
-                    color: CatudyColors.mutedFor(context),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+            child: CatudyAssetSlot(
+              accentColor: color,
+              size: 86,
+              child: Center(child: child),
             ),
           ),
-          TextButton(
-            onPressed: () => context.go('/plus'),
-            child: Text(store.t('profile.openPlus')),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
           ),
         ],
       ),
@@ -444,9 +693,15 @@ class _ProfileAvatar extends StatelessWidget {
       padding: EdgeInsets.all(effectiveId == 'custom' ? 0 : size * 0.13),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: CatudyColors.surface,
+        color: CatudyColors.surfaceFor(context),
         borderRadius: BorderRadius.circular(size * 0.31),
-        border: Border.all(color: CatudyColors.teal.withValues(alpha: 0.18)),
+        border: Border.all(color: CatudyColors.teal.withValues(alpha: 0.28)),
+        boxShadow: [
+          BoxShadow(
+            color: CatudyColors.violet.withValues(alpha: 0.18),
+            blurRadius: 24,
+          ),
+        ],
       ),
       child: _avatarChild(effectiveId, effectiveCustom),
     );
@@ -668,469 +923,5 @@ Uint8List? _decodeAvatar(String? base64Value) {
     return base64Decode(base64Value);
   } catch (_) {
     return null;
-  }
-}
-
-class _ProfileMetric extends StatelessWidget {
-  const _ProfileMetric({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.info,
-    this.iconColor,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final String info;
-  final Color? iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return CatudyInfoTap(
-      title: label,
-      message: info,
-      child: Column(
-        children: [
-          Icon(icon, color: iconColor ?? CatudyColors.teal, size: 28),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 3),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              style: TextStyle(
-                color: CatudyColors.blueFor(context),
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EquippedItemsCard extends StatelessWidget {
-  const _EquippedItemsCard({required this.items});
-
-  final List<ShopItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return CatudyPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CardTitle(
-            icon: Icons.shopping_bag_rounded,
-            title: catudyDemoStore.t('profile.equippedItems'),
-            color: CatudyColors.teal,
-          ),
-          const SizedBox(height: 12),
-          if (items.isEmpty)
-            Text(
-              catudyDemoStore.t('profile.noItems'),
-              style: TextStyle(color: CatudyColors.muted),
-            )
-          else
-            for (final item in items)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: item.accent.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(item.icon, color: item.accent),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        catudyDemoStore.itemName(item),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          const SizedBox(height: 6),
-          OutlinedButton.icon(
-            onPressed: () => context.go('/inventory'),
-            icon: const Icon(Icons.chevron_right_rounded),
-            label: Text(catudyDemoStore.t('profile.viewAll')),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProfileInsightsCard extends StatelessWidget {
-  const _ProfileInsightsCard({required this.store});
-
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    final unlocked = store.unlockedAchievements.take(4).toList();
-    final premiumBadges = store.cosmeticItems
-        .where(
-          (item) =>
-              item.slot == 'profile_badge' &&
-              store.ownedCosmeticIds.contains(item.id),
-        )
-        .toList();
-    final goal = store.todayGoalProgress;
-    return CatudyPanel(
-      accentColor: CatudyColors.violet,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CardTitle(
-            icon: Icons.auto_graph_rounded,
-            title: store.t('profile.richStats'),
-            color: CatudyColors.violet,
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _InsightChip(
-                icon: Icons.local_fire_department_rounded,
-                label: store.t('profile.bestStreak', {
-                  'days': store.bestStreakDays,
-                }),
-              ),
-              _InsightChip(
-                icon: Icons.track_changes_rounded,
-                label: store.t('profile.todayGoalShort', {
-                  'done': goal.completedMinutes,
-                  'goal': goal.goalMinutes,
-                }),
-              ),
-              _InsightChip(
-                icon: Icons.star_rounded,
-                label: store.t('profile.favorite', {
-                  'category': store.favoriteCategory.name,
-                }),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            store.t('profile.badges'),
-            style: TextStyle(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (unlocked.isEmpty && premiumBadges.isEmpty)
-            Text(
-              store.t('profile.noBadges'),
-              style: TextStyle(color: CatudyColors.mutedFor(context)),
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final achievement in unlocked)
-                  Chip(
-                    avatar: Icon(
-                      achievement.icon,
-                      size: 17,
-                      color: CatudyColors.teal,
-                    ),
-                    label: Text(achievement.title),
-                  ),
-                for (final badge in premiumBadges)
-                  Chip(
-                    avatar: Icon(badge.icon, size: 17, color: badge.accent),
-                    label: Text(badge.name),
-                  ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InsightChip extends StatelessWidget {
-  const _InsightChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      avatar: Icon(icon, size: 17, color: CatudyColors.violet),
-      label: Text(label),
-    );
-  }
-}
-
-class _PetPreviewCard extends StatelessWidget {
-  const _PetPreviewCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return StoreBuilder(
-      builder: (context, store) => CatudyPanel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _CardTitle(
-              icon: Icons.pets_rounded,
-              title: catudyDemoStore.t('profile.myPet'),
-              color: CatudyColors.teal,
-            ),
-            const SizedBox(height: 8),
-            const Center(child: FloatingMascot(width: 96, height: 96)),
-            Center(
-              child: Text(
-                store.selectedPet.name,
-                style: TextStyle(
-                  color: CatudyColors.blueFor(context),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-            Center(
-              child: Text(
-                catudyDemoStore.t('profile.focusBuddy'),
-                style: TextStyle(color: CatudyColors.muted),
-              ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () {
-                store.clearVisitedRoom();
-                context.go('/pet-room');
-              },
-              icon: const Icon(Icons.chevron_right_rounded),
-              label: Text(catudyDemoStore.t('profile.petRoom')),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FavoriteCategoryTile extends StatelessWidget {
-  const _FavoriteCategoryTile({required this.category});
-
-  final FocusCategory category;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: category.color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: category.color.withValues(alpha: 0.16)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.menu_book_rounded, color: category.color),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              category.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: CatudyColors.blue,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WeeklySummaryCard extends StatelessWidget {
-  const _WeeklySummaryCard({required this.records});
-
-  final List<FocusRecord> records;
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final values = <int>[];
-    for (var index = 6; index >= 0; index--) {
-      final day = now.subtract(Duration(days: index));
-      values.add(
-        records
-            .where(
-              (item) =>
-                  item.createdAt.year == day.year &&
-                  item.createdAt.month == day.month &&
-                  item.createdAt.day == day.day,
-            )
-            .fold(0, (sum, item) => sum + item.minutes),
-      );
-    }
-    final total = values.fold(0, (sum, value) => sum + value);
-    final sessions = records
-        .where((item) => now.difference(item.createdAt).inDays < 7)
-        .length;
-    final max = values.fold(1, (max, value) => value > max ? value : max);
-
-    return CatudyPanel(
-      accentColor: CatudyColors.lavender,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CardTitle(
-            icon: Icons.bar_chart_rounded,
-            title: catudyDemoStore.t('profile.weeklySummary'),
-            color: CatudyColors.violet,
-          ),
-          const SizedBox(height: 10),
-          _SummaryRow(
-            label: catudyDemoStore.t('home.focus'),
-            value: _formatMinutes(total),
-          ),
-          _SummaryRow(
-            label: catudyDemoStore.t('profile.sessions'),
-            value: '$sessions',
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 52,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                for (final value in values)
-                  Expanded(
-                    child: CatudyInfoTap(
-                      title: catudyDemoStore.t('profile.dailyFocus'),
-                      message: value == 0
-                          ? (catudyDemoStore.languageCode == 'en'
-                                ? 'No focus was recorded for this day.'
-                                : 'Bu gün için kayıtlı odak yok.')
-                          : (catudyDemoStore.languageCode == 'en'
-                                ? 'This day has $value minutes of recorded focus.'
-                                : 'Bu gün toplam $value dakika odak kaydı var.'),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Container(
-                          height: 14 + (34 * (value / max)),
-                          decoration: BoxDecoration(
-                            color: CatudyColors.teal.withValues(alpha: 0.36),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatMinutes(int minutes) {
-    final hours = minutes ~/ 60;
-    final rest = minutes % 60;
-    if (hours == 0) {
-      return '$rest${catudyDemoStore.t('common.minutesShort')}';
-    }
-    return '$hours${catudyDemoStore.t('common.hoursShort')} $rest${catudyDemoStore.t('common.minutesShort')}';
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: CatudyColors.muted,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            color: CatudyColors.blue,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CardTitle extends StatelessWidget {
-  const _CardTitle({
-    required this.icon,
-    required this.title,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String title;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: color),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: CatudyColors.muted,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

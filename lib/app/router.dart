@@ -72,9 +72,11 @@ class CatudyRouter {
             pageBuilder: (context, state) => _animatedPage(
               state,
               CommunityScreen(
-                initialTab: state.uri.queryParameters['tab'] == 'ranking'
-                    ? CommunityTab.ranking
-                    : CommunityTab.friends,
+                initialTab: switch (state.uri.queryParameters['tab']) {
+                  'ranking' => CommunityTab.ranking,
+                  'lobbies' => CommunityTab.lobbies,
+                  _ => CommunityTab.friends,
+                },
               ),
             ),
           ),
@@ -130,8 +132,7 @@ class CatudyRouter {
           ),
           GoRoute(
             path: '/lobby',
-            pageBuilder: (context, state) =>
-                _animatedPage(state, const LobbyScreen()),
+            redirect: (context, state) => '/community?tab=lobbies',
           ),
           GoRoute(
             path: '/lobby/create',
