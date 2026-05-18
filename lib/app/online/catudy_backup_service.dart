@@ -45,7 +45,7 @@ class CatudyBackupService {
   Future<void> upsertCurrentBackup({
     required Map<String, dynamic> data,
     required DateTime clientUpdatedAt,
-    int stateVersion = 2,
+    int stateVersion = 3,
   }) async {
     final userId = currentUserId;
     if (userId == null) {

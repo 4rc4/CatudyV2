@@ -41,7 +41,11 @@ class SeasonPassScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 LinearProgressIndicator(
-                  value: (store.seasonProgress.focusMinutes / 320).clamp(0, 1),
+                  value: store.currentSeason.targetMinutes == 0
+                      ? 0
+                      : (store.seasonProgress.focusMinutes /
+                                store.currentSeason.targetMinutes)
+                            .clamp(0, 1),
                   minHeight: 10,
                   borderRadius: BorderRadius.circular(999),
                 ),

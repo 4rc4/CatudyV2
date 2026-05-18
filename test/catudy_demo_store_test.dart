@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:catudy_app/app/demo/catudy_demo_store.dart';
 import 'package:catudy_app/app/online/catudy_auth_service.dart';
 import 'package:catudy_app/app/online/catudy_leaderboard_service.dart';
+import 'package:catudy_app/app/online/catudy_premium_service.dart';
 import 'package:catudy_app/app/premium/catudy_premium_models.dart';
 import 'package:catudy_app/app/storage/catudy_local_storage.dart';
 import 'package:catudy_app/app/theme/catudy_colors.dart';
@@ -155,7 +156,7 @@ void main() {
 
     expect(record.minutes, 60);
     expect(record.gold, 63);
-    expect(store.focusPoints, 63);
+    expect(store.focusPoints, 60);
   });
 
   test('demo wallet tops up currency without clearing purchases', () async {
@@ -665,6 +666,7 @@ void main() {
 
       expect(record.gold, 23);
       expect(store.gold, 23);
+      expect(store.focusPoints, 20);
     },
   );
 
@@ -733,6 +735,7 @@ void main() {
       expect(store.ownedCosmeticIds.contains('rainbow_scarf'), isTrue);
       expect(store.shardWallet.shards, Rarity.common.shardValue);
       expect(store.pityStates['cat_crate']?.opensSinceRare, 2);
+      expect(store.pityStates['cat_crate']?.opensSinceEpic, 2);
     },
   );
 
@@ -740,15 +743,15 @@ void main() {
     final store = CatudyDemoStore(storage: _MemoryStorage(null));
 
     await store.load();
-    store.seasonProgress = store.seasonProgress.copyWith(focusMinutes: 320);
+    store.seasonProgress = store.seasonProgress.copyWith(focusMinutes: 720);
 
-    expect(store.claimSeasonReward('free_cat_crate_140'), isTrue);
+    expect(store.claimSeasonReward('free_cat_crate_180'), isTrue);
     expect(store.crateInventory['cat_crate'], 1);
-    expect(store.claimSeasonReward('plus_style_crate_60'), isFalse);
+    expect(store.claimSeasonReward('plus_style_crate_90'), isFalse);
 
     store.activatePremiumDemo();
 
-    expect(store.claimSeasonReward('plus_style_crate_60'), isTrue);
+    expect(store.claimSeasonReward('plus_style_crate_90'), isTrue);
     expect(store.crateInventory['style_crate'], 1);
   });
 
@@ -762,16 +765,16 @@ void main() {
       await receiver.load();
       sender.activatePremiumDemo();
 
-      final pass = sender.createBuddyPass();
+      final pass = await sender.createBuddyPass();
 
       expect(pass, isNotNull);
-      expect(sender.createBuddyPass(), isNull);
-      expect(receiver.redeemBuddyPass(pass!.code), isTrue);
+      expect(await sender.createBuddyPass(), isNull);
+      expect(await receiver.redeemBuddyPass(pass!.code), isTrue);
       expect(receiver.hasPremiumAccess, isTrue);
 
       receiver.clearPremiumEntitlement();
 
-      expect(receiver.redeemBuddyPass('BUDDY-SECOND'), isFalse);
+      expect(await receiver.redeemBuddyPass('PLUS-SECOND12'), isFalse);
     },
   );
 
@@ -794,6 +797,57 @@ void main() {
       expect(store.leaderboardProfiles.single.totalMinutes, 15);
     },
   );
+
+  test('online premium state overrides local backup state', () async {
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+    final now = DateTime.now();
+    final service = _FakePremiumService(
+      CatudyPremiumSnapshot(
+        entitlement: PremiumEntitlement(
+          source: PremiumSource.subscription,
+          activatedAt: now,
+          expiresAt: now.add(const Duration(days: 30)),
+        ),
+        issuedBuddyPasses: const [],
+        redemption: const BuddyPassRedemption(code: '', redeemedAt: null),
+        grantedCosmeticIds: const {},
+      ),
+    );
+
+    await store.load();
+    store.attachPremiumService(service);
+    store.authUserId = 'premium-user';
+    store.activatePremiumDemo(duration: const Duration(days: 1));
+    store.attachPremiumService(service);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(store.hasPremiumAccess, isTrue);
+    expect(store.premiumEntitlement.source, PremiumSource.subscription);
+    expect(
+      store.premiumEntitlement.expiresAt,
+      now.add(const Duration(days: 30)),
+    );
+  });
+
+  test('online reward grants merge into owned cosmetics', () async {
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+    final service = _FakePremiumService(
+      const CatudyPremiumSnapshot(
+        entitlement: PremiumEntitlement.inactive(),
+        issuedBuddyPasses: [],
+        redemption: BuddyPassRedemption(code: '', redeemedAt: null),
+        grantedCosmeticIds: {'buddy_moon_pin'},
+      ),
+    );
+
+    await store.load();
+    store.attachPremiumService(service);
+    store.authUserId = 'reward-user';
+    store.attachPremiumService(service);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(store.ownedCosmeticIds, contains('buddy_moon_pin'));
+  });
 }
 
 class _MemoryStorage extends CatudyLocalStorage {
@@ -866,6 +920,36 @@ class _FakeAuthService extends CatudyAuthService {
     _session = null;
     _controller.add(null);
   }
+}
+
+class _FakePremiumService extends CatudyPremiumService {
+  _FakePremiumService(this.snapshot) : super(_testSupabaseClient());
+
+  CatudyPremiumSnapshot snapshot;
+
+  @override
+  Future<CatudyPremiumSnapshot?> fetchCurrentState() async => snapshot;
+
+  @override
+  Future<BuddyPass?> createBuddyPass() async {
+    final pass = BuddyPass(
+      code: 'PLUS-FAKE1234',
+      createdAt: DateTime.now(),
+      expiresAt: DateTime.now().add(const Duration(days: 30)),
+      redeemedByUserId: null,
+      redeemedAt: null,
+    );
+    snapshot = CatudyPremiumSnapshot(
+      entitlement: snapshot.entitlement,
+      issuedBuddyPasses: [...snapshot.issuedBuddyPasses, pass],
+      redemption: snapshot.redemption,
+      grantedCosmeticIds: snapshot.grantedCosmeticIds,
+    );
+    return pass;
+  }
+
+  @override
+  Future<bool> redeemBuddyPass(String code) async => code == 'PLUS-FAKE1234';
 }
 
 class _FixedRandom implements Random {

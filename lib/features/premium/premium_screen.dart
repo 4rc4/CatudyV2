@@ -97,6 +97,16 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
           const SizedBox(height: 14),
           _QuickLinks(store: store),
+          if (store.premiumError != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              store.premiumError!,
+              style: const TextStyle(
+                color: CatudyColors.coral,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           _BuddyPassPanel(store: store, controller: _buddyController),
           const SizedBox(height: 14),
@@ -199,10 +209,10 @@ class _BuddyPassPanel extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           FilledButton.icon(
-            onPressed: store.canSendBuddyPass
-                ? () {
-                    final pass = store.createBuddyPass();
-                    if (pass != null) {
+            onPressed: store.canSendBuddyPass && !store.premiumBusy
+                ? () async {
+                    final pass = await store.createBuddyPass();
+                    if (pass != null && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(store.t('buddy.created'))),
                       );
@@ -222,9 +232,12 @@ class _BuddyPassPanel extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: store.canRedeemBuddyPass
-                ? () {
-                    final ok = store.redeemBuddyPass(controller.text);
+            onPressed: store.canRedeemBuddyPass && !store.premiumBusy
+                ? () async {
+                    final ok = await store.redeemBuddyPass(controller.text);
+                    if (!context.mounted) {
+                      return;
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(

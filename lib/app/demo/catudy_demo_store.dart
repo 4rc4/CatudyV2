@@ -10,6 +10,7 @@ import '../online/catudy_auth_service.dart';
 import '../online/catudy_backup_service.dart';
 import '../online/catudy_leaderboard_service.dart';
 import '../online/catudy_lobby_service.dart';
+import '../online/catudy_premium_service.dart';
 import '../online/catudy_social_service.dart';
 import '../premium/catudy_premium_models.dart';
 import '../storage/catudy_local_storage.dart';
@@ -466,6 +467,7 @@ class CatudyDemoStore extends ChangeNotifier {
   CatudyBackupService? _backupService;
   CatudySupabaseLobbyService? _lobbyService;
   CatudyLeaderboardService? _leaderboardService;
+  CatudyPremiumService? _premiumService;
   CatudySocialService? _socialService;
   StreamSubscription<CatudyAuthSession?>? _authSubscription;
   StreamSubscription<CatudyOnlineLobby>? _onlineLobbySubscription;
@@ -489,6 +491,7 @@ class CatudyDemoStore extends ChangeNotifier {
   Timer? _backupSyncTimer;
   Timer? _focusCompletionTimer;
   Future<void>? _backupMergeFuture;
+  Future<void>? _premiumRefreshFuture;
   String? _lastBackupMergedUserId;
   bool _backupMergeInProgress = false;
   String? _explicitGuestUserId;
@@ -645,6 +648,19 @@ class CatudyDemoStore extends ChangeNotifier {
       seasonal: true,
     ),
     const CosmeticItem(
+      id: 'buddy_moon_pin',
+      name: 'Buddy Moon Pin',
+      description: 'A reward badge for a Buddy Pass friend who truly starts.',
+      slot: 'profile_badge',
+      rarity: Rarity.rare,
+      accent: CatudyColors.teal,
+      icon: Icons.volunteer_activism_rounded,
+      crateType: LootCrateType.style,
+      directPrice: null,
+      premiumOnly: false,
+      seasonal: false,
+    ),
+    const CosmeticItem(
       id: 'pet_widget_theme',
       name: 'Pet Widget Theme',
       description: 'Widget cards with Mochi peeking over the progress bar.',
@@ -743,7 +759,7 @@ class CatudyDemoStore extends ChangeNotifier {
       description: 'Pet accessories and cat-only styles.',
       type: LootCrateType.cat,
       poolId: 'cat_core',
-      price: 140,
+      price: 180,
       seasonal: false,
       premiumOnly: false,
     ),
@@ -753,7 +769,7 @@ class CatudyDemoStore extends ChangeNotifier {
       description: 'Decor, room effects, and study ambience.',
       type: LootCrateType.room,
       poolId: 'room_core',
-      price: 160,
+      price: 220,
       seasonal: false,
       premiumOnly: false,
     ),
@@ -763,7 +779,7 @@ class CatudyDemoStore extends ChangeNotifier {
       description: 'Frames, themes, badges, and dialogue packs.',
       type: LootCrateType.style,
       poolId: 'style_core',
-      price: 150,
+      price: 200,
       seasonal: false,
       premiumOnly: false,
     ),
@@ -822,6 +838,8 @@ class CatudyDemoStore extends ChangeNotifier {
       accent: CatudyColors.teal,
     ),
   ];
+
+  static const economyBalance = EconomyBalance.launch;
 
   final shopItems = <ShopItem>[
     const ShopItem(
@@ -932,10 +950,12 @@ class CatudyDemoStore extends ChangeNotifier {
   int petEnergy = 75;
   String displayName = 'Guest Cat';
   bool authBusy = false;
+  bool premiumBusy = false;
   String? authUserId;
   String? authEmail;
   String? authProvider;
   String? authError;
+  String? premiumError;
   String apiBaseUrl = 'http://127.0.0.1:5099';
   String profileShareBaseUrl = '';
   bool offlineMode = true;
@@ -1074,6 +1094,8 @@ class CatudyDemoStore extends ChangeNotifier {
   bool get onlineLobbyAvailable => _lobbyService != null;
 
   bool get onlineAuthAvailable => _authService != null;
+
+  bool get onlinePremiumAvailable => _premiumService != null;
 
   bool get isAuthenticated => authUserId != null;
 
@@ -1803,10 +1825,12 @@ class CatudyDemoStore extends ChangeNotifier {
       _commit(touchState: false);
       _watchSocialState();
       _mergeBackupForCurrentUser();
+      _refreshPremiumState();
     }, onError: _setAuthError);
     notifyListeners();
     unawaited(_save());
     _mergeBackupForCurrentUser();
+    _refreshPremiumState();
   }
 
   bool _shouldDiscardAnonymousSession(CatudyAuthSession? session) {
@@ -1840,6 +1864,11 @@ class CatudyDemoStore extends ChangeNotifier {
       },
     );
     _scheduleLeaderboardSync(immediate: true);
+  }
+
+  void attachPremiumService(CatudyPremiumService service) {
+    _premiumService = service;
+    _refreshPremiumState();
   }
 
   void _applyOnlineLeaderboardProfiles(
@@ -2506,9 +2535,30 @@ class CatudyDemoStore extends ChangeNotifier {
     _commit();
   }
 
-  BuddyPass? createBuddyPass() {
+  Future<BuddyPass?> createBuddyPass() async {
     if (!canSendBuddyPass) {
       return null;
+    }
+    final service = _premiumService;
+    if (service != null && authUserId != null) {
+      premiumBusy = true;
+      premiumError = null;
+      notifyListeners();
+      try {
+        final pass = await service.createBuddyPass();
+        if (pass == null) {
+          return null;
+        }
+        issuedBuddyPasses.add(pass);
+        await _refreshPremiumStateAfterMutation();
+        return pass;
+      } catch (_) {
+        premiumError = t('buddy.invalid');
+        return null;
+      } finally {
+        premiumBusy = false;
+        notifyListeners();
+      }
     }
     final now = DateTime.now();
     final code = 'PLUS-${_stableHash('$publicUserId|${now.toIso8601String()}')}'
@@ -2526,11 +2576,31 @@ class CatudyDemoStore extends ChangeNotifier {
     return pass;
   }
 
-  bool redeemBuddyPass(String code) {
+  Future<bool> redeemBuddyPass(String code) async {
     final clean = code.trim().toUpperCase();
     final looksLikeBuddyPass = RegExp(r'^PLUS-[A-Z0-9]{8}$').hasMatch(clean);
     if (!canRedeemBuddyPass || !looksLikeBuddyPass) {
       return false;
+    }
+    final service = _premiumService;
+    if (service != null && authUserId != null) {
+      premiumBusy = true;
+      premiumError = null;
+      notifyListeners();
+      try {
+        final ok = await service.redeemBuddyPass(clean);
+        if (!ok) {
+          return false;
+        }
+        await _refreshPremiumStateAfterMutation();
+        return hasPremiumAccess;
+      } catch (_) {
+        premiumError = t('buddy.invalid');
+        return false;
+      } finally {
+        premiumBusy = false;
+        notifyListeners();
+      }
     }
     final now = DateTime.now();
     buddyPassRedemption = BuddyPassRedemption(code: clean, redeemedAt: now);
@@ -2541,6 +2611,26 @@ class CatudyDemoStore extends ChangeNotifier {
     );
     _commit();
     return true;
+  }
+
+  Future<void> _refreshPremiumStateAfterMutation() async {
+    final service = _premiumService;
+    final userId = authUserId;
+    if (service == null || userId == null) {
+      return;
+    }
+    final snapshot = await service.fetchCurrentState();
+    if (authUserId != userId || snapshot == null) {
+      return;
+    }
+    premiumEntitlement = snapshot.entitlement;
+    issuedBuddyPasses
+      ..clear()
+      ..addAll(snapshot.issuedBuddyPasses);
+    buddyPassRedemption = snapshot.redemption;
+    ownedCosmeticIds.addAll(snapshot.grantedCosmeticIds);
+    _normalizeCosmeticSelections();
+    _commit();
   }
 
   bool buyCosmetic(String id) {
@@ -2593,7 +2683,8 @@ class CatudyDemoStore extends ChangeNotifier {
     if (candidates.isEmpty) {
       return null;
     }
-    final state = pityStates[id] ?? const PityState(opensSinceRare: 0);
+    final state =
+        pityStates[id] ?? const PityState(opensSinceRare: 0, opensSinceEpic: 0);
     final rng = random ?? Random();
     final targetRarity = _rollRarity(
       seasonal: crate.seasonal,
@@ -2614,9 +2705,19 @@ class CatudyDemoStore extends ChangeNotifier {
       ownedCosmeticIds.add(item.id);
       _autoEquipCosmetic(item);
     }
-    pityStates[id] = item.rarity == Rarity.common
-        ? state.copyWith(opensSinceRare: state.opensSinceRare + 1)
-        : const PityState(opensSinceRare: 0);
+    pityStates[id] = switch (item.rarity) {
+      Rarity.common => state.copyWith(
+        opensSinceRare: state.opensSinceRare + 1,
+        opensSinceEpic: state.opensSinceEpic + 1,
+      ),
+      Rarity.rare => state.copyWith(
+        opensSinceRare: 0,
+        opensSinceEpic: state.opensSinceEpic + 1,
+      ),
+      Rarity.epic ||
+      Rarity.legendary ||
+      Rarity.mythic => const PityState(opensSinceRare: 0, opensSinceEpic: 0),
+    };
     _commit();
     return item;
   }
@@ -3102,6 +3203,14 @@ class CatudyDemoStore extends ChangeNotifier {
     if (session == null) {
       _lastBackupMergedUserId = null;
       _backupSyncTimer?.cancel();
+      if (_premiumService != null) {
+        premiumEntitlement = const PremiumEntitlement.inactive();
+        issuedBuddyPasses.clear();
+        buddyPassRedemption = const BuddyPassRedemption(
+          code: '',
+          redeemedAt: null,
+        );
+      }
       return;
     }
     if (!session.anonymous) {
@@ -3119,6 +3228,7 @@ class CatudyDemoStore extends ChangeNotifier {
       }
     }
     _mergeBackupForCurrentUser();
+    _refreshPremiumState();
   }
 
   void _resetLocalProfileIdentity() {
@@ -3509,6 +3619,50 @@ class CatudyDemoStore extends ChangeNotifier {
     );
   }
 
+  void _refreshPremiumState() {
+    final service = _premiumService;
+    final userId = authUserId;
+    if (service == null || userId == null || _premiumRefreshFuture != null) {
+      return;
+    }
+    _premiumRefreshFuture = _runPremiumRefresh(service, userId).whenComplete(
+      () {
+        _premiumRefreshFuture = null;
+      },
+    );
+  }
+
+  Future<void> _runPremiumRefresh(
+    CatudyPremiumService service,
+    String userId,
+  ) async {
+    premiumBusy = true;
+    premiumError = null;
+    notifyListeners();
+    try {
+      final snapshot = await service.fetchCurrentState();
+      if (authUserId != userId || snapshot == null) {
+        return;
+      }
+      premiumEntitlement = snapshot.entitlement;
+      issuedBuddyPasses
+        ..clear()
+        ..addAll(snapshot.issuedBuddyPasses);
+      buddyPassRedemption = snapshot.redemption;
+      ownedCosmeticIds.addAll(snapshot.grantedCosmeticIds);
+      _normalizeCosmeticSelections();
+      premiumError = null;
+      await _save();
+    } catch (_) {
+      premiumError = t('premium.syncError');
+    } finally {
+      if (authUserId == userId) {
+        premiumBusy = false;
+        notifyListeners();
+      }
+    }
+  }
+
   FocusRecord _completeCurrentSession({required DateTime completedAt}) {
     final goalWasCompleted = todayGoalProgress.completed;
     final unlockedBefore = unlockedAchievements
@@ -3531,7 +3685,7 @@ class CatudyDemoStore extends ChangeNotifier {
       0,
       session.durationMinutes,
     );
-    final reward = _rewardForMinutes(actualMinutes);
+    final goldReward = _goldRewardForMinutes(actualMinutes);
     final record = FocusRecord(
       id: _newEntityId('focus'),
       categoryId: session.categoryId,
@@ -3544,7 +3698,7 @@ class CatudyDemoStore extends ChangeNotifier {
                 ? 'Early lobby focus session'
                 : 'Early focus session')
           : (session.lobbyMode ? 'Lobby focus session' : 'Focus session'),
-      gold: reward,
+      gold: goldReward,
       todoId: session.todoId,
     );
     history.insert(0, record);
@@ -3555,8 +3709,8 @@ class CatudyDemoStore extends ChangeNotifier {
         todos[index] = todos[index].copyWith(done: true);
       }
     }
-    gold += reward;
-    focusPoints += reward;
+    gold += goldReward;
+    focusPoints += actualMinutes;
     if (seasonProgress.seasonId != currentSeason.id) {
       seasonProgress = SeasonProgress(
         seasonId: currentSeason.id,
@@ -3623,12 +3777,15 @@ class CatudyDemoStore extends ChangeNotifier {
     }
   }
 
-  int _rewardForMinutes(int minutes) {
+  int _goldRewardForMinutes(int minutes) {
     if (minutes <= 0) {
       return 0;
     }
     final bonus = ((minutes * focusRewardBoostBasisPoints) / 10000).round();
-    final premiumBonus = hasPremiumAccess ? (minutes * 0.15).round() : 0;
+    final premiumBonus = hasPremiumAccess
+        ? ((minutes * economyBalance.premiumGoldBonusBasisPoints) / 10000)
+              .round()
+        : 0;
     return minutes + bonus + premiumBonus;
   }
 
@@ -3637,7 +3794,12 @@ class CatudyDemoStore extends ChangeNotifier {
     required PityState state,
     required Random random,
   }) {
-    if (state.opensSinceRare >= 8) {
+    if (state.opensSinceEpic >= economyBalance.epicPityThreshold) {
+      return seasonal && random.nextDouble() < 0.04
+          ? Rarity.mythic
+          : Rarity.epic;
+    }
+    if (state.opensSinceRare >= economyBalance.rarePityThreshold) {
       return seasonal && random.nextDouble() < 0.04
           ? Rarity.mythic
           : Rarity.rare;
@@ -4274,27 +4436,35 @@ Season _buildCurrentSeason() {
     freeTrack: const SeasonRewardTrack(
       rewards: [
         SeasonReward(
-          id: 'free_gold_60',
-          title: '60 focus minutes',
-          thresholdMinutes: 60,
+          id: 'free_gold_90',
+          title: '90 focus minutes',
+          thresholdMinutes: 90,
           kind: SeasonRewardKind.gold,
-          payload: '90',
+          payload: '120',
           premiumOnly: false,
         ),
         SeasonReward(
-          id: 'free_cat_crate_140',
+          id: 'free_cat_crate_180',
           title: 'Cat Crate',
-          thresholdMinutes: 140,
+          thresholdMinutes: 180,
           kind: SeasonRewardKind.crate,
           payload: 'cat_crate',
           premiumOnly: false,
         ),
         SeasonReward(
-          id: 'free_room_crate_240',
+          id: 'free_room_crate_360',
           title: 'Room Crate',
-          thresholdMinutes: 240,
+          thresholdMinutes: 360,
           kind: SeasonRewardKind.crate,
           payload: 'room_crate',
+          premiumOnly: false,
+        ),
+        SeasonReward(
+          id: 'free_style_crate_720',
+          title: 'Style Crate',
+          thresholdMinutes: 720,
+          kind: SeasonRewardKind.crate,
+          payload: 'style_crate',
           premiumOnly: false,
         ),
       ],
@@ -4302,33 +4472,41 @@ Season _buildCurrentSeason() {
     premiumTrack: const SeasonRewardTrack(
       rewards: [
         SeasonReward(
-          id: 'plus_style_crate_60',
+          id: 'plus_style_crate_90',
           title: 'Style Crate',
-          thresholdMinutes: 60,
+          thresholdMinutes: 90,
           kind: SeasonRewardKind.crate,
           payload: 'style_crate',
           premiumOnly: true,
         ),
         SeasonReward(
-          id: 'plus_season_cat_140',
+          id: 'plus_season_cat_180',
           title: 'Season Cat Crate',
-          thresholdMinutes: 140,
+          thresholdMinutes: 180,
           kind: SeasonRewardKind.crate,
           payload: 'season_cat_crate',
           premiumOnly: true,
         ),
         SeasonReward(
-          id: 'plus_dialogues_220',
+          id: 'plus_dialogues_360',
           title: 'Storybook Dialogues',
-          thresholdMinutes: 220,
+          thresholdMinutes: 360,
           kind: SeasonRewardKind.cosmetic,
           payload: 'storybook_dialogues',
           premiumOnly: true,
         ),
         SeasonReward(
-          id: 'plus_season_style_320',
+          id: 'plus_season_room_540',
+          title: 'Season Room Crate',
+          thresholdMinutes: 540,
+          kind: SeasonRewardKind.crate,
+          payload: 'season_room_crate',
+          premiumOnly: true,
+        ),
+        SeasonReward(
+          id: 'plus_season_style_720',
           title: 'Season Style Crate',
-          thresholdMinutes: 320,
+          thresholdMinutes: 720,
           kind: SeasonRewardKind.crate,
           payload: 'season_style_crate',
           premiumOnly: true,

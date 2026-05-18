@@ -71,6 +71,9 @@ grant select, insert, update on public.catudy_leaderboard
 create index if not exists catudy_leaderboard_points_idx
   on public.catudy_leaderboard (points desc, total_minutes desc);
 
+create index if not exists catudy_leaderboard_total_minutes_idx
+  on public.catudy_leaderboard (total_minutes desc, points desc);
+
 create or replace view public.catudy_public_profiles as
 select
   user_id,
@@ -136,6 +139,375 @@ create policy "users can update their backup"
   with check (auth.uid() = user_id);
 
 grant select, insert, update on public.catudy_user_backups
+  to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Premium entitlements and Buddy Passes
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.catudy_premium_entitlements (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  source text not null default 'none'
+    check (source in ('none', 'subscription', 'buddyPass')),
+  activated_at timestamptz,
+  expires_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.catudy_premium_entitlements
+  add column if not exists source text not null default 'none',
+  add column if not exists activated_at timestamptz,
+  add column if not exists expires_at timestamptz,
+  add column if not exists updated_at timestamptz not null default now();
+
+alter table public.catudy_premium_entitlements
+  drop constraint if exists catudy_premium_entitlements_source_check;
+alter table public.catudy_premium_entitlements
+  add constraint catudy_premium_entitlements_source_check
+  check (source in ('none', 'subscription', 'buddyPass'));
+
+create table if not exists public.catudy_buddy_passes (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  sender_user_id uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  redeemed_by_user_id uuid references auth.users(id) on delete set null,
+  redeemed_at timestamptz,
+  redeemer_start_minutes integer not null default 0,
+  sender_reward_granted_at timestamptz
+);
+
+alter table public.catudy_buddy_passes
+  add column if not exists code text,
+  add column if not exists sender_user_id uuid
+    references auth.users(id) on delete cascade,
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists expires_at timestamptz,
+  add column if not exists redeemed_by_user_id uuid
+    references auth.users(id) on delete set null,
+  add column if not exists redeemed_at timestamptz,
+  add column if not exists redeemer_start_minutes integer not null default 0,
+  add column if not exists sender_reward_granted_at timestamptz;
+
+create unique index if not exists catudy_buddy_passes_code_idx
+  on public.catudy_buddy_passes (code);
+create index if not exists catudy_buddy_passes_sender_month_idx
+  on public.catudy_buddy_passes (sender_user_id, created_at desc);
+
+create table if not exists public.catudy_buddy_pass_redemptions (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  buddy_pass_id uuid not null unique
+    references public.catudy_buddy_passes(id) on delete cascade,
+  buddy_pass_code text not null,
+  redeemed_at timestamptz not null default now()
+);
+
+create table if not exists public.catudy_reward_grants (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  reward_key text not null,
+  source_type text not null,
+  source_id uuid not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, reward_key, source_type, source_id)
+);
+
+alter table public.catudy_reward_grants
+  add column if not exists user_id uuid
+    references auth.users(id) on delete cascade,
+  add column if not exists reward_key text,
+  add column if not exists source_type text,
+  add column if not exists source_id uuid,
+  add column if not exists created_at timestamptz not null default now();
+
+create unique index if not exists catudy_reward_grants_unique_idx
+  on public.catudy_reward_grants (user_id, reward_key, source_type, source_id);
+
+alter table public.catudy_buddy_pass_redemptions
+  add column if not exists buddy_pass_id uuid
+    references public.catudy_buddy_passes(id) on delete cascade,
+  add column if not exists buddy_pass_code text,
+  add column if not exists redeemed_at timestamptz not null default now();
+
+alter table public.catudy_premium_entitlements enable row level security;
+alter table public.catudy_buddy_passes enable row level security;
+alter table public.catudy_buddy_pass_redemptions enable row level security;
+alter table public.catudy_reward_grants enable row level security;
+
+drop policy if exists "users can read their premium entitlement"
+  on public.catudy_premium_entitlements;
+create policy "users can read their premium entitlement"
+  on public.catudy_premium_entitlements
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "users can read sent or redeemed buddy passes"
+  on public.catudy_buddy_passes;
+create policy "users can read sent or redeemed buddy passes"
+  on public.catudy_buddy_passes
+  for select
+  to authenticated
+  using (
+    auth.uid() = sender_user_id
+    or auth.uid() = redeemed_by_user_id
+  );
+
+drop policy if exists "users can read their buddy redemption"
+  on public.catudy_buddy_pass_redemptions;
+create policy "users can read their buddy redemption"
+  on public.catudy_buddy_pass_redemptions
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "users can read their reward grants"
+  on public.catudy_reward_grants;
+create policy "users can read their reward grants"
+  on public.catudy_reward_grants
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+grant select on public.catudy_premium_entitlements
+  to authenticated;
+grant select on public.catudy_buddy_passes
+  to authenticated;
+grant select on public.catudy_buddy_pass_redemptions
+  to authenticated;
+grant select on public.catudy_reward_grants
+  to authenticated;
+
+create or replace function public.catudy_has_active_premium(target_user_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.catudy_premium_entitlements e
+    where e.user_id = target_user_id
+      and e.source <> 'none'
+      and (e.expires_at is null or e.expires_at > now())
+  );
+$$;
+
+create or replace function public.catudy_create_buddy_pass()
+returns table (
+  code text,
+  created_at timestamptz,
+  expires_at timestamptz,
+  redeemed_by_user_id uuid,
+  redeemed_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  generated_code text;
+begin
+  if current_user_id is null then
+    raise exception 'authentication required';
+  end if;
+
+  if not public.catudy_has_active_premium(current_user_id) then
+    raise exception 'active premium required';
+  end if;
+
+  if exists (
+    select 1
+    from public.catudy_buddy_passes p
+    where p.sender_user_id = current_user_id
+      and date_trunc('month', p.created_at) = date_trunc('month', now())
+  ) then
+    raise exception 'monthly buddy pass already used';
+  end if;
+
+  loop
+    generated_code := 'PLUS-' || upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 8));
+    exit when not exists (
+      select 1
+      from public.catudy_buddy_passes p
+      where p.code = generated_code
+    );
+  end loop;
+
+  insert into public.catudy_buddy_passes (
+    code,
+    sender_user_id,
+    expires_at
+  )
+  values (
+    generated_code,
+    current_user_id,
+    now() + interval '30 days'
+  )
+  returning
+    catudy_buddy_passes.code,
+    catudy_buddy_passes.created_at,
+    catudy_buddy_passes.expires_at,
+    catudy_buddy_passes.redeemed_by_user_id,
+    catudy_buddy_passes.redeemed_at
+  into
+    code,
+    created_at,
+    expires_at,
+    redeemed_by_user_id,
+    redeemed_at;
+
+  return next;
+end;
+$$;
+
+create or replace function public.catudy_redeem_buddy_pass(pass_code text)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  target_pass public.catudy_buddy_passes%rowtype;
+begin
+  if current_user_id is null then
+    return false;
+  end if;
+
+  if public.catudy_has_active_premium(current_user_id) then
+    return false;
+  end if;
+
+  if exists (
+    select 1
+    from public.catudy_buddy_pass_redemptions r
+    where r.user_id = current_user_id
+  ) then
+    return false;
+  end if;
+
+  select *
+  into target_pass
+  from public.catudy_buddy_passes p
+  where p.code = upper(trim(pass_code))
+  for update;
+
+  if not found
+    or target_pass.sender_user_id = current_user_id
+    or target_pass.redeemed_at is not null
+    or target_pass.expires_at <= now() then
+    return false;
+  end if;
+
+  update public.catudy_buddy_passes
+  set
+    redeemed_by_user_id = current_user_id,
+    redeemed_at = now(),
+    redeemer_start_minutes = coalesce(
+      (
+        select total_minutes
+        from public.catudy_leaderboard
+        where user_id = current_user_id
+      ),
+      0
+    )
+  where id = target_pass.id;
+
+  insert into public.catudy_buddy_pass_redemptions (
+    user_id,
+    buddy_pass_id,
+    buddy_pass_code
+  )
+  values (
+    current_user_id,
+    target_pass.id,
+    target_pass.code
+  );
+
+  insert into public.catudy_premium_entitlements (
+    user_id,
+    source,
+    activated_at,
+    expires_at,
+    updated_at
+  )
+  values (
+    current_user_id,
+    'buddyPass',
+    now(),
+    now() + interval '30 days',
+    now()
+  )
+  on conflict (user_id) do update
+  set
+    source = excluded.source,
+    activated_at = excluded.activated_at,
+    expires_at = excluded.expires_at,
+    updated_at = excluded.updated_at;
+
+  return true;
+end;
+$$;
+
+create or replace function public.catudy_award_buddy_pass_sender_reward()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  qualifying_pass public.catudy_buddy_passes%rowtype;
+begin
+  select *
+  into qualifying_pass
+  from public.catudy_buddy_passes p
+  where p.redeemed_by_user_id = new.user_id
+    and p.sender_reward_granted_at is null
+    and new.total_minutes - p.redeemer_start_minutes >= 180
+  order by p.redeemed_at desc
+  limit 1
+  for update;
+
+  if not found then
+    return new;
+  end if;
+
+  update public.catudy_buddy_passes
+  set sender_reward_granted_at = now()
+  where id = qualifying_pass.id;
+
+  insert into public.catudy_reward_grants (
+    user_id,
+    reward_key,
+    source_type,
+    source_id
+  )
+  values (
+    qualifying_pass.sender_user_id,
+    'buddy_moon_pin',
+    'buddy_pass',
+    qualifying_pass.id
+  )
+  on conflict (user_id, reward_key, source_type, source_id) do nothing;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists catudy_award_buddy_pass_sender_reward_trigger
+  on public.catudy_leaderboard;
+create trigger catudy_award_buddy_pass_sender_reward_trigger
+after insert or update of total_minutes
+on public.catudy_leaderboard
+for each row
+execute function public.catudy_award_buddy_pass_sender_reward();
+
+grant execute on function public.catudy_create_buddy_pass()
+  to authenticated;
+grant execute on function public.catudy_redeem_buddy_pass(text)
   to authenticated;
 
 -- ---------------------------------------------------------------------------

@@ -115,8 +115,8 @@ class _SessionResultScreenState extends State<SessionResultScreen> {
                       items: [
                         _ResultMetricItem(
                           icon: Icons.add_circle_rounded,
-                          label: store.t('focus.resultPointsEarned'),
-                          value: '+${result.gold} ${store.t('common.points')}',
+                          label: store.t('focus.resultGoldEarned'),
+                          value: '+${result.gold} ${store.t('common.gold')}',
                           color: CatudyColors.violet,
                         ),
                         _ResultMetricItem(

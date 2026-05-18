@@ -236,6 +236,7 @@ class CatudyCopy {
     'focus.petUnlockedBody': '{pet} envantere eklendi.',
     'focus.resultSummary': 'Seans özeti',
     'focus.resultPointsEarned': 'Kazanılan puan',
+    'focus.resultGoldEarned': 'Kazanılan altın',
     'focus.resultPetEffect': 'Pet etkisi',
     'focus.resultPetEffectValue': '+8 mutluluk',
     'focus.resultStreak': 'Seri durumu',
@@ -385,10 +386,11 @@ class CatudyCopy {
     'premium.widgetThemes': 'Widget / Lock-screen temaları',
     'premium.widgetClassic': 'Klasik widget',
     'premium.widgetPreview': '{done}/{goal} dk bugün',
+    'premium.syncError': 'Plus durumu şu an senkronize edilemedi.',
 
     'buddy.title': 'Buddy Pass',
     'buddy.body':
-        'Her aktif Plus hesabı ayda 1 kez 30 günlük pass gönderebilir. Alıcı yeni kullanıcı olmak zorunda değildir; her hesap yalnızca 1 kez kullanabilir.',
+        'Her aktif Plus hesabı ayda 1 kez 30 günlük pass gönderebilir. Alıcı yeni kullanıcı olmak zorunda değildir; her hesap yalnızca 1 kez kullanabilir. Arkadaşın 180 gerçek odak dakikasına ulaşırsa Buddy Moon Pin rozeti kazanırsın.',
     'buddy.copy': 'Kopyala',
     'buddy.copied': 'Buddy Pass kodu kopyalandı.',
     'buddy.create': 'Buddy Pass oluştur',
@@ -419,6 +421,8 @@ class CatudyCopy {
     'crates.open': 'Aç',
     'crates.opening': 'Kutu açılıyor',
     'crates.rolling': 'Ne çıkacak?',
+    'crates.economyNote':
+        'Kutular yalnızca kozmetik verir. Altın gerçek odak dakikasından kazanılır; Plus altın kazancını artırır ama leaderboard’u etkilemez.',
 
     'coach.starterHeadline': 'Güvenli başlangıç',
     'coach.starterReason':
@@ -772,6 +776,7 @@ class CatudyCopy {
     'focus.petUnlockedBody': '{pet} was added to inventory.',
     'focus.resultSummary': 'Session summary',
     'focus.resultPointsEarned': 'Points earned',
+    'focus.resultGoldEarned': 'Gold earned',
     'focus.resultPetEffect': 'Pet effect',
     'focus.resultPetEffectValue': '+8 happiness',
     'focus.resultStreak': 'Streak status',
@@ -919,10 +924,11 @@ class CatudyCopy {
     'premium.widgetThemes': 'Widget / lock-screen themes',
     'premium.widgetClassic': 'Classic widget',
     'premium.widgetPreview': '{done}/{goal} min today',
+    'premium.syncError': 'Plus state could not be synced right now.',
 
     'buddy.title': 'Buddy Pass',
     'buddy.body':
-        'Each active Plus account can send one 30-day pass per month. The receiver does not need to be new; each account can redeem only once.',
+        'Each active Plus account can send one 30-day pass per month. The receiver does not need to be new; each account can redeem only once. If your friend reaches 180 real focus minutes, you earn the Buddy Moon Pin badge.',
     'buddy.copy': 'Copy',
     'buddy.copied': 'Buddy Pass code copied.',
     'buddy.create': 'Create Buddy Pass',
@@ -953,6 +959,8 @@ class CatudyCopy {
     'crates.open': 'Open',
     'crates.opening': 'Opening crate',
     'crates.rolling': 'What will drop?',
+    'crates.economyNote':
+        'Crates are cosmetic only. Gold comes from real focus minutes; Plus increases gold gain but never changes leaderboard rank.',
 
     'coach.starterHeadline': 'Safe starting point',
     'coach.starterReason':

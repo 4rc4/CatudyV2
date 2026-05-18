@@ -236,18 +236,27 @@ class ShardWallet {
 }
 
 class PityState {
-  const PityState({required this.opensSinceRare});
+  const PityState({required this.opensSinceRare, required this.opensSinceEpic});
 
   factory PityState.fromJson(Map<String, dynamic>? json) {
-    return PityState(opensSinceRare: _readInt(json, 'opensSinceRare', 0));
+    return PityState(
+      opensSinceRare: _readInt(json, 'opensSinceRare', 0),
+      opensSinceEpic: _readInt(json, 'opensSinceEpic', 0),
+    );
   }
 
   final int opensSinceRare;
+  final int opensSinceEpic;
 
-  PityState copyWith({int? opensSinceRare}) =>
-      PityState(opensSinceRare: opensSinceRare ?? this.opensSinceRare);
+  PityState copyWith({int? opensSinceRare, int? opensSinceEpic}) => PityState(
+    opensSinceRare: opensSinceRare ?? this.opensSinceRare,
+    opensSinceEpic: opensSinceEpic ?? this.opensSinceEpic,
+  );
 
-  Map<String, dynamic> toJson() => {'opensSinceRare': opensSinceRare};
+  Map<String, dynamic> toJson() => {
+    'opensSinceRare': opensSinceRare,
+    'opensSinceEpic': opensSinceEpic,
+  };
 }
 
 enum SeasonRewardKind { gold, crate, cosmetic }
@@ -298,6 +307,14 @@ class Season {
   bool get active {
     final now = DateTime.now();
     return !now.isBefore(startsAt) && now.isBefore(endsAt);
+  }
+
+  int get targetMinutes {
+    final thresholds = [
+      ...freeTrack.rewards.map((reward) => reward.thresholdMinutes),
+      ...premiumTrack.rewards.map((reward) => reward.thresholdMinutes),
+    ];
+    return thresholds.isEmpty ? 0 : thresholds.reduce((a, b) => a >= b ? a : b);
   }
 }
 
@@ -355,6 +372,24 @@ class CoachRecommendation {
   final String reason;
   final bool basedOnHistory;
   final int sessionsConsidered;
+}
+
+class EconomyBalance {
+  const EconomyBalance({
+    required this.premiumGoldBonusBasisPoints,
+    required this.rarePityThreshold,
+    required this.epicPityThreshold,
+  });
+
+  static const launch = EconomyBalance(
+    premiumGoldBonusBasisPoints: 1500,
+    rarePityThreshold: 6,
+    epicPityThreshold: 18,
+  );
+
+  final int premiumGoldBonusBasisPoints;
+  final int rarePityThreshold;
+  final int epicPityThreshold;
 }
 
 String _readString(Map<String, dynamic>? json, String key) {

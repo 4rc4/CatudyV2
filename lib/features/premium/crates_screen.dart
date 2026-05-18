@@ -43,6 +43,25 @@ class CratesScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          CatudyPanel(
+            accentColor: CatudyColors.teal,
+            child: Row(
+              children: [
+                const Icon(Icons.balance_rounded, color: CatudyColors.teal),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    store.t('crates.economyNote'),
+                    style: TextStyle(
+                      color: CatudyColors.mutedFor(context),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
           for (final crate in store.lootCrates)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),

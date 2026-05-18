@@ -9,6 +9,7 @@ import 'app/online/catudy_auth_service.dart';
 import 'app/online/catudy_backup_service.dart';
 import 'app/online/catudy_leaderboard_service.dart';
 import 'app/online/catudy_lobby_service.dart';
+import 'app/online/catudy_premium_service.dart';
 import 'app/online/catudy_social_service.dart';
 
 const _supabaseUrl = bool.hasEnvironment('CATUDY_SUPABASE_URL')
@@ -76,6 +77,9 @@ Future<void> _initializeOnlineLobby() async {
     );
     catudyDemoStore.attachLeaderboardService(
       CatudyLeaderboardService(Supabase.instance.client),
+    );
+    catudyDemoStore.attachPremiumService(
+      CatudyPremiumService(Supabase.instance.client),
     );
     catudyDemoStore.attachSocialService(
       CatudySocialService(Supabase.instance.client),
