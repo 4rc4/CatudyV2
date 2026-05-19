@@ -47,7 +47,7 @@ class _StatsScreenState extends State<StatsScreen> {
           title: store.t('stats.title'),
           actions: [
             IconButton.filledTonal(
-              onPressed: () => context.go('/manual-entry'),
+              onPressed: () => context.push('/manual-entry'),
               icon: const Icon(Icons.add_chart_rounded),
             ),
           ],
@@ -56,7 +56,7 @@ class _StatsScreenState extends State<StatsScreen> {
               selected: effectiveRange,
               onChanged: (range) {
                 if (!store.hasPremiumAccess && range != StatsRange.week) {
-                  context.go('/plus');
+                  context.push('/plus?from=stats');
                   return;
                 }
                 setState(() => _range = range);
@@ -237,7 +237,7 @@ class _StatsScreenState extends State<StatsScreen> {
               actions: [
                 if (!store.hasPremiumAccess)
                   FilledButton.icon(
-                    onPressed: () => context.go('/plus'),
+                    onPressed: () => context.push('/plus?from=stats'),
                     icon: const Icon(Icons.lock_open_rounded),
                     label: Text(store.t('stats.openPlus')),
                   ),
@@ -673,7 +673,7 @@ class _PremiumStatsUpsell extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () => context.go('/plus'),
+            onPressed: () => context.push('/plus?from=stats'),
             child: Text(store.t('stats.openPlus')),
           ),
         ],

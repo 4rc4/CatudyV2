@@ -41,57 +41,15 @@ class _PremiumScreenState extends State<PremiumScreen> {
       builder: (context, store) => ScreenScaffold(
         title: store.t('premium.title'),
         showBack: true,
-        fallbackBackPath: '/',
+        fallbackBackPath: '/profile',
         children: [
-          CatudyPanel(
-            color: CatudyColors.cream,
-            accentColor: CatudyColors.violet,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CatudySectionHeader(
-                  title: store.hasPremiumAccess
-                      ? store.t('premium.active')
-                      : store.t('premium.pitch'),
-                  icon: Icons.workspace_premium_rounded,
-                  accentColor: CatudyColors.violet,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  store.t('premium.body'),
-                  style: TextStyle(
-                    color: CatudyColors.mutedFor(context),
-                    fontWeight: FontWeight.w700,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _FeatureChip(label: store.t('premium.featureCoach')),
-                    _FeatureChip(label: store.t('premium.featureStats')),
-                    _FeatureChip(label: store.t('premium.featureSeason')),
-                    _FeatureChip(label: store.t('premium.featureCosmetics')),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                if (!store.hasPremiumAccess)
-                  FilledButton.icon(
-                    onPressed: store.activatePremiumDemo,
-                    icon: const Icon(Icons.auto_awesome_rounded),
-                    label: Text(store.t('premium.activateDemo')),
-                  )
-                else
-                  OutlinedButton.icon(
-                    onPressed: store.clearPremiumEntitlement,
-                    icon: const Icon(Icons.lock_open_rounded),
-                    label: Text(store.t('premium.clearDemo')),
-                  ),
-              ],
-            ),
-          ),
+          _PlusHero(store: store),
+          const SizedBox(height: 14),
+          _PlusBenefitsGrid(store: store),
+          const SizedBox(height: 14),
+          _PlusComparison(store: store),
+          const SizedBox(height: 14),
+          _PlanSelector(store: store),
           const SizedBox(height: 14),
           _QuickLinks(store: store),
           const SizedBox(height: 14),
@@ -112,6 +70,492 @@ class _PremiumScreenState extends State<PremiumScreen> {
           _WidgetThemePanel(store: store),
         ],
       ),
+    );
+  }
+}
+
+class _PlusHero extends StatelessWidget {
+  const _PlusHero({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      padding: const EdgeInsets.all(18),
+      accentColor: CatudyColors.violet,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.workspace_premium_rounded,
+                      color: CatudyColors.yellow,
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        store.t('premium.heroTitle'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: CatudyColors.blueFor(context),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  store.t('premium.heroHeadline'),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                    height: 1.04,
+                  ),
+                ),
+                Text(
+                  store.t('premium.heroAccent'),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: CatudyColors.teal,
+                    fontWeight: FontWeight.w900,
+                    height: 1.04,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  store.t('premium.heroBody'),
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w800,
+                    height: 1.28,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 112,
+            height: 126,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: CatudyColors.surfaceFor(context),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: CatudyColors.violet.withValues(alpha: 0.26),
+              ),
+            ),
+            child: Image.asset('assets/brand/catudy-mascot.png'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlusBenefitsGrid extends StatelessWidget {
+  const _PlusBenefitsGrid({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final benefits = [
+      _BenefitData(
+        Icons.wallpaper_rounded,
+        store.t('premium.benefitRoomsTitle'),
+        store.t('premium.benefitRoomsBody'),
+      ),
+      _BenefitData(
+        Icons.checkroom_rounded,
+        store.t('premium.benefitPetTitle'),
+        store.t('premium.benefitPetBody'),
+      ),
+      _BenefitData(
+        Icons.card_giftcard_rounded,
+        store.t('premium.benefitSeasonTitle'),
+        store.t('premium.benefitSeasonBody'),
+      ),
+      _BenefitData(
+        Icons.query_stats_rounded,
+        store.t('premium.benefitStatsTitle'),
+        store.t('premium.benefitStatsBody'),
+      ),
+      _BenefitData(
+        Icons.headphones_rounded,
+        store.t('premium.benefitSoundTitle'),
+        store.t('premium.benefitSoundBody'),
+      ),
+      _BenefitData(
+        Icons.rocket_launch_rounded,
+        store.t('premium.benefitEarlyTitle'),
+        store.t('premium.benefitEarlyBody'),
+      ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          store.t('premium.whatYouGet'),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: CatudyColors.blueFor(context),
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: benefits.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.78,
+          ),
+          itemBuilder: (context, index) => _BenefitCard(data: benefits[index]),
+        ),
+      ],
+    );
+  }
+}
+
+class _BenefitData {
+  const _BenefitData(this.icon, this.title, this.body);
+
+  final IconData icon;
+  final String title;
+  final String body;
+}
+
+class _BenefitCard extends StatelessWidget {
+  const _BenefitCard({required this.data});
+
+  final _BenefitData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceStrongFor(context),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: CatudyColors.violet.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(data.icon, color: CatudyColors.violet),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  data.body,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    height: 1.12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlusComparison extends StatelessWidget {
+  const _PlusComparison({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = [
+      (
+        Icons.home_rounded,
+        store.t('premium.compareRooms'),
+        '3',
+        store.t('premium.compareAll'),
+      ),
+      (
+        Icons.checkroom_rounded,
+        store.t('premium.comparePet'),
+        store.t('premium.compareBasic'),
+        store.t('premium.compareExclusive'),
+      ),
+      (
+        Icons.card_giftcard_rounded,
+        store.t('premium.compareSeason'),
+        '—',
+        store.t('common.yes'),
+      ),
+      (
+        Icons.bar_chart_rounded,
+        store.t('premium.compareStats'),
+        store.t('premium.compareBasic'),
+        store.t('premium.compareAdvanced'),
+      ),
+      (
+        Icons.workspace_premium_rounded,
+        store.t('premium.compareBadges'),
+        '—',
+        store.t('common.yes'),
+      ),
+    ];
+    return CatudyPanel(
+      padding: const EdgeInsets.all(14),
+      accentColor: CatudyColors.violet,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Expanded(child: SizedBox()),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    store.t('premium.freeColumn'),
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Text(
+                    store.t('premium.plusColumn'),
+                    style: const TextStyle(
+                      color: CatudyColors.teal,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          for (final row in rows)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 7),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(row.$1, size: 18, color: CatudyColors.violet),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            row.$2,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(child: Center(child: Text(row.$3))),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        row.$4,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: CatudyColors.teal,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanSelector extends StatelessWidget {
+  const _PlanSelector({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      accentColor: CatudyColors.teal,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _PlanCard(
+                  title: store.t('premium.monthly'),
+                  price: store.t('premium.monthlyPrice'),
+                  selected: false,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _PlanCard(
+                  title: store.t('premium.yearly'),
+                  price: store.t('premium.yearlyPrice'),
+                  badge: store.t('premium.bestValue'),
+                  selected: true,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: FilledButton.icon(
+              onPressed: store.hasPremiumAccess
+                  ? store.clearPremiumEntitlement
+                  : store.activatePremiumDemo,
+              icon: const Icon(Icons.workspace_premium_rounded),
+              label: Text(
+                store.hasPremiumAccess
+                    ? store.t('premium.clearDemo')
+                    : store.t('premium.trialCta'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            store.t('premium.cancelAnytime'),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({
+    required this.title,
+    required this.price,
+    required this.selected,
+    this.badge,
+  });
+
+  final String title;
+  final String price;
+  final bool selected;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            color: selected
+                ? CatudyColors.violet.withValues(alpha: 0.14)
+                : CatudyColors.surfaceFor(context),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: selected
+                  ? CatudyColors.teal
+                  : CatudyColors.lineFor(context),
+              width: selected ? 1.8 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: selected
+                    ? CatudyColors.yellow
+                    : CatudyColors.mutedFor(context),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: CatudyColors.blueFor(context),
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      price,
+                      style: TextStyle(color: CatudyColors.mutedFor(context)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (badge != null)
+          Positioned(
+            top: -10,
+            left: 24,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: CatudyColors.violet,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                badge!,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -191,12 +635,12 @@ class _QuickLinks extends StatelessWidget {
   Widget build(BuildContext context) {
     final buttons = [
       FilledButton.tonalIcon(
-        onPressed: () => context.go('/season'),
+        onPressed: () => context.push('/season?from=profile'),
         icon: const Icon(Icons.emoji_events_rounded),
         label: Text(store.t('premium.openSeason')),
       ),
       FilledButton.tonalIcon(
-        onPressed: () => context.go('/crates'),
+        onPressed: () => context.push('/crates?from=profile'),
         icon: const Icon(Icons.inventory_2_rounded),
         label: Text(store.t('premium.openCrates')),
       ),
@@ -440,16 +884,5 @@ class _WidgetPreview extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _FeatureChip extends StatelessWidget {
-  const _FeatureChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(label: Text(label));
   }
 }

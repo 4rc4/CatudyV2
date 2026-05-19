@@ -51,7 +51,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
               selected: _tab,
               onChanged: (tab) {
                 setState(() => _tab = tab);
-                context.go('/community?tab=${_tabCode(tab)}');
+                final uri = GoRouterState.of(context).uri;
+                final from = uri.queryParameters['from'];
+                final suffix = from == null ? '' : '&from=$from';
+                context.replace('/community?tab=${_tabCode(tab)}$suffix');
               },
               tabs: [
                 CatudyVisualTab(

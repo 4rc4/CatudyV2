@@ -9,9 +9,7 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../features/onboarding/pet_intro_tour.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
-import '../../shared/widgets/catudy_visual_system.dart';
 import '../../shared/widgets/floating_mascot.dart';
-import '../../shared/widgets/shop_item_art.dart';
 import '../../shared/widgets/store_builder.dart';
 
 class PetRoomScreen extends StatefulWidget {
@@ -155,8 +153,8 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
               context: context,
               builder: (_) => _PetNameDialog(store: store),
             ),
-            onShop: () => context.go('/shop'),
-            onInventory: () => context.go('/inventory'),
+            onShop: () => context.push('/shop'),
+            onInventory: () => context.push('/inventory'),
             onReturnHome: store.clearVisitedRoom,
           ),
         );
@@ -376,8 +374,8 @@ class _RoomScene extends StatelessWidget {
             bottom: controlsReserve + 38,
             height: (roomHeight * 0.18).clamp(122.0, 154.0).toDouble(),
           );
-          final petSize = (roomWidth * (studying ? 0.25 : 0.27))
-              .clamp(96.0, 122.0)
+          final petSize = (roomWidth * (studying ? 0.31 : 0.34))
+              .clamp(126.0, 158.0)
               .toDouble();
           final petBoxWidth = petSize * (studying ? 1.32 : 1.18);
           final petBoxHeight = petSize * (studying ? 1.05 : 1.14);
@@ -389,8 +387,8 @@ class _RoomScene extends StatelessWidget {
           final petLeft = (petCenterX - petBoxWidth / 2)
               .clamp(24.0, maxPetLeft)
               .toDouble();
-          final petBottom = (controlsReserve + 58)
-              .clamp(226.0, 276.0)
+          final petBottom = (controlsReserve + 84)
+              .clamp(236.0, 304.0)
               .toDouble();
           final speechBottom = (petBottom + petBoxHeight - 8)
               .clamp(roomHeight * 0.43, roomHeight * 0.62)
@@ -583,7 +581,7 @@ class _RoomBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'assets/room/corner_room_background_v1.png',
+      'assets/room/catudy_room_background_v2.png',
       fit: BoxFit.cover,
       alignment: Alignment.topCenter,
       filterQuality: FilterQuality.high,
@@ -1206,9 +1204,8 @@ class _RoomCustomizeStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = catudyDemoStore;
-    final items = store.equippedRoomItems.toList();
     return Container(
-      height: 72,
+      height: 66,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: CatudyColors.surfaceFor(context).withValues(alpha: 0.78),
@@ -1217,77 +1214,23 @@ class _RoomCustomizeStrip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          InkWell(
-            onTap: onInventory,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 104,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: CatudyColors.violet,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.inventory_2_rounded,
-                    color: Colors.white,
-                    size: 19,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      store.t('inventory.title'),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          Expanded(
+            child: _RoomStripButton(
+              icon: Icons.inventory_2_rounded,
+              label: store.t('inventory.title'),
+              color: CatudyColors.violet,
+              onTap: onInventory,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
-            child: items.isEmpty
-                ? _RoomStripButton(
-                    icon: Icons.storefront_rounded,
-                    label: store.t('pet.shop'),
-                    color: CatudyColors.tealDark,
-                    onTap: onShop,
-                  )
-                : ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: items.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (context, index) {
-                      final item = items[index];
-                      return InkWell(
-                        onTap: onInventory,
-                        borderRadius: BorderRadius.circular(16),
-                        child: CatudyAssetSlot(
-                          size: 54,
-                          accentColor: item.accent,
-                          child: ShopItemArt(item: item, size: 44),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          if (items.isNotEmpty) ...[
-            const SizedBox(width: 8),
-            _RoomStripButton(
+            child: _RoomStripButton(
               icon: Icons.storefront_rounded,
               label: store.t('pet.shop'),
               color: CatudyColors.tealDark,
               onTap: onShop,
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -1348,11 +1291,7 @@ class _PerspectiveRug extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _RoomLayerAsset(
-      path: 'assets/room/corner_round_rug_v1.png',
-      width: double.infinity,
-      height: double.infinity,
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -1409,11 +1348,7 @@ class _RoomWindow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _RoomLayerAsset(
-      path: 'assets/room/corner_window_v1.png',
-      width: width,
-      height: height,
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -1678,11 +1613,7 @@ class _StudyDesk extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _RoomLayerAsset(
-      path: item?.assetPath ?? 'assets/room/corner_study_desk_v1.png',
-      width: width,
-      height: height,
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -1894,11 +1825,7 @@ class _PetBed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _RoomLayerAsset(
-      path: item?.assetPath ?? 'assets/room/corner_cat_bed_v1.png',
-      width: width,
-      height: height,
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -1960,11 +1887,7 @@ class _CozySofa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _RoomLayerAsset(
-      path: 'assets/room/corner_cat_bed_v1.png',
-      width: width,
-      height: height,
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -1981,11 +1904,7 @@ class _RoomLamp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _RoomLayerAsset(
-      path: item?.assetPath ?? 'assets/room/corner_right_shelf_lights_v1.png',
-      width: width,
-      height: height,
-    );
+    return const SizedBox.shrink();
   }
 }
 
@@ -2118,11 +2037,7 @@ class _TinyShelf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _RoomLayerAsset(
-      path: item?.assetPath ?? 'assets/room/corner_bookcase_v1.png',
-      width: width,
-      height: height,
-    );
+    return const SizedBox.shrink();
   }
 }
 

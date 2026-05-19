@@ -122,7 +122,7 @@ class _HomeHeader extends StatelessWidget {
           ),
         ),
         IconButton(
-          onPressed: () => context.go('/plus'),
+          onPressed: () => context.push('/plus?from=home'),
           tooltip: store.t('premium.title'),
           style: IconButton.styleFrom(
             backgroundColor: store.hasPremiumAccess
@@ -241,7 +241,7 @@ class _FocusHeroCard extends StatelessWidget {
                   icon: Icons.add_home_work_rounded,
                   label: store.t('home.createLobby'),
                   color: CatudyColors.violet,
-                  onTap: () => context.go('/lobby/create'),
+                  onTap: () => context.push('/lobby/create'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -250,7 +250,7 @@ class _FocusHeroCard extends StatelessWidget {
                   icon: Icons.login_rounded,
                   label: store.t('home.joinLobby'),
                   color: CatudyColors.tealDark,
-                  onTap: () => context.go('/lobby/join'),
+                  onTap: () => context.push('/lobby/join'),
                 ),
               ),
             ],
@@ -334,7 +334,7 @@ class _PetCompanionCard extends StatelessWidget {
                   infoTitle: store.t('home.happiness'),
                   infoMessage: store.languageCode == 'en'
                       ? 'Mochi gets happier with focus sessions and favorite items. High happiness makes the room feel more lively.'
-                      : 'Mochi ger?ek odak serileriyle daha mutlu olur. Mutluluk y?ksekken oda daha canl? hissettirir.',
+                      : 'Mochi gerçek odak serileriyle daha mutlu olur. Mutluluk yüksekken oda daha canlı hissettirir.',
                 ),
               ),
               const SizedBox(width: 10),
@@ -346,7 +346,7 @@ class _PetCompanionCard extends StatelessWidget {
                   infoTitle: store.t('home.hunger'),
                   infoMessage: store.languageCode == 'en'
                       ? 'Hunger rises over time. Regular focus and care keep your pet balanced.'
-                      : 'Odak yap?lmad???nda a?l?k artar. Bug?nk? ger?ek seanslar dengeyi toparlar.',
+                      : 'Odak yapılmadığında açlık artar. Bugünkü gerçek seanslar dengeyi toparlar.',
                 ),
               ),
             ],
@@ -374,7 +374,7 @@ class _SecondaryHomePanel extends StatelessWidget {
               icon: Icons.groups_rounded,
               label: store.t('community.title'),
               color: CatudyColors.violet,
-              onTap: () => context.go('/community?tab=friends'),
+              onTap: () => context.push('/community?tab=friends'),
             ),
           ),
           const SizedBox(width: 8),
@@ -383,7 +383,7 @@ class _SecondaryHomePanel extends StatelessWidget {
               icon: Icons.workspace_premium_rounded,
               label: store.t('season.title'),
               color: CatudyColors.teal,
-              onTap: () => context.go('/season'),
+              onTap: () => context.push('/season'),
             ),
           ),
           const SizedBox(width: 8),
@@ -392,7 +392,7 @@ class _SecondaryHomePanel extends StatelessWidget {
               icon: Icons.emoji_events_rounded,
               label: store.t('leaderboard.title'),
               color: CatudyColors.coral,
-              onTap: () => context.go('/community?tab=ranking'),
+              onTap: () => context.push('/community?tab=ranking'),
             ),
           ),
         ],

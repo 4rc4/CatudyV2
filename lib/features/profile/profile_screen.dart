@@ -54,50 +54,10 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
           children: [
-            CatudyStagePanel(
-              title: store.displayName,
-              art: _ProfileAvatar(store: store, size: 112),
-              footer: Row(
-                children: [
-                  Expanded(
-                    child: CatudyMetricTile(
-                      icon: Icons.schedule_rounded,
-                      label: store.t('profile.totalFocus'),
-                      value: _formatMinutes(store.totalFocusMinutes, store),
-                      color: CatudyColors.teal,
-                      dense: false,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: CatudyMetricTile(
-                      icon: Icons.local_fire_department_rounded,
-                      label: store.t('stats.streak'),
-                      value:
-                          '${store.streakDays}${store.t('common.daysShort')}',
-                      color: CatudyColors.coral,
-                      dense: false,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: CatudyMetricTile(
-                      icon: Icons.star_rounded,
-                      label: store.t('profile.levelTitle'),
-                      value: '$level',
-                      color: CatudyColors.yellow,
-                      dense: false,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                FilledButton.icon(
-                  onPressed: () => _editProfile(context, store),
-                  icon: const Icon(Icons.edit_rounded),
-                  label: Text(store.t('profile.edit')),
-                ),
-              ],
+            _ProfileHeroCard(
+              store: store,
+              level: level,
+              onEdit: () => _editProfile(context, store),
             ),
             const SizedBox(height: 14),
             _UserCodeCard(store: store),
@@ -211,45 +171,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   static String _profileShareLink(CatudyDemoStore store) {
-    final userId = Uri.encodeComponent(
-      store.authUserId ?? store.publicUserCode,
-    );
-    final configuredBase = _shareOriginFromText(store.profileShareBaseUrl);
-    if (configuredBase != null) {
-      return '$configuredBase/public-profile?user=$userId';
-    }
-    final base = Uri.base;
-    if ((base.scheme == 'http' || base.scheme == 'https') &&
-        base.host.isNotEmpty) {
-      final port = base.hasPort ? ':${base.port}' : '';
-      return '${base.scheme}://${base.host}$port/public-profile?user=$userId';
-    }
-    return 'https://catudy.app/public-profile?user=$userId';
-  }
-
-  static String? _shareOriginFromText(String value) {
-    final clean = value.trim();
-    if (clean.isEmpty) {
-      return null;
-    }
-    final uri = Uri.tryParse(clean.contains('://') ? clean : 'https://$clean');
-    if (uri == null ||
-        (uri.scheme != 'http' && uri.scheme != 'https') ||
-        uri.host.isEmpty) {
-      return null;
-    }
-    final path = uri.path == '/'
-        ? ''
-        : uri.path.endsWith('/') && uri.path.length > 1
-        ? uri.path.substring(0, uri.path.length - 1)
-        : uri.path;
-    return Uri(
-      scheme: uri.scheme,
-      userInfo: uri.userInfo,
-      host: uri.host,
-      port: uri.hasPort ? uri.port : null,
-      path: path,
-    ).toString();
+    final userId = Uri.encodeComponent(store.publicUserCode);
+    return 'https://catudy.com/public-profile?user=$userId';
   }
 
   static String _formatMinutes(int minutes, CatudyDemoStore store) {
@@ -307,6 +230,154 @@ class _UserCodeCard extends StatelessWidget {
   }
 }
 
+class _ProfileHeroCard extends StatelessWidget {
+  const _ProfileHeroCard({
+    required this.store,
+    required this.level,
+    required this.onEdit,
+  });
+
+  final CatudyDemoStore store;
+  final int level;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      padding: const EdgeInsets.all(16),
+      accentColor: CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  store.displayName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                    height: 1.05,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              _ProfileAvatar(store: store, size: 92),
+            ],
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_rounded, size: 18),
+            label: Text(store.t('profile.edit')),
+            style: FilledButton.styleFrom(
+              backgroundColor: CatudyColors.violet,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _ProfileStatTile(
+                  icon: Icons.schedule_rounded,
+                  label: store.t('profile.totalFocus'),
+                  value: ProfileScreen._formatMinutes(
+                    store.totalFocusMinutes,
+                    store,
+                  ),
+                  color: CatudyColors.teal,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ProfileStatTile(
+                  icon: Icons.local_fire_department_rounded,
+                  label: store.t('stats.streak'),
+                  value: '${store.streakDays}${store.t('common.daysShort')}',
+                  color: CatudyColors.coral,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ProfileStatTile(
+                  icon: Icons.star_rounded,
+                  label: store.t('profile.levelTitle'),
+                  value: '$level',
+                  color: CatudyColors.yellow,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileStatTile extends StatelessWidget {
+  const _ProfileStatTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 94,
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          const Spacer(),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: CatudyColors.blueFor(context),
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w900,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AchievementShelf extends StatelessWidget {
   const _AchievementShelf({required this.achievements, required this.store});
 
@@ -324,7 +395,7 @@ class _AchievementShelf extends StatelessWidget {
             icon: Icons.emoji_events_rounded,
             title: store.t('achievements.title'),
             action: store.t('profile.viewAll'),
-            onTap: () => context.go('/season'),
+            onTap: () => context.push('/season?from=profile'),
           ),
           const SizedBox(height: 12),
           if (achievements.isEmpty)
@@ -402,7 +473,7 @@ class _CollectionShelf extends StatelessWidget {
             icon: Icons.collections_bookmark_rounded,
             title: store.t('profile.collection'),
             action: store.t('profile.viewAll'),
-            onTap: () => context.go('/inventory'),
+            onTap: () => context.push('/inventory'),
           ),
           const SizedBox(height: 12),
           if (total == 0)
@@ -490,7 +561,7 @@ class _FriendsCard extends StatelessWidget {
       secondaryColor: CatudyColors.teal,
       actions: [
         FilledButton.icon(
-          onPressed: () => context.go('/community?tab=friends'),
+          onPressed: () => context.push('/community?tab=friends&from=profile'),
           icon: const Icon(Icons.chevron_right_rounded),
           label: Text(store.t('community.title')),
         ),

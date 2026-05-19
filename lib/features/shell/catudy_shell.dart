@@ -73,8 +73,7 @@ class _CatudyShellState extends State<CatudyShell> {
 
   @override
   Widget build(BuildContext context) {
-    final currentPath = _pathOnly(widget.location);
-    final selectedIndex = _selectedIndex(currentPath);
+    final selectedIndex = _selectedIndex(widget.location);
     _rememberLocation(selectedIndex, widget.location);
     final dark = CatudyColors.isDark(context);
 
@@ -88,7 +87,7 @@ class _CatudyShellState extends State<CatudyShell> {
           context.pop();
           return;
         }
-        final target = _backTarget(currentPath);
+        final target = _backTarget(widget.location);
         if (target == null) {
           unawaited(_confirmAndExit(context));
           return;
@@ -243,6 +242,12 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path == '/auth' || path.startsWith('/focus/')) {
       return;
     }
+    // Full-screen auxiliary routes are often opened from more than one tab.
+    // They should be remembered only while they are really the active tab
+    // context; after the user backs out, the root route below overwrites them.
+    if (path == '/plus' && index == 0) {
+      return;
+    }
     _lastPathByIndex[index] = location;
   }
 
@@ -278,12 +283,35 @@ class _CatudyShellState extends State<CatudyShell> {
     SystemNavigator.pop();
   }
 
-  String? _backTarget(String path) {
+  String? _backTarget(String location) {
+    final uri = Uri.tryParse(location);
+    final path = uri?.path.isNotEmpty == true ? uri!.path : location;
+    final from = uri?.queryParameters['from'];
+    if (from == 'profile' &&
+        (path.startsWith('/community') ||
+            path.startsWith('/plus') ||
+            path.startsWith('/season') ||
+            path.startsWith('/crates'))) {
+      return '/profile';
+    }
+    if (from == 'home' &&
+        (path.startsWith('/community') ||
+            path.startsWith('/plus') ||
+            path.startsWith('/season') ||
+            path.startsWith('/crates'))) {
+      return '/';
+    }
+    if (from == 'stats' && path.startsWith('/plus')) {
+      return '/stats';
+    }
     if (path == '/') {
       return null;
     }
     if (path.startsWith('/shop') || path.startsWith('/inventory')) {
       return '/pet-room';
+    }
+    if (path.startsWith('/season/rewards')) {
+      return '/season';
     }
     if (path.startsWith('/season') || path.startsWith('/crates')) {
       return '/plus';
@@ -318,7 +346,25 @@ class _CatudyShellState extends State<CatudyShell> {
     return '/';
   }
 
-  int _selectedIndex(String path) {
+  int _selectedIndex(String location) {
+    final uri = Uri.tryParse(location);
+    final path = uri?.path.isNotEmpty == true ? uri!.path : location;
+    final from = uri?.queryParameters['from'];
+    final fromIndex = switch (from) {
+      'home' => 0,
+      'stats' => 1,
+      'calendar' => 2,
+      'pet' => 3,
+      'profile' => 4,
+      _ => null,
+    };
+    if (fromIndex != null &&
+        (path.startsWith('/community') ||
+            path.startsWith('/plus') ||
+            path.startsWith('/season') ||
+            path.startsWith('/crates'))) {
+      return fromIndex;
+    }
     if (path.startsWith('/stats')) {
       return 1;
     }
@@ -334,6 +380,9 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path.startsWith('/profile') ||
         path.startsWith('/settings') ||
         path.startsWith('/public-profile')) {
+      return 4;
+    }
+    if (path.startsWith('/plus')) {
       return 4;
     }
     return 0;

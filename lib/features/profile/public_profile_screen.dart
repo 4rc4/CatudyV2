@@ -24,8 +24,11 @@ class PublicProfileScreen extends StatelessWidget {
         final visited = userId == null
             ? store.visitedProfile
             : requestedProfile;
-        final currentUserId = store.authUserId ?? 'local';
-        final isCurrentUser = userId == null || userId == currentUserId;
+        final currentUserId = store.authUserId ?? store.publicUserCode;
+        final isCurrentUser =
+            userId == null ||
+            userId == currentUserId ||
+            userId == store.publicUserCode;
         final name =
             visited?.name ?? (isCurrentUser ? store.displayName : userId!);
         final totalMinutes =

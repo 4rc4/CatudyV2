@@ -56,7 +56,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           title: store.t('calendar.title'),
           actions: [
             IconButton.filledTonal(
-              onPressed: () => context.go('/manual-entry'),
+              onPressed: () => context.push('/manual-entry'),
               icon: const Icon(Icons.add_chart_rounded),
             ),
           ],

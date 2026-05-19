@@ -344,39 +344,57 @@ class CatudyRewardRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final maxCount = math.max(freeItems.length, premiumItems.length);
-    return Column(
-      children: [
-        for (var index = 0; index < maxCount; index++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: index < freeItems.length
-                      ? _RewardRailCard(item: freeItems[index])
-                      : const SizedBox.shrink(),
-                ),
-                const SizedBox(width: 8),
-                _RailNode(
-                  index: index + 1,
-                  active:
-                      (index < freeItems.length &&
-                          freeItems[index].threshold <= currentValue) ||
-                      (index < premiumItems.length &&
-                          premiumItems[index].threshold <= currentValue),
-                  color: accentColor,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: index < premiumItems.length
-                      ? _RewardRailCard(item: premiumItems[index])
-                      : const SizedBox.shrink(),
-                ),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) => Stack(
+        children: [
+          Positioned(
+            left: (constraints.maxWidth - 2) / 2,
+            top: 22,
+            bottom: 26,
+            child: Container(
+              width: 2,
+              decoration: BoxDecoration(
+                color: CatudyColors.lineFor(context),
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
           ),
-      ],
+          Column(
+            children: [
+              for (var index = 0; index < maxCount; index++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: index < freeItems.length
+                            ? _RewardRailCard(item: freeItems[index])
+                            : const SizedBox.shrink(),
+                      ),
+                      const SizedBox(width: 7),
+                      _RailNode(
+                        index: index + 1,
+                        active:
+                            (index < freeItems.length &&
+                                freeItems[index].threshold <= currentValue) ||
+                            (index < premiumItems.length &&
+                                premiumItems[index].threshold <= currentValue),
+                        color: accentColor,
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: index < premiumItems.length
+                            ? _RewardRailCard(item: premiumItems[index])
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -439,7 +457,8 @@ class _RewardRailCard extends StatelessWidget {
       duration: const Duration(milliseconds: 180),
       opacity: dimmed ? 0.72 : 1,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        constraints: const BoxConstraints(minHeight: 72),
+        padding: const EdgeInsets.all(9),
         decoration: BoxDecoration(
           color: CatudyColors.surfaceFor(context),
           borderRadius: BorderRadius.circular(20),
@@ -452,8 +471,16 @@ class _RewardRailCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(item.icon, color: item.color, size: 24),
-                const SizedBox(width: 8),
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: item.color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(item.icon, color: item.color, size: 22),
+                ),
+                const SizedBox(width: 7),
                 Expanded(
                   child: Text(
                     item.title,
@@ -462,6 +489,8 @@ class _RewardRailCard extends StatelessWidget {
                     style: TextStyle(
                       color: CatudyColors.blueFor(context),
                       fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                      height: 1.12,
                     ),
                   ),
                 ),
@@ -482,14 +511,14 @@ class _RewardRailCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 5),
             Text(
               item.subtitle,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: CatudyColors.mutedFor(context),
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
               ),
             ),

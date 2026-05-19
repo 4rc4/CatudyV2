@@ -745,13 +745,13 @@ void main() {
     await store.load();
     store.seasonProgress = store.seasonProgress.copyWith(focusMinutes: 720);
 
-    expect(store.claimSeasonReward('free_cat_crate_180'), isTrue);
+    expect(store.claimSeasonReward('free_cat_crate_120'), isTrue);
     expect(store.crateInventory['cat_crate'], 1);
-    expect(store.claimSeasonReward('plus_style_crate_90'), isFalse);
+    expect(store.claimSeasonReward('plus_style_crate_60'), isFalse);
 
     store.activatePremiumDemo();
 
-    expect(store.claimSeasonReward('plus_style_crate_90'), isTrue);
+    expect(store.claimSeasonReward('plus_style_crate_60'), isTrue);
     expect(store.crateInventory['style_crate'], 1);
   });
 

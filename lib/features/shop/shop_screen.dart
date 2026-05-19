@@ -241,7 +241,7 @@ class _ShopScreenState extends State<ShopScreen> {
         ),
       const SizedBox(height: 12),
       OutlinedButton.icon(
-        onPressed: () => context.go('/inventory'),
+        onPressed: () => context.push('/inventory'),
         icon: const Icon(Icons.inventory_2_rounded),
         label: Text(store.t('shop.openInventory')),
       ),
@@ -457,7 +457,7 @@ class _PremiumCosmeticCard extends StatelessWidget {
       ],
       action: FilledButton(
         onPressed: owned
-            ? () => context.go('/inventory')
+            ? () => context.push('/inventory')
             : locked
             ? null
             : () => store.buyCosmetic(item.id),
@@ -497,7 +497,7 @@ class _CrateCard extends StatelessWidget {
         if (owned > 0) _MetaChip(label: 'x$owned'),
       ],
       action: FilledButton(
-        onPressed: () => context.go('/crates'),
+        onPressed: () => context.push('/crates'),
         child: Text(store.t('shop.openCrates')),
       ),
     );
@@ -575,7 +575,7 @@ class _CratesPromoPanel extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () => context.go('/crates'),
+            onPressed: () => context.push('/crates'),
             child: Text(store.t('shop.openCrates')),
           ),
         ],

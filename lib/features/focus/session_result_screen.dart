@@ -277,7 +277,7 @@ class _NextRewardPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => context.go('/inventory'),
+                  onPressed: () => context.push('/inventory'),
                   icon: const Icon(Icons.inventory_2_rounded),
                   label: Text(store.t('pet.inventory')),
                 ),
@@ -285,7 +285,7 @@ class _NextRewardPanel extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => context.go('/shop'),
+                  onPressed: () => context.push('/shop'),
                   icon: const Icon(Icons.storefront_rounded),
                   label: Text(store.t('pet.shop')),
                 ),

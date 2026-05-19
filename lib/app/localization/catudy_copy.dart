@@ -41,21 +41,42 @@ class CatudyCopy {
     'lobby.genericError': 'Lobi işlemi tamamlanamadı. Biraz sonra tekrar dene.',
     'app.exitTitle': 'Uygulamadan çıkılsın mı?',
     'app.exitBody': 'Catudy kapatılacak. Emin misin?',
-    'terms.title': 'Kullan?c? s?zle?mesi',
+    'terms.title': 'Kullanıcı sözleşmesi',
     'terms.intro':
-        'Catudy oda??n?, hat?rlatmalar?n?, pet ilerlemeni ve sosyal ?zelliklerini ?al??t?rmak i?in bu k?sa kurallar? ister.',
+        'Catudy’yi kullanarak aşağıdaki gizlilik ve kullanım şartlarını kabul etmiş olursun.',
+    'terms.fullText': '''Gizlilik Özeti
+Catudy; hesabını oluşturmak, odak seanslarını takip etmek, görevlerini/hatırlatmalarını göstermek, takvim kayıtlarını saklamak, pet ilerlemesini yürütmek, profilini paylaşmak ve lobi/sosyal özellikleri çalıştırmak için gerekli bilgileri işler.
+
+Toplanabilecek veriler: görünen ad, e-posta veya giriş sağlayıcı bilgisi, profil tercihin, odak kayıtların, manuel takvim kayıtların, görevlerin, hatırlatmaların, pet/oda ilerlemen, mağaza-envanter seçimlerin, arkadaşlık/lobi verilerin, uygulama ayarların ve teknik hata kayıtları.
+
+Konumunu, rehberini, fotoğraflarını veya diğer uygulamalarını izlemek için kullanmayız. Verilerini satmayız, reklam profili oluşturmak için kullanmayız ve kişisel üretkenlik verilerini iznin olmadan üçüncü kişilerle paylaşmayız.
+
+Veriler cihazında saklanabilir ve hesabına giriş yaptığında senkronizasyon için güvenli bulut servislerine aktarılabilir. Aktarım sırasında şifreleme kullanılır. Hesabını veya yerel verilerini ayarlardan silebilirsin; sunucu tarafındaki kalıcı silme işlemleri için destek kanalları veya uygulama içi hesap silme akışı kullanılabilir.
+
+Kullanım Şartları
+Catudy; odaklanma, görev yönetimi, hatırlatma, istatistik, pet odası, kozmetik ödüller, profil paylaşımı, arkadaşlık ve lobi özellikleri sunan bir üretkenlik uygulamasıdır. Uygulama “olduğu gibi” sunulur; kesintisiz çalışacağı veya her ihtiyacını karşılayacağı garanti edilmez.
+
+Catudy’yi kullanmak için en az 13 yaşında olmalısın. Hesap bilgilerini doğru tutmak, hesabını güvende tutmak ve kendi eklediğin içerikten sorumlu olmak sana aittir.
+
+Yasaya aykırı kullanım, spam, taciz, başkası gibi davranma, hile, güvenlik önlemlerini aşma, tersine mühendislik, servisi bozma veya başkalarının haklarını ihlal eden içerik paylaşma yasaktır.
+
+Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye aittir. Senin eklediğin görev, not, profil ve takvim içerikleri sana aittir; Catudy bu içerikleri yalnızca hizmeti sunmak ve senkronize etmek için işler.
+
+Ücretsiz özellikler sunulabilir; Plus, sezon ödülleri, kozmetik kutular veya abonelikler gibi ücretli özellikler açık fiyat ve mağaza kurallarıyla çalışır. Abonelik iptali ve iade süreçleri ilgili uygulama mağazası kurallarına tabidir.
+
+Şartlar veya gizlilik metni değişirse uygulama içinde veya uygun başka bir kanalla bilgilendirme yapılabilir. Önemli değişikliklerde tekrar onay istenebilir. Sorular için destek kanalından bizimle iletişime geçebilirsin.''',
     'terms.bulletAge':
-        'Catudy 13 ya? ve ?zeri kullan?c?lar i?indir; daha k???ksen ebeveyn izni gerekir.',
+        'Catudy 13 yaş ve üzeri kullanıcılar içindir; daha küçüksen ebeveyn izni gerekir.',
     'terms.bulletData':
-        'Odak kay?tlar?n, hedeflerin, profil ad?n ve sosyal/lobi verilerin uygulamay? ?al??t?rmak i?in saklan?r.',
+        'Odak kayıtların, hedeflerin, profil adın ve sosyal/lobi verilerin uygulamayı çalıştırmak için saklanır.',
     'terms.bulletContent':
-        'Ekledi?in not ve profil i?eriklerinden sen sorumlusun; ba?kalar?n?n hakk?n? ihlal eden i?erik ekleme.',
+        'Eklediğin not ve profil içeriklerinden sen sorumlusun; başkalarının hakkını ihlal eden içerik ekleme.',
     'terms.bulletFairUse':
-        'Hile, spam, taciz, tersine m?hendislik veya yasa d??? kullan?m yasakt?r.',
+        'Hile, spam, taciz, tersine mühendislik veya yasa dışı kullanım yasaktır.',
     'terms.bulletDeletion':
-        'Ayarlar b?l?m?nden ??k?? yapabilir ve yerel hesap verilerini silebilirsin.',
+        'Ayarlar bölümünden çıkış yapabilir ve yerel hesap verilerini silebilirsin.',
     'terms.acceptCheck':
-        'Kullan?c? s?zle?mesini ve gizlilik ?zetini kabul ediyorum.',
+        'Kullanıcı sözleşmesini ve gizlilik özetini kabul ediyorum.',
     'terms.accept': 'Kabul et',
 
     'auth.title': 'Giriş',
@@ -188,7 +209,7 @@ class CatudyCopy {
         'Henüz aktif lobi yok. Bir lobi kurabilir veya arkadaşından gelen kodla katılabilirsin.',
 
     'season.focusPassTitle': 'Focus Pass',
-    'season.heroTitle': 'Rainy Study Season',
+    'season.heroTitle': 'Monthly Focus Pass',
     'season.xpProgress': 'Season XP: {xp} / {target}',
     'season.daysLeft': 'Gün kaldı',
     'season.status': 'Durum',
@@ -205,9 +226,29 @@ class CatudyCopy {
     'season.questFocusTitle': 'Günlük odak hedefini ilerlet',
     'season.questReminderTitle': 'Bugünkü görevleri tamamla',
     'season.focusXp': 'Season XP',
-    'season.daysShort': 'g?n',
-    'season.rewardsTitle': 'Focus Pass ?d?lleri',
-    'season.tapRewards': '?d?lleri tam ekran g?r',
+    'season.daysShort': 'gün',
+    'season.rewardsTitle': 'Focus Pass Ödülleri',
+    'season.tapRewards': 'Ödülleri tam ekran gör',
+    'season.reward.free_gold_60': '100 Coin',
+    'season.reward.free_cat_crate_120': 'Kedi Kutusu',
+    'season.reward.free_gold_180': '150 Coin',
+    'season.reward.free_room_crate_300': 'Oda Kutusu',
+    'season.reward.free_profile_badge_420': 'Profil Rozeti',
+    'season.reward.free_style_crate_600': 'Stil Kutusu',
+    'season.reward.free_gold_780': '250 Coin',
+    'season.reward.free_room_crate_960': 'Oda Kutusu',
+    'season.reward.free_cat_crate_1200': 'Kedi Kutusu',
+    'season.reward.free_final_gold_1500': '400 Coin',
+    'season.reward.plus_style_crate_60': 'Stil Kutusu',
+    'season.reward.plus_season_cat_120': 'Sezon Kedi Kutusu',
+    'season.reward.plus_gold_180': '250 Coin',
+    'season.reward.plus_rainy_window_300': 'Yağmurlu Pencere',
+    'season.reward.plus_season_room_420': 'Sezon Oda Kutusu',
+    'season.reward.plus_dialogues_600': 'Masal Diyalogları',
+    'season.reward.plus_profile_theme_780': 'Galaksi Profil Teması',
+    'season.reward.plus_season_style_960': 'Sezon Stil Kutusu',
+    'season.reward.plus_pet_widget_1200': 'Pet Widget Teması',
+    'season.reward.plus_focus_crown_1500': 'Focus Crown Rozeti',
 
     'calendar.todayBadge': 'Bugün',
     'calendar.focusCompleted': '{minutes} dk odak tamamlandı',
@@ -219,18 +260,18 @@ class CatudyCopy {
     'stats.sessionsDelta': '+8 geçen aya göre',
     'stats.averageDelta': '+6 dk geçen aya göre',
     'stats.bestDay': 'En iyi gün',
-    'stats.focusTimeThisPeriod': 'Odak s?resi',
+    'stats.focusTimeThisPeriod': 'Odak süresi',
     'stats.emptyMochiInsight':
         'Mochi veri topluyor; birkaç seans sonra ritmin daha görünür olacak.',
     'stats.mochiBestInsight': '{day} günleri odak süren yüksek görünüyor.',
-    'stats.sessionsInfo': 'Bu aral?kta tamamlanan ger?ek odak seans?: {count}.',
-    'stats.averageSessionInfo': 'Seans ba??na ortalama s?re: {minutes} dk.',
-    'stats.bestDayInfo': '{day} g?n? {minutes} dk ile en g??l? g?n.',
-    'stats.bestDayInfoEmpty': 'Bu aral?kta hen?z en iyi g?n olu?mad?.',
-    'stats.focusedTimeInfo': 'Bu aral?kta toplam {minutes} dk odak kayd? var.',
+    'stats.sessionsInfo': 'Bu aralıkta tamamlanan gerçek odak seansı: {count}.',
+    'stats.averageSessionInfo': 'Seans başına ortalama süre: {minutes} dk.',
+    'stats.bestDayInfo': '{day} günü {minutes} dk ile en güçlü gün.',
+    'stats.bestDayInfoEmpty': 'Bu aralıkta henüz en iyi gün oluşmadı.',
+    'stats.focusedTimeInfo': 'Bu aralıkta toplam {minutes} dk odak kaydı var.',
     'stats.categoryDistributionInfo':
-        'Odak dakikalar?n?n kategorilere da??l?m?.',
-    'stats.dayFocusInfo': 'Bu g?n {minutes} dk odakland?.',
+        'Odak dakikalarının kategorilere dağılımı.',
+    'stats.dayFocusInfo': 'Bu gün {minutes} dk odaklandı.',
 
     'profile.profileHeroBody': '{pet} senin en yakın odak dostun.',
     'profile.level': 'Lv. {level}',
@@ -247,7 +288,7 @@ class CatudyCopy {
     'pet.play': 'Oyna',
     'pet.sleep': 'Uyu',
     'pet.love': 'Sev',
-    'pet.rename': '?smi de?i?tir',
+    'pet.rename': 'İsmi değiştir',
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
@@ -262,7 +303,7 @@ class CatudyCopy {
     'leaderboard.viewAll': 'Sonrasını görüntüle',
 
     'calendar.title': 'Takvim',
-    'calendar.manualAdd': 'Kay?t Ekle',
+    'calendar.manualAdd': 'Kayıt Ekle',
     'calendar.reminderAdd': 'Hatırlatma',
     'calendar.reminders': 'Hatırlatmalar',
     'calendar.noReminders': 'Bugün için hatırlatma yok.',
@@ -276,9 +317,9 @@ class CatudyCopy {
     'calendar.reminderHint': 'Örn. Matematik tekrarını bitir',
     'calendar.enterText': 'Metin gir.',
     'calendar.time': 'Saat: {time}',
-    'calendar.batchSelected': '{count} g?n se?ildi',
+    'calendar.batchSelected': '{count} gün seçildi',
     'calendar.batchHint':
-        '{count} g?n se?ildi. Kay?t veya hat?rlatma se?ili g?nlere uygulan?r.',
+        '{count} gün seçildi. Kayıt veya hatırlatma seçili günlere uygulanır.',
     'calendar.enterMinutes': 'Dakika gir.',
     'calendar.recordNote': 'Not',
 
@@ -412,8 +453,8 @@ class CatudyCopy {
     'shop.category.profile': 'Profil',
     'shop.category.extras': 'Ekstralar',
     'shop.category.crates': 'Kutular',
-    'shop.section.roomBackgrounds': 'Oda temalar?',
-    'shop.noRoomBackgrounds': '?imdilik sat?lacak oda temas? yok.',
+    'shop.section.roomBackgrounds': 'Oda temaları',
+    'shop.noRoomBackgrounds': 'Şimdilik satılacak oda teması yok.',
     'shop.section.petItems': 'Pet aksesuarları',
     'shop.section.petStyles': 'Pet stilleri',
     'shop.section.profileItems': 'Profil aksesuarları',
@@ -530,6 +571,42 @@ class CatudyCopy {
     'premium.title': 'Catudy Plus',
     'premium.active': 'Catudy Plus aktif',
     'premium.pitch': 'Daha akıllı öneriler, daha zengin koleksiyon',
+    'premium.heroTitle': 'Plus avantajları',
+    'premium.heroHeadline': 'Daha fazla konfor.',
+    'premium.heroAccent': 'Daha fazla purr-gress.',
+    'premium.heroBody':
+        'Daha sakin, daha zengin ve daha motive bir odak deneyimi.',
+    'premium.whatYouGet': 'Neler var',
+    'premium.benefitRoomsTitle': 'Özel oda temaları',
+    'premium.benefitRoomsBody': 'Alanını Plus temalarla değiştir.',
+    'premium.benefitPetTitle': 'Pet kostümleri',
+    'premium.benefitPetBody': 'Mochi için özel görünümler.',
+    'premium.benefitSeasonTitle': 'Sezon ödülleri',
+    'premium.benefitSeasonBody': 'Bonus XP, coin ve kutular.',
+    'premium.benefitStatsTitle': 'Gelişmiş içgörüler',
+    'premium.benefitStatsBody': 'Daha derin odak analizi.',
+    'premium.benefitSoundTitle': 'Ambient ses paketleri',
+    'premium.benefitSoundBody': 'Daha sakin çalışma sesi.',
+    'premium.benefitEarlyTitle': 'Erken erişim',
+    'premium.benefitEarlyBody': 'Yeni özellikleri önce dene.',
+    'premium.freeColumn': 'Free',
+    'premium.plusColumn': 'Plus',
+    'premium.compareRooms': 'Oda temaları',
+    'premium.comparePet': 'Pet kozmetikleri',
+    'premium.compareSeason': 'Sezon ödülleri',
+    'premium.compareStats': 'Detaylı istatistik',
+    'premium.compareBadges': 'Özel rozetler',
+    'premium.compareAll': 'Tüm temalar',
+    'premium.compareBasic': 'Temel',
+    'premium.compareExclusive': 'Özel',
+    'premium.compareAdvanced': 'Gelişmiş',
+    'premium.monthly': 'Aylık',
+    'premium.yearly': 'Yıllık',
+    'premium.monthlyPrice': '\$4.99 / ay',
+    'premium.yearlyPrice': '\$39.99 / yıl',
+    'premium.bestValue': 'En iyi değer',
+    'premium.trialCta': '7 günlük ücretsiz denemeyi başlat',
+    'premium.cancelAnytime': 'İstediğin zaman iptal et. Taahhüt yok.',
     'premium.body':
         'Koç, gelişmiş istatistikler, sezon pass, premium kozmetikler, widget temaları ve Buddy Pass tek pakette.',
     'premium.featureCoach': 'Algoritmik koç',
@@ -644,10 +721,10 @@ class CatudyCopy {
     'settings.authSignedOut': 'Henüz giriş yapılmadı.',
     'settings.signOut': 'Çıkış yap',
     'settings.openLogin': 'Giriş ekranını aç',
-    'settings.deleteAccount': 'Hesab? sil',
+    'settings.deleteAccount': 'Hesabı sil',
     'settings.deleteAccountBody':
-        'Bu cihazdaki Catudy verileri silinir ve oturum kapat?l?r. Online hesab?n sunucu taraf?nda kal?c? silinmesi i?in backend deste?i gerekir.',
-    'settings.deleteAccountConfirm': 'Hesab? sil',
+        'Bu cihazdaki Catudy verileri silinir ve oturum kapatılır. Online hesabın sunucu tarafında kalıcı silinmesi için backend desteği gerekir.',
+    'settings.deleteAccountConfirm': 'Hesabı sil',
     'settings.demoWallet': 'Demo Bakiyesi',
     'settings.demoWalletBody':
         'Mağaza denemeleri için altını 5000, puanı 2500 seviyesine tamamlar. Satın alınan eşyaları sıfırlamaz.',
@@ -760,7 +837,28 @@ class CatudyCopy {
     'app.exitBody': 'Catudy will close. Are you sure?',
     'terms.title': 'User agreement',
     'terms.intro':
-        'Catudy needs these short rules to run focus tracking, reminders, pet progress, and social features.',
+        'By using Catudy, you accept this privacy and user agreement.',
+    'terms.fullText': '''Privacy Summary
+Catudy processes the information needed to create your account, track focus sessions, show tasks and reminders, store calendar records, run pet progress, share your profile, and support social/lobby features.
+
+Data we may store includes display name, email or sign-in provider data, profile preferences, focus records, manual calendar records, tasks, reminders, pet and room progress, shop and inventory choices, friend/lobby data, app settings, and technical error logs.
+
+We do not use your location, contacts, photos, or other apps for tracking. We do not sell your data, build advertising profiles, or share personal productivity data with other people without your permission.
+
+Data may be stored on your device and, when you sign in, synced through secure cloud services. Transmission uses encryption. You can delete local data or your account from Settings; server-side permanent deletion may use the in-app account deletion flow or support channel.
+
+Terms of Use
+Catudy is a productivity app with focus tracking, task management, reminders, statistics, pet room, cosmetic rewards, profile sharing, friends, and lobby features. The app is provided as is; uninterrupted service or fitness for every specific need is not guaranteed.
+
+You must be at least 13 years old to use Catudy. You are responsible for accurate account information, keeping your account secure, and the content you add.
+
+Illegal use, spam, harassment, impersonation, cheating, bypassing security, reverse engineering, disrupting the service, or adding content that violates others rights is not allowed.
+
+The Catudy app, design, brand, software, and visual system belong to Catudy. Tasks, notes, profile details, and calendar content you add remain yours; Catudy processes them only to provide and sync the service.
+
+Free features may be offered. Paid features such as Plus, season rewards, cosmetic crates, or subscriptions use clear pricing and app-store rules. Subscription cancellation and refunds follow the relevant store policies.
+
+If these terms or privacy rules change, we may notify you in the app or by another appropriate channel. Material changes may require acceptance again. For questions, contact support through the app.''',
     'terms.bulletAge':
         'Catudy is for users 13 and older; younger users need parent permission.',
     'terms.bulletData':
@@ -908,7 +1006,7 @@ class CatudyCopy {
         'No active lobby yet. Create one or join with a code from a friend.',
 
     'season.focusPassTitle': 'Focus Pass',
-    'season.heroTitle': 'Rainy Study Season',
+    'season.heroTitle': 'Monthly Focus Pass',
     'season.xpProgress': 'Season XP: {xp} / {target}',
     'season.daysLeft': 'Days left',
     'season.status': 'Status',
@@ -922,12 +1020,32 @@ class CatudyCopy {
     'season.dailyQuests': 'Daily Quests',
     'season.dailyQuestsBody':
         'Your current target and reminders feed the season rhythm.',
-    'season.questFocusTitle': 'Progress today?s focus target',
-    'season.questReminderTitle': 'Complete today?s tasks',
+    'season.questFocusTitle': "Progress today's focus target",
+    'season.questReminderTitle': "Complete today's tasks",
     'season.focusXp': 'Season XP',
     'season.daysShort': 'days',
     'season.rewardsTitle': 'Focus Pass Rewards',
     'season.tapRewards': 'Open rewards full screen',
+    'season.reward.free_gold_60': '100 Coin',
+    'season.reward.free_cat_crate_120': 'Cat Crate',
+    'season.reward.free_gold_180': '150 Coin',
+    'season.reward.free_room_crate_300': 'Room Crate',
+    'season.reward.free_profile_badge_420': 'Profile Badge',
+    'season.reward.free_style_crate_600': 'Style Crate',
+    'season.reward.free_gold_780': '250 Coin',
+    'season.reward.free_room_crate_960': 'Room Crate',
+    'season.reward.free_cat_crate_1200': 'Cat Crate',
+    'season.reward.free_final_gold_1500': '400 Coin',
+    'season.reward.plus_style_crate_60': 'Style Crate',
+    'season.reward.plus_season_cat_120': 'Season Cat Crate',
+    'season.reward.plus_gold_180': '250 Coin',
+    'season.reward.plus_rainy_window_300': 'Rainy Window',
+    'season.reward.plus_season_room_420': 'Season Room Crate',
+    'season.reward.plus_dialogues_600': 'Storybook Dialogues',
+    'season.reward.plus_profile_theme_780': 'Galaxy Profile Theme',
+    'season.reward.plus_season_style_960': 'Season Style Crate',
+    'season.reward.plus_pet_widget_1200': 'Pet Widget Theme',
+    'season.reward.plus_focus_crown_1500': 'Focus Crown Badge',
 
     'calendar.todayBadge': 'Today',
     'calendar.focusCompleted': '{minutes} min focus completed',
@@ -1251,6 +1369,41 @@ class CatudyCopy {
     'premium.title': 'Catudy Plus',
     'premium.active': 'Catudy Plus active',
     'premium.pitch': 'Smarter guidance, richer collection',
+    'premium.heroTitle': 'Plus benefits',
+    'premium.heroHeadline': 'More perks.',
+    'premium.heroAccent': 'More purr-gress.',
+    'premium.heroBody': 'A calmer, richer, more motivating focus experience.',
+    'premium.whatYouGet': 'What you get',
+    'premium.benefitRoomsTitle': 'Exclusive room themes',
+    'premium.benefitRoomsBody': 'Decorate with Plus themes.',
+    'premium.benefitPetTitle': 'Premium pet outfits',
+    'premium.benefitPetBody': 'Special looks for Mochi.',
+    'premium.benefitSeasonTitle': 'Season rewards',
+    'premium.benefitSeasonBody': 'Bonus XP, coins, and crates.',
+    'premium.benefitStatsTitle': 'Advanced insights',
+    'premium.benefitStatsBody': 'Deeper focus analysis.',
+    'premium.benefitSoundTitle': 'Ambient sound packs',
+    'premium.benefitSoundBody': 'Calmer study audio.',
+    'premium.benefitEarlyTitle': 'Early access',
+    'premium.benefitEarlyBody': 'Try new features first.',
+    'premium.freeColumn': 'Free',
+    'premium.plusColumn': 'Plus',
+    'premium.compareRooms': 'Room themes',
+    'premium.comparePet': 'Pet cosmetics',
+    'premium.compareSeason': 'Season rewards',
+    'premium.compareStats': 'Detailed stats',
+    'premium.compareBadges': 'Special badges',
+    'premium.compareAll': 'All themes',
+    'premium.compareBasic': 'Basic',
+    'premium.compareExclusive': 'Exclusive',
+    'premium.compareAdvanced': 'Advanced',
+    'premium.monthly': 'Monthly',
+    'premium.yearly': 'Yearly',
+    'premium.monthlyPrice': '\$4.99 / month',
+    'premium.yearlyPrice': '\$39.99 / year',
+    'premium.bestValue': 'Best value',
+    'premium.trialCta': 'Start 7-day free trial',
+    'premium.cancelAnytime': 'Cancel anytime. No commitment.',
     'premium.body':
         'Coach, advanced stats, season pass, premium cosmetics, widget themes, and Buddy Pass in one layer.',
     'premium.featureCoach': 'Algorithmic coach',

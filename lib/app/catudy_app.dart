@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'demo/catudy_demo_store.dart';
 import 'router.dart';
+import 'theme/catudy_colors.dart';
 import 'theme/catudy_theme.dart';
 import '../features/onboarding/pet_intro_tour.dart';
 
@@ -155,30 +156,39 @@ class _TermsAgreementDialogState extends State<_TermsAgreementDialog> {
     final store = catudyDemoStore;
     return AlertDialog(
       title: Text(store.t('terms.title')),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(store.t('terms.intro')),
-            const SizedBox(height: 12),
-            _TermsBullet(text: store.t('terms.bulletAge')),
-            _TermsBullet(text: store.t('terms.bulletData')),
-            _TermsBullet(text: store.t('terms.bulletContent')),
-            _TermsBullet(text: store.t('terms.bulletFairUse')),
-            _TermsBullet(text: store.t('terms.bulletDeletion')),
-            const SizedBox(height: 10),
-            CheckboxListTile(
-              value: _checked,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              onChanged: (value) => setState(() => _checked = value ?? false),
-              title: Text(
-                store.t('terms.acceptCheck'),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                store.t('terms.intro'),
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                store.t('terms.fullText'),
+                style: TextStyle(
+                  color: CatudyColors.mutedFor(context),
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                value: _checked,
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                onChanged: (value) => setState(() => _checked = value ?? false),
+                title: Text(
+                  store.t('terms.acceptCheck'),
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -187,26 +197,6 @@ class _TermsAgreementDialogState extends State<_TermsAgreementDialog> {
           child: Text(store.t('terms.accept')),
         ),
       ],
-    );
-  }
-}
-
-class _TermsBullet extends StatelessWidget {
-  const _TermsBullet({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('• '),
-          Expanded(child: Text(text)),
-        ],
-      ),
     );
   }
 }

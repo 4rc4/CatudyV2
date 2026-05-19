@@ -116,33 +116,33 @@ class _SeasonSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = store.seasonProgress;
     return CatudyPanel(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       accentColor: CatudyColors.teal,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const CatudyMascotBadge(size: 58, accent: CatudyColors.teal),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  season.name,
+                  store.t('season.focusXp'),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: CatudyColors.tealDark,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: CatudyColors.blueFor(context),
                     fontWeight: FontWeight.w900,
+                    height: 1.05,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 6),
                 Text(
                   store.t('season.xpProgress', {
                     'xp': progress.focusMinutes,
                     'target': target,
                   }),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: CatudyColors.blueFor(context),
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -154,11 +154,34 @@ class _SeasonSummaryCard extends StatelessWidget {
                   color: CatudyColors.teal,
                   backgroundColor: CatudyColors.surfaceFor(context),
                 ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.schedule_rounded,
+                      size: 16,
+                      color: CatudyColors.teal,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      '$daysLeft ${store.t('season.daysShort')}',
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
-          Chip(label: Text('$daysLeft ${store.t('season.daysShort')}')),
+          const SizedBox(width: 12),
+          CatudyAssetSlot(
+            size: 96,
+            accentColor: CatudyColors.violet,
+            child: Image.asset('assets/brand/catudy-mascot.png'),
+          ),
         ],
       ),
     );
@@ -179,7 +202,7 @@ class _RewardPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => context.go('/season/rewards'),
+      onTap: () => context.push('/season/rewards'),
       borderRadius: BorderRadius.circular(28),
       child: CatudyPanel(
         accentColor: CatudyColors.violet,
@@ -188,7 +211,7 @@ class _RewardPreviewCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Expanded(child: _TrackHeaders(store: store)),
+                Expanded(child: _TrackTabs(store: store)),
                 const Icon(
                   Icons.fullscreen_rounded,
                   color: CatudyColors.violet,
@@ -199,11 +222,11 @@ class _RewardPreviewCard extends StatelessWidget {
             CatudyRewardRail(
               currentValue: progress.focusMinutes,
               freeItems: [
-                for (final reward in season.freeTrack.rewards.take(5))
+                for (final reward in season.freeTrack.rewards)
                   _seasonRailItem(store, reward, claimsEnabled: false),
               ],
               premiumItems: [
-                for (final reward in season.premiumTrack.rewards.take(5))
+                for (final reward in season.premiumTrack.rewards)
                   _seasonRailItem(store, reward, claimsEnabled: false),
               ],
             ),
@@ -263,7 +286,7 @@ CatudyRewardRailItem _seasonRailItem(
   final unlocked = store.seasonProgress.focusMinutes >= reward.thresholdMinutes;
   final premiumBlocked = reward.premiumOnly && !store.hasPremiumAccess;
   return CatudyRewardRailItem(
-    title: reward.title,
+    title: _seasonRewardTitle(store, reward),
     subtitle: store.t('season.unlockAtXp', {'xp': reward.thresholdMinutes}),
     icon: _rewardIcon(reward.kind),
     color: reward.premiumOnly ? CatudyColors.violet : CatudyColors.teal,
@@ -276,6 +299,110 @@ CatudyRewardRailItem _seasonRailItem(
         ? null
         : () => store.claimSeasonReward(reward.id),
   );
+}
+
+class _TrackTabs extends StatelessWidget {
+  const _TrackTabs({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _TrackPill(
+            icon: Icons.card_giftcard_rounded,
+            label: store.t('season.freeTrack'),
+            color: CatudyColors.teal,
+            active: false,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _TrackPill(
+            icon: Icons.workspace_premium_rounded,
+            label: store.t('season.premiumTrack'),
+            color: CatudyColors.violet,
+            active: true,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TrackPill extends StatelessWidget {
+  const _TrackPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.active,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 46,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: active
+            ? color.withValues(alpha: 0.28)
+            : CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: active
+              ? color.withValues(alpha: 0.54)
+              : CatudyColors.lineFor(context),
+        ),
+        boxShadow: active
+            ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.18),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: active ? color : CatudyColors.mutedFor(context),
+            size: 18,
+          ),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: active
+                    ? CatudyColors.blueFor(context)
+                    : CatudyColors.mutedFor(context),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _seasonRewardTitle(CatudyDemoStore store, SeasonReward reward) {
+  final key = 'season.reward.${reward.id}';
+  final localized = store.t(key);
+  return localized == key ? reward.title : localized;
 }
 
 IconData _rewardIcon(SeasonRewardKind kind) => switch (kind) {
@@ -320,7 +447,7 @@ class _UpgradeStrip extends StatelessWidget {
       secondaryColor: CatudyColors.teal,
       actions: [
         FilledButton.icon(
-          onPressed: () => context.go('/plus'),
+          onPressed: () => context.push('/plus?from=profile'),
           icon: const Icon(Icons.workspace_premium_rounded),
           label: Text(store.t('season.upgradeCta')),
         ),
