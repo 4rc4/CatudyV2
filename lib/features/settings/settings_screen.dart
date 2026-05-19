@@ -18,7 +18,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final TextEditingController _nameController;
-  late final TextEditingController _profileShareUrlController;
   late final TextEditingController _monthlyGoalController;
   bool _dnd = true;
   bool _notifications = true;
@@ -32,9 +31,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     final store = catudyDemoStore;
     _nameController = TextEditingController(text: store.displayName);
-    _profileShareUrlController = TextEditingController(
-      text: store.profileShareBaseUrl,
-    );
     _monthlyGoalController = TextEditingController(
       text: store.monthlyGoalMinutes.toString(),
     );
@@ -49,7 +45,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _profileShareUrlController.dispose();
     _monthlyGoalController.dispose();
     super.dispose();
   }
@@ -71,19 +66,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   decoration: InputDecoration(
                     labelText: store.t('settings.displayName'),
                     border: const OutlineInputBorder(),
-                  ),
-                  onChanged: (_) => _save(store),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _profileShareUrlController,
-                  keyboardType: TextInputType.url,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: store.t('settings.profileShareBaseUrl'),
-                    hintText: store.t('settings.profileShareBaseUrlHint'),
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.link_rounded),
                   ),
                   onChanged: (_) => _save(store),
                 ),
@@ -310,7 +292,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       : store.t('settings.authSignedOut'),
                 ),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: store.isAuthenticated
+                        ? CatudyColors.violet
+                        : CatudyColors.tealDark,
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: store.authBusy
                       ? null
                       : () async {
@@ -333,6 +321,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ? store.t('settings.signOut')
                         : store.t('settings.openLogin'),
                   ),
+                ),
+                const SizedBox(height: 10),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: CatudyColors.coral,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: store.authBusy
+                      ? null
+                      : () async {
+                          final confirmed = await _confirmDeleteAccount(
+                            context,
+                            store,
+                          );
+                          if (!confirmed) {
+                            return;
+                          }
+                          await store.deleteAccount();
+                          if (context.mounted) {
+                            context.go('/auth');
+                          }
+                        },
+                  icon: const Icon(Icons.delete_forever_rounded),
+                  label: Text(store.t('settings.deleteAccount')),
                 ),
               ],
             ),
@@ -381,7 +393,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       apiUrl: store.apiBaseUrl,
       dnd: _dnd,
       petNotifications: _notifications,
-      profileShareUrl: _profileShareUrlController.text,
       profileStatsVisible: _publicStatsVisible,
       language: language ?? _language,
       themeMode: themeMode ?? _themeMode,
@@ -413,5 +424,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
       time: picked,
     );
     _save(store);
+  }
+
+  Future<bool> _confirmDeleteAccount(
+    BuildContext context,
+    CatudyDemoStore store,
+  ) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(store.t('settings.deleteAccount')),
+            content: Text(store.t('settings.deleteAccountBody')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(store.t('common.cancel')),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: CatudyColors.coral,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(store.t('settings.deleteAccountConfirm')),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 }

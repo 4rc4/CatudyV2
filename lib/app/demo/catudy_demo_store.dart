@@ -455,6 +455,8 @@ class LeaderboardProfile {
 }
 
 class CatudyDemoStore extends ChangeNotifier {
+  static const currentTermsVersion = 1;
+
   CatudyDemoStore({CatudyLocalStorage storage = const CatudyLocalStorage()})
     : _storage = storage {
     _applyDefaults();
@@ -479,6 +481,7 @@ class CatudyDemoStore extends ChangeNotifier {
   StreamSubscription<List<String>>? _friendsSubscription;
   StreamSubscription<List<String>>? _blockedUsersSubscription;
   void Function(String name, String languageCode)? _friendRequestNotifier;
+  void Function(String alertType, String languageCode)? _petCareNotifier;
   final _knownIncomingFriendRequestIds = <String>{};
   Future<void>? _loadFuture;
   bool _loaded = false;
@@ -964,6 +967,7 @@ class CatudyDemoStore extends ChangeNotifier {
   bool dailyGoalReminderEnabled = true;
   bool publicStatsVisible = true;
   bool introTourSeen = false;
+  int acceptedTermsVersion = 0;
   String languageCode = 'tr';
   String themeModeCode = 'system';
   int dailyGoalMinutes = 90;
@@ -1012,9 +1016,13 @@ class CatudyDemoStore extends ChangeNotifier {
   String selectedProfileThemeId = '';
   String selectedWidgetThemeId = '';
   String selectedDialoguePackId = '';
+  DateTime? lastHappinessAlertAt;
+  DateTime? lastHungerAlertAt;
+  DateTime? lastEnergyFullAlertAt;
   DateTime stateUpdatedAt = DateTime.now();
 
   bool get isLoaded => _loaded;
+  bool get needsTermsAcceptance => acceptedTermsVersion < currentTermsVersion;
 
   bool get hasPremiumAccess => premiumEntitlement.active;
 
@@ -1910,6 +1918,15 @@ class CatudyDemoStore extends ChangeNotifier {
     _friendRequestNotifier = onFriendRequest;
   }
 
+  void configurePetCareNotifications({
+    void Function(String alertType, String languageCode)? onPetCareAlert,
+  }) {
+    _petCareNotifier = onPetCareAlert;
+    _refreshPetVitals(notify: true);
+    notifyListeners();
+    unawaited(_save());
+  }
+
   void _watchSocialState() {
     final service = _socialService;
     if (service == null || authUserId == null) {
@@ -2078,6 +2095,29 @@ class CatudyDemoStore extends ChangeNotifier {
       selectedTodoId = null;
     }
     _commit();
+  }
+
+  CalendarTodo? deleteTodo(String id) {
+    final index = todos.indexWhere((item) => item.id == id);
+    if (index == -1) {
+      return null;
+    }
+    final removed = todos.removeAt(index);
+    if (selectedTodoId == id) {
+      selectedTodoId = null;
+    }
+    _commit();
+    return removed;
+  }
+
+  FocusRecord? deleteFocusRecord(String id) {
+    final index = history.indexWhere((item) => item.id == id);
+    if (index == -1) {
+      return null;
+    }
+    final removed = history.removeAt(index);
+    _commit();
+    return removed;
   }
 
   void selectTodoForFocus(String? id) {
@@ -2508,8 +2548,6 @@ class CatudyDemoStore extends ChangeNotifier {
         gold: 0,
       ),
     );
-    petMood = (petMood + 3).clamp(0, 100);
-    petEnergy = (petEnergy + 1).clamp(0, 100);
     _commit();
   }
 
@@ -2968,6 +3006,26 @@ class CatudyDemoStore extends ChangeNotifier {
     _commit(touchState: false);
   }
 
+  Future<void> deleteAccount() async {
+    authBusy = true;
+    authError = null;
+    _commit(touchState: false);
+    final acceptedTerms = acceptedTermsVersion;
+    try {
+      await _authService?.signOut();
+    } catch (_) {
+      // Local deletion still proceeds; server-side hard delete requires
+      // backend support and should not block the in-app data wipe.
+    }
+    _explicitGuestUserId = null;
+    _applyDefaults();
+    acceptedTermsVersion = acceptedTerms;
+    introTourSeen = true;
+    authBusy = false;
+    _loaded = true;
+    _commit(touchState: false);
+  }
+
   void toggleReady() {
     currentUserReady = !currentUserReady;
     _commit();
@@ -3358,6 +3416,11 @@ class CatudyDemoStore extends ChangeNotifier {
     _commit();
   }
 
+  void acceptTerms() {
+    acceptedTermsVersion = currentTermsVersion;
+    _commit();
+  }
+
   void updateProfile({
     required String name,
     required String avatarId,
@@ -3530,12 +3593,14 @@ class CatudyDemoStore extends ChangeNotifier {
     } catch (_) {
       _applyDefaults();
     }
+    _refreshPetVitals(notify: true);
     _loaded = true;
     notifyListeners();
     await _save();
   }
 
   void _commit({bool touchState = true}) {
+    _refreshPetVitals(notify: touchState);
     if (touchState && !_backupMergeInProgress) {
       stateUpdatedAt = DateTime.now();
     }
@@ -3551,6 +3616,99 @@ class CatudyDemoStore extends ChangeNotifier {
       return;
     }
     unawaited(sync().catchError((Object _) {}));
+  }
+
+  void _refreshPetVitals({bool notify = false}) {
+    final now = DateTime.now();
+    final oldMood = petMood;
+    final oldFullness = 100 - petHunger;
+    final oldEnergy = petEnergy;
+    final realRecords = history
+        .where((item) => !item.manual && item.minutes > 0)
+        .toList();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayRealMinutes = realRecords
+        .where((item) => !item.createdAt.isBefore(todayStart))
+        .fold(0, (sum, item) => sum + item.minutes);
+    final lastRealRecord = realRecords.isEmpty
+        ? null
+        : realRecords.reduce(
+            (a, b) => a.createdAt.isAfter(b.createdAt) ? a : b,
+          );
+    final lastRealDay = lastRealRecord == null
+        ? null
+        : DateTime(
+            lastRealRecord.createdAt.year,
+            lastRealRecord.createdAt.month,
+            lastRealRecord.createdAt.day,
+          );
+    final inactiveDays = lastRealDay == null
+        ? 7
+        : now.difference(lastRealDay).inDays.clamp(0, 30);
+    final recentSessions = realRecords
+        .where(
+          (item) =>
+              item.createdAt.isAfter(now.subtract(const Duration(days: 14))),
+        )
+        .length;
+
+    final computedMood =
+        50 +
+        min(streakDays, 10) * 4 +
+        min(recentSessions * 2, 20) -
+        min(inactiveDays * 8, 36);
+    final computedHunger =
+        20 + min(inactiveDays * 24, 70) - min(todayRealMinutes / 3, 35);
+    var computedEnergy = 100 - todayRealMinutes * 0.25;
+    if (activeSession == null && lastRealRecord != null) {
+      final hoursSinceFocus =
+          now.difference(lastRealRecord.createdAt).inMinutes / 60;
+      computedEnergy += hoursSinceFocus * 18;
+    }
+
+    petMood = computedMood.round().clamp(0, 100).toInt();
+    petHunger = computedHunger.round().clamp(0, 100).toInt();
+    petEnergy = computedEnergy.round().clamp(0, 100).toInt();
+
+    if (notify) {
+      _maybeSendPetCareAlerts(
+        now: now,
+        oldMood: oldMood,
+        oldFullness: oldFullness,
+        oldEnergy: oldEnergy,
+      );
+    }
+  }
+
+  void _maybeSendPetCareAlerts({
+    required DateTime now,
+    required int oldMood,
+    required int oldFullness,
+    required int oldEnergy,
+  }) {
+    final notifier = _petCareNotifier;
+    if (!notifications || notifier == null) {
+      return;
+    }
+    if (petMood < 50 && _canSendCareAlert(lastHappinessAlertAt, now)) {
+      lastHappinessAlertAt = now;
+      notifier('happiness', languageCode);
+    }
+    final fullness = 100 - petHunger;
+    if (fullness < 50 && _canSendCareAlert(lastHungerAlertAt, now)) {
+      lastHungerAlertAt = now;
+      notifier('hunger', languageCode);
+    }
+    if (petEnergy >= 100 &&
+        oldEnergy < 100 &&
+        _canSendCareAlert(lastEnergyFullAlertAt, now, hours: 4)) {
+      lastEnergyFullAlertAt = now;
+      notifier('energy_full', languageCode);
+    }
+  }
+
+  bool _canSendCareAlert(DateTime? last, DateTime now, {int hours = 12}) {
+    return last == null || now.difference(last).inHours >= hours;
   }
 
   void _scheduleLeaderboardSync({bool immediate = false}) {
@@ -3774,9 +3932,6 @@ class CatudyDemoStore extends ChangeNotifier {
       focusMinutes: seasonProgress.focusMinutes + actualMinutes,
     );
     streakDays = streakDays < 1 ? 1 : streakDays;
-    petMood = (petMood + 8).clamp(0, 100);
-    petHunger = (petHunger + 4).clamp(0, 100);
-    petEnergy = (petEnergy - 6).clamp(0, 100);
     _unlockEligiblePets();
     _queueCompletionCelebrations(
       record: record,
@@ -4008,6 +4163,7 @@ class CatudyDemoStore extends ChangeNotifier {
     dailyGoalReminderEnabled = true;
     publicStatsVisible = true;
     introTourSeen = false;
+    acceptedTermsVersion = 0;
     themeModeCode = 'system';
     dailyGoalMinutes = 90;
     monthlyGoalMinutes = 1800;
@@ -4056,6 +4212,9 @@ class CatudyDemoStore extends ChangeNotifier {
     selectedProfileThemeId = '';
     selectedWidgetThemeId = '';
     selectedDialoguePackId = '';
+    lastHappinessAlertAt = null;
+    lastHungerAlertAt = null;
+    lastEnergyFullAlertAt = null;
     stateUpdatedAt = DateTime.now();
     _restoredCompletedSession = false;
   }
@@ -4126,6 +4285,7 @@ class CatudyDemoStore extends ChangeNotifier {
     );
     publicStatsVisible = _readBool(json, 'publicStatsVisible', true);
     introTourSeen = _readBool(json, 'introTourSeen', false);
+    acceptedTermsVersion = _readInt(json, 'acceptedTermsVersion', 0);
     dailyGoalMinutes = _readInt(
       json,
       'dailyGoalMinutes',
@@ -4237,6 +4397,9 @@ class CatudyDemoStore extends ChangeNotifier {
     selectedProfileThemeId = _readString(json, 'selectedProfileThemeId', '');
     selectedWidgetThemeId = _readString(json, 'selectedWidgetThemeId', '');
     selectedDialoguePackId = _readString(json, 'selectedDialoguePackId', '');
+    lastHappinessAlertAt = _readNullableDate(json, 'lastHappinessAlertAt');
+    lastHungerAlertAt = _readNullableDate(json, 'lastHungerAlertAt');
+    lastEnergyFullAlertAt = _readNullableDate(json, 'lastEnergyFullAlertAt');
     equippedRoomItemIds
       ..clear()
       ..addAll(_readStringMap(json['equippedRoomItemIds']));
@@ -4312,6 +4475,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'dailyGoalReminderEnabled': dailyGoalReminderEnabled,
     'publicStatsVisible': publicStatsVisible,
     'introTourSeen': introTourSeen,
+    'acceptedTermsVersion': acceptedTermsVersion,
     'languageCode': languageCode,
     'themeModeCode': themeModeCode,
     'dailyGoalMinutes': dailyGoalMinutes,
@@ -4351,6 +4515,9 @@ class CatudyDemoStore extends ChangeNotifier {
     'selectedProfileThemeId': selectedProfileThemeId,
     'selectedWidgetThemeId': selectedWidgetThemeId,
     'selectedDialoguePackId': selectedDialoguePackId,
+    'lastHappinessAlertAt': lastHappinessAlertAt?.toIso8601String(),
+    'lastHungerAlertAt': lastHungerAlertAt?.toIso8601String(),
+    'lastEnergyFullAlertAt': lastEnergyFullAlertAt?.toIso8601String(),
     'activeSession': activeSession?.toJson(),
     'lastResult': lastResult?.toJson(),
   };
@@ -4505,8 +4672,8 @@ Season _buildCurrentSeason() {
       'season_${startsAt.year}_${startsAt.month.toString().padLeft(2, '0')}';
   return Season(
     id: seasonId,
-    name: 'Moonlight Semester',
-    description: 'Study under a softer sky and collect monthly rewards.',
+    name: 'Monthly Focus Pass',
+    description: 'Focus this month and collect rewards.',
     startsAt: startsAt,
     endsAt: endsAt,
     freeTrack: const SeasonRewardTrack(

@@ -32,6 +32,14 @@ Future<void> main() async {
       );
     },
   );
+  catudyDemoStore.configurePetCareNotifications(
+    onPetCareAlert: (alertType, languageCode) {
+      CatudyNotificationService.instance.showPetCareNotification(
+        alertType: alertType,
+        languageCode: languageCode,
+      );
+    },
+  );
   catudyDemoStore.configureNotificationSync(_scheduleLocalizedNotifications);
   await _initializeOnlineLobby();
   await _scheduleLocalizedNotifications();

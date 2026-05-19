@@ -204,6 +204,49 @@ class CatudyNotificationService {
     );
   }
 
+  Future<void> showPetCareNotification({
+    required String alertType,
+    required String languageCode,
+  }) async {
+    await initialize();
+    final english = _isEnglish(languageCode);
+    final title = english ? 'Mochi update' : 'Mochi bildirimi';
+    final body = switch (alertType) {
+      'happiness' =>
+        english
+            ? 'Mochi feels low. A real focus streak will help.'
+            : 'Mochi biraz durgun. Gercek odak serisi iyi gelir.',
+      'hunger' =>
+        english
+            ? 'Mochi needs attention. Focus today to refill the routine.'
+            : 'Mochi ilgi istiyor. Bugun odaklanip ritmi doldur.',
+      'energy_full' =>
+        english
+            ? 'Mochi is rested and ready for a new focus session.'
+            : 'Mochi dinlendi ve yeni odak seansina hazir.',
+      _ => english ? 'Open Catudy to check your pet.' : 'Petini kontrol et.',
+    };
+    await _plugin.show(
+      id: switch (alertType) {
+        'happiness' => 920001,
+        'hunger' => 920002,
+        'energy_full' => 920003,
+        _ => 920000,
+      },
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(
+        android: _androidDetails(
+          channelId: 'catudy_pet',
+          languageCode: languageCode,
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+    );
+  }
+
   Future<void> cancelReminder(CalendarTodo todo) async {
     await initialize();
     await _plugin.cancel(id: _notificationId(todo));
@@ -256,6 +299,7 @@ class CatudyNotificationService {
         'catudy_goals' => 'Catudy Goals',
         'catudy_social' => 'Catudy Social',
         'catudy_focus' => 'Catudy Focus',
+        'catudy_pet' => 'Catudy Pet',
         _ => 'Catudy Reminders',
       };
     }
@@ -263,6 +307,7 @@ class CatudyNotificationService {
       'catudy_goals' => 'Catudy Hedefleri',
       'catudy_social' => 'Catudy Sosyal',
       'catudy_focus' => 'Catudy Odak',
+      'catudy_pet' => 'Catudy Pet',
       _ => 'Catudy Hatırlatmaları',
     };
   }
@@ -273,6 +318,7 @@ class CatudyNotificationService {
         'catudy_goals' => 'Daily focus target reminders from Catudy',
         'catudy_social' => 'Social updates from Catudy',
         'catudy_focus' => 'Focus session updates from Catudy',
+        'catudy_pet' => 'Pet care updates from Catudy',
         _ => 'Study reminders from Catudy',
       };
     }

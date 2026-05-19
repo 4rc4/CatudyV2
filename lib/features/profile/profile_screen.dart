@@ -39,6 +39,7 @@ class ProfileScreen extends StatelessWidget {
             .where((item) => store.ownedCosmeticIds.contains(item.id))
             .take(4)
             .toList();
+        final level = (store.focusPoints ~/ 120) + 1;
 
         return ScreenScaffold(
           title: store.t('profile.title'),
@@ -54,28 +55,8 @@ class ProfileScreen extends StatelessWidget {
           ],
           children: [
             CatudyStagePanel(
-              eyebrow: store.t('profile.subtitle'),
               title: store.displayName,
-              subtitle: store.t('profile.profileHeroBody', {
-                'pet': store.petDisplayName,
-              }),
-              art: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  _ProfileAvatar(store: store, size: 112),
-                  Positioned(
-                    bottom: -5,
-                    left: 16,
-                    child: Chip(
-                      label: Text(
-                        store.t('profile.level', {
-                          'level': (store.focusPoints ~/ 120) + 1,
-                        }),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              art: _ProfileAvatar(store: store, size: 112),
               footer: Row(
                 children: [
                   Expanded(
@@ -84,7 +65,7 @@ class ProfileScreen extends StatelessWidget {
                       label: store.t('profile.totalFocus'),
                       value: _formatMinutes(store.totalFocusMinutes, store),
                       color: CatudyColors.teal,
-                      dense: true,
+                      dense: false,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -95,30 +76,31 @@ class ProfileScreen extends StatelessWidget {
                       value:
                           '${store.streakDays}${store.t('common.daysShort')}',
                       color: CatudyColors.coral,
-                      dense: true,
+                      dense: false,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: CatudyMetricTile(
                       icon: Icons.star_rounded,
-                      label: store.t('season.focusXp'),
-                      value: '+${store.seasonProgress.focusMinutes}',
+                      label: store.t('profile.levelTitle'),
+                      value: '$level',
                       color: CatudyColors.yellow,
-                      dense: true,
+                      dense: false,
                     ),
                   ),
                 ],
               ),
+              actions: [
+                FilledButton.icon(
+                  onPressed: () => _editProfile(context, store),
+                  icon: const Icon(Icons.edit_rounded),
+                  label: Text(store.t('profile.edit')),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
-            _AchievementShelf(achievements: unlockedAchievements, store: store),
-            const SizedBox(height: 14),
-            _CollectionShelf(
-              store: store,
-              items: collectionItems,
-              cosmetics: collectionCosmetics,
-            ),
+            _UserCodeCard(store: store),
             const SizedBox(height: 14),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -149,40 +131,12 @@ class ProfileScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 14),
-            CatudyPanel(
-              accentColor: CatudyColors.violet,
-              child: Row(
-                children: [
-                  const Icon(Icons.badge_rounded, color: CatudyColors.violet),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          store.t('profile.myId'),
-                          style: TextStyle(
-                            color: CatudyColors.mutedFor(context),
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        SelectableText(
-                          store.publicUserCode,
-                          style: TextStyle(
-                            color: CatudyColors.blueFor(context),
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  FilledButton.tonalIcon(
-                    onPressed: () => _copyUserId(context, store),
-                    icon: const Icon(Icons.copy_rounded),
-                    label: Text(store.t('profile.copyId')),
-                  ),
-                ],
-              ),
+            _AchievementShelf(achievements: unlockedAchievements, store: store),
+            const SizedBox(height: 14),
+            _CollectionShelf(
+              store: store,
+              items: collectionItems,
+              cosmetics: collectionCosmetics,
             ),
           ],
         );
@@ -257,18 +211,20 @@ class ProfileScreen extends StatelessWidget {
   }
 
   static String _profileShareLink(CatudyDemoStore store) {
-    final userId = Uri.encodeComponent(store.authUserId ?? 'local');
+    final userId = Uri.encodeComponent(
+      store.authUserId ?? store.publicUserCode,
+    );
     final configuredBase = _shareOriginFromText(store.profileShareBaseUrl);
     if (configuredBase != null) {
-      return '$configuredBase/#/public-profile?user=$userId';
+      return '$configuredBase/public-profile?user=$userId';
     }
     final base = Uri.base;
     if ((base.scheme == 'http' || base.scheme == 'https') &&
         base.host.isNotEmpty) {
       final port = base.hasPort ? ':${base.port}' : '';
-      return '${base.scheme}://${base.host}$port/#/public-profile?user=$userId';
+      return '${base.scheme}://${base.host}$port/public-profile?user=$userId';
     }
-    return 'catudy:///public-profile?user=$userId';
+    return 'https://catudy.app/public-profile?user=$userId';
   }
 
   static String? _shareOriginFromText(String value) {
@@ -306,6 +262,51 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
+class _UserCodeCard extends StatelessWidget {
+  const _UserCodeCard({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return CatudyPanel(
+      accentColor: CatudyColors.violet,
+      child: Row(
+        children: [
+          const Icon(Icons.badge_rounded, color: CatudyColors.violet),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  store.t('profile.myId'),
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SelectableText(
+                  store.publicUserCode,
+                  style: TextStyle(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton.filledTonal(
+            onPressed: () => ProfileScreen._copyUserId(context, store),
+            tooltip: store.t('profile.copyId'),
+            icon: const Icon(Icons.copy_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AchievementShelf extends StatelessWidget {
   const _AchievementShelf({required this.achievements, required this.store});
 
@@ -333,7 +334,7 @@ class _AchievementShelf extends StatelessWidget {
             )
           else
             SizedBox(
-              height: 132,
+              height: 108,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: achievements.length,
@@ -341,7 +342,7 @@ class _AchievementShelf extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final achievement = achievements[index];
                   return SizedBox(
-                    width: 118,
+                    width: 96,
                     child: CatudyAssetSlot(
                       icon: achievement.icon,
                       accentColor: CatudyColors.violet,
@@ -351,9 +352,9 @@ class _AchievementShelf extends StatelessWidget {
                           Icon(
                             achievement.icon,
                             color: CatudyColors.violet,
-                            size: 34,
+                            size: 28,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             achievement.title,
                             textAlign: TextAlign.center,
@@ -362,7 +363,7 @@ class _AchievementShelf extends StatelessWidget {
                             style: TextStyle(
                               color: CatudyColors.blueFor(context),
                               fontWeight: FontWeight.w900,
-                              fontSize: 12,
+                              fontSize: 11,
                             ),
                           ),
                         ],
@@ -411,7 +412,7 @@ class _CollectionShelf extends StatelessWidget {
             )
           else
             SizedBox(
-              height: 124,
+              height: 104,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
@@ -419,7 +420,7 @@ class _CollectionShelf extends StatelessWidget {
                     _CollectionItem(
                       title: store.itemName(item),
                       color: item.accent,
-                      child: ShopItemArt(item: item, size: 70),
+                      child: ShopItemArt(item: item, size: 58),
                     ),
                     const SizedBox(width: 10),
                   ],
@@ -430,7 +431,7 @@ class _CollectionShelf extends StatelessWidget {
                       child: Icon(
                         cosmetic.icon,
                         color: cosmetic.accent,
-                        size: 42,
+                        size: 36,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -553,7 +554,7 @@ class _CollectionItem extends StatelessWidget {
           Expanded(
             child: CatudyAssetSlot(
               accentColor: color,
-              size: 86,
+              size: 74,
               child: Center(child: child),
             ),
           ),

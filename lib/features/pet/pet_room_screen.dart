@@ -30,16 +30,16 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
   bool _petNameDialogOpen = false;
 
   static const _dialoguesTr = [
-    'Burada olduÄŸunu bilmiyordum! OdayÄ± biraz daha gÃ¼zelleÅŸtirelim mi?',
-    'Ders Ã§alÄ±ÅŸmaya hazÄ±r mÄ±sÄ±n? Ben bugÃ¼n masanÄ±n yanÄ±nda bekliyorum.',
-    'Bir odak seansÄ± yaparsan battaniyemi kabartÄ±p seni alkÄ±ÅŸlarÄ±m.',
-    'BugÃ¼n biraz sakinim. KÄ±sa bir Ã§alÄ±ÅŸma ritmi iyi gelebilir.',
-    'Masadaki Ä±ÅŸÄ±k tam yerinde. BaÅŸlamak iÃ§in gÃ¼zel bir gÃ¼n.',
-    'Ben buradayÄ±m. Sen odaklanÄ±rken odaya gÃ¶z kulak olurum.',
-    'Koltuk Ã§ok rahat ama Ã¶nce kÃ¼Ã§Ã¼k bir odak turu yapalÄ±m mÄ±?',
-    'YataÄŸÄ±ma zÄ±plamadÄ±m. Tamam, belki biraz zÄ±plamÄ±ÅŸ olabilirim.',
-    'BugÃ¼n oda Ã§ok sakin. Bir sÃ¼re Ã§alÄ±ÅŸÄ±rsan ben de burada beklerim.',
-    'Yeni bir eÅŸya aÃ§Ä±nca odamÄ±z daha tatlÄ± gÃ¶rÃ¼necek, sÃ¶z.',
+    'Burada oldu\u{011F}unu bilmiyordum! Oday\u{0131} biraz daha g\u{00FC}zelle\u{015F}tirelim mi?',
+    'Ders \u{00E7}al\u{0131}\u{015F}maya haz\u{0131}r m\u{0131}s\u{0131}n? Bug\u{00FC}n masan\u{0131}n yan\u{0131}nda bekliyorum.',
+    'Bir odak seans\u{0131} yaparsan battaniyemi kabart\u{0131}p seni alk\u{0131}\u{015F}lar\u{0131}m.',
+    'Bug\u{00FC}n biraz sakinim. K\u{0131}sa bir \u{00E7}al\u{0131}\u{015F}ma ritmi iyi gelebilir.',
+    'Masadaki \u{0131}\u{015F}\u{0131}k tam yerinde. Ba\u{015F}lamak i\u{00E7}in g\u{00FC}zel bir g\u{00FC}n.',
+    'Ben buraday\u{0131}m. Sen odaklan\u{0131}rken odaya g\u{00F6}z kulak olurum.',
+    'Koltuk \u{00E7}ok rahat ama \u{00F6}nce k\u{00FC}\u{00E7}\u{00FC}k bir odak turu yapal\u{0131}m m\u{0131}?',
+    'Yata\u{011F}\u{0131}ma z\u{0131}plamad\u{0131}m. Tamam, belki biraz z\u{0131}plam\u{0131}\u{015F} olabilirim.',
+    'Bug\u{00FC}n oda \u{00E7}ok sakin. Bir s\u{00FC}re \u{00E7}al\u{0131}\u{015F}\u{0131}rsan ben de burada beklerim.',
+    'Yeni bir oda a\u{00E7}\u{0131}nca buras\u{0131} daha tatl\u{0131} g\u{00F6}r\u{00FC}necek, s\u{00F6}z.',
   ];
 
   static const _dialoguesEn = [
@@ -56,9 +56,9 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
   ];
 
   static const _storybookDialoguesTr = [
-    'Bir sayfa daha, sonra birlikte yÄ±ldÄ±zlarÄ± sayarÄ±z.',
-    'BugÃ¼nÃ¼n kÃ¼Ã§Ã¼k gayreti yarÄ±nÄ±n masalÄ±nÄ± biraz daha gÃ¼zelleÅŸtirir.',
-    'Sen Ã§alÄ±ÅŸÄ±rken ben de sessizce nÃ¶bet tutuyorum.',
+    'Bir sayfa daha, sonra birlikte y\u{0131}ld\u{0131}zlar\u{0131} sayar\u{0131}z.',
+    'Bug\u{00FC}n\u{00FC}n k\u{00FC}\u{00E7}\u{00FC}k gayreti yar\u{0131}n\u{0131}n masal\u{0131}n\u{0131} biraz daha g\u{00FC}zelle\u{015F}tirir.',
+    'Sen \u{00E7}al\u{0131}\u{015F}\u{0131}rken ben de sessizce n\u{00F6}bet tutuyorum.',
   ];
 
   static const _storybookDialoguesEn = [
@@ -151,6 +151,10 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             visiting: visited != null,
             onSettings: () => context.push('/settings'),
             onInfo: () => showPetIntroTour(context),
+            onRename: () => showDialog<void>(
+              context: context,
+              builder: (_) => _PetNameDialog(store: store),
+            ),
             onShop: () => context.go('/shop'),
             onInventory: () => context.go('/inventory'),
             onReturnHome: store.clearVisitedRoom,
@@ -288,6 +292,7 @@ class _RoomScene extends StatelessWidget {
     required this.visiting,
     required this.onSettings,
     required this.onInfo,
+    required this.onRename,
     required this.onShop,
     required this.onInventory,
     required this.onReturnHome,
@@ -313,6 +318,7 @@ class _RoomScene extends StatelessWidget {
   final bool visiting;
   final VoidCallback onSettings;
   final VoidCallback onInfo;
+  final VoidCallback onRename;
   final VoidCallback onShop;
   final VoidCallback onInventory;
   final VoidCallback onReturnHome;
@@ -479,6 +485,7 @@ class _RoomScene extends StatelessWidget {
                   rewardBoostPercent: rewardBoostPercent,
                   onSettings: onSettings,
                   onInfo: onInfo,
+                  onRename: onRename,
                 ),
               ),
               Positioned(
@@ -877,6 +884,7 @@ class _RoomTopBar extends StatelessWidget {
     required this.rewardBoostPercent,
     required this.onSettings,
     required this.onInfo,
+    required this.onRename,
   });
 
   final String petName;
@@ -884,6 +892,7 @@ class _RoomTopBar extends StatelessWidget {
   final double rewardBoostPercent;
   final VoidCallback onSettings;
   final VoidCallback onInfo;
+  final VoidCallback onRename;
 
   @override
   Widget build(BuildContext context) {
@@ -908,6 +917,16 @@ class _RoomTopBar extends StatelessWidget {
                   color: CatudyColors.blueFor(context),
                   fontWeight: FontWeight.w900,
                 ),
+              ),
+              TextButton.icon(
+                onPressed: onRename,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                icon: const Icon(Icons.edit_rounded, size: 15),
+                label: Text(catudyDemoStore.t('pet.rename')),
               ),
             ],
           ),
@@ -1109,46 +1128,6 @@ class _CarePanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _CareActionButton(
-                  icon: Icons.cake_rounded,
-                  label: store.t('pet.feed'),
-                  color: CatudyColors.teal,
-                  onTap: store.feedPet,
-                ),
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: _CareActionButton(
-                  icon: Icons.sports_esports_rounded,
-                  label: store.t('pet.play'),
-                  color: CatudyColors.violet,
-                  onTap: store.playWithPet,
-                ),
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: _CareActionButton(
-                  icon: Icons.nightlight_round,
-                  label: store.t('pet.sleep'),
-                  color: CatudyColors.lavender,
-                  onTap: store.restPet,
-                ),
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: _CareActionButton(
-                  icon: Icons.favorite_rounded,
-                  label: store.t('pet.love'),
-                  color: CatudyColors.coral,
-                  onTap: store.petPet,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -1218,53 +1197,6 @@ class _CareStatTile extends StatelessWidget {
   }
 }
 
-class _CareActionButton extends StatelessWidget {
-  const _CareActionButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.16),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withValues(alpha: 0.24)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: CatudyColors.blueFor(context),
-                fontWeight: FontWeight.w900,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _RoomCustomizeStrip extends StatelessWidget {
   const _RoomCustomizeStrip({required this.onInventory, required this.onShop});
 
@@ -1289,49 +1221,31 @@ class _RoomCustomizeStrip extends StatelessWidget {
             onTap: onInventory,
             borderRadius: BorderRadius.circular(16),
             child: Container(
-              width: 108,
+              width: 104,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: CatudyColors.violet.withValues(alpha: 0.16),
+                color: CatudyColors.violet,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
                   const Icon(
-                    Icons.weekend_rounded,
-                    color: CatudyColors.violet,
+                    Icons.inventory_2_rounded,
+                    color: Colors.white,
                     size: 19,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          store.t('pet.customizeTitle'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: CatudyColors.mutedFor(context),
-                            fontWeight: FontWeight.w800,
-                            fontSize: 9,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          store.t('inventory.title'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: CatudyColors.blueFor(context),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                            height: 1,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      store.t('inventory.title'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        height: 1,
+                      ),
                     ),
                   ),
                 ],
@@ -1341,10 +1255,11 @@ class _RoomCustomizeStrip extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: items.isEmpty
-                ? OutlinedButton.icon(
-                    onPressed: onShop,
-                    icon: const Icon(Icons.storefront_rounded),
-                    label: Text(store.t('pet.shop')),
+                ? _RoomStripButton(
+                    icon: Icons.storefront_rounded,
+                    label: store.t('pet.shop'),
+                    color: CatudyColors.tealDark,
+                    onTap: onShop,
                   )
                 : ListView.separated(
                     scrollDirection: Axis.horizontal,
@@ -1364,13 +1279,65 @@ class _RoomCustomizeStrip extends StatelessWidget {
                     },
                   ),
           ),
-          const SizedBox(width: 8),
-          IconButton.filledTonal(
-            onPressed: onShop,
-            icon: const Icon(Icons.storefront_rounded),
-            tooltip: store.t('pet.shop'),
-          ),
+          if (items.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            _RoomStripButton(
+              icon: Icons.storefront_rounded,
+              label: store.t('pet.shop'),
+              color: CatudyColors.tealDark,
+              onTap: onShop,
+            ),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+class _RoomStripButton extends StatelessWidget {
+  const _RoomStripButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        height: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 19),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

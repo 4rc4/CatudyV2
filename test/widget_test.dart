@@ -104,7 +104,7 @@ void main() {
     await _pumpCatudy(tester, initialLocation: '/calendar');
 
     expect(find.text('Takvim'), findsOneWidget);
-    expect(find.text('Manuel Ekle'), findsOneWidget);
+    expect(find.text('Kay?t Ekle'), findsOneWidget);
     expect(find.text('Hatırlatma'), findsOneWidget);
     expect(find.text('Pzt'), findsOneWidget);
   });

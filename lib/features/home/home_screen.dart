@@ -334,7 +334,7 @@ class _PetCompanionCard extends StatelessWidget {
                   infoTitle: store.t('home.happiness'),
                   infoMessage: store.languageCode == 'en'
                       ? 'Mochi gets happier with focus sessions and favorite items. High happiness makes the room feel more lively.'
-                      : 'Mochi odak seanslar? ve sevdi?i e?yalarla daha mutlu olur. Mutluluk y?ksekken oda daha canl? hissettirir.',
+                      : 'Mochi ger?ek odak serileriyle daha mutlu olur. Mutluluk y?ksekken oda daha canl? hissettirir.',
                 ),
               ),
               const SizedBox(width: 10),
@@ -346,7 +346,7 @@ class _PetCompanionCard extends StatelessWidget {
                   infoTitle: store.t('home.hunger'),
                   infoMessage: store.languageCode == 'en'
                       ? 'Hunger rises over time. Regular focus and care keep your pet balanced.'
-                      : 'A?l?k zamanla y?kselir. D?zenli odak ve bak?m petin dengesini korur.',
+                      : 'Odak yap?lmad???nda a?l?k artar. Bug?nk? ger?ek seanslar dengeyi toparlar.',
                 ),
               ),
             ],
@@ -377,16 +377,16 @@ class _SecondaryHomePanel extends StatelessWidget {
               onTap: () => context.go('/community?tab=friends'),
             ),
           ),
-          _ShortcutDivider(),
+          const SizedBox(width: 8),
           Expanded(
             child: _HomeShortcutButton(
               icon: Icons.workspace_premium_rounded,
-              label: store.t('season.previewTitle'),
+              label: store.t('season.title'),
               color: CatudyColors.teal,
               onTap: () => context.go('/season'),
             ),
           ),
-          _ShortcutDivider(),
+          const SizedBox(width: 8),
           Expanded(
             child: _HomeShortcutButton(
               icon: Icons.emoji_events_rounded,
@@ -419,13 +419,20 @@ class _HomeShortcutButton extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: Container(
+        height: 58,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: color.withValues(alpha: 0.32)),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 27),
-            const SizedBox(height: 6),
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 4),
             Text(
               label,
               maxLines: 1,
@@ -434,23 +441,12 @@ class _HomeShortcutButton extends StatelessWidget {
               style: TextStyle(
                 color: CatudyColors.mutedFor(context),
                 fontWeight: FontWeight.w900,
-                fontSize: 12,
+                fontSize: 11,
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ShortcutDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 54,
-      color: CatudyColors.lineFor(context).withValues(alpha: 0.7),
     );
   }
 }
@@ -518,6 +514,7 @@ class _DailyGoalPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = store.todayGoalProgress;
+    final remaining = progress.remainingMinutes;
     return CatudyPanel(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       color: CatudyColors.cream,
@@ -531,7 +528,7 @@ class _DailyGoalPanel extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  store.t('home.dailyGoal'),
+                  '${store.t('home.dailyGoal')} - ${progress.goalMinutes}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: CatudyColors.blueFor(context),
                     fontWeight: FontWeight.w900,
@@ -554,11 +551,7 @@ class _DailyGoalPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            store.t('home.dailyGoalProgress', {
-              'done': progress.completedMinutes,
-              'goal': progress.goalMinutes,
-              'left': progress.remainingMinutes,
-            }),
+            store.t('home.dailyGoalRemaining', {'left': remaining}),
             style: TextStyle(
               color: CatudyColors.mutedFor(context),
               fontWeight: FontWeight.w800,

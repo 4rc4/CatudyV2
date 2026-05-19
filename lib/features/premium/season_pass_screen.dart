@@ -31,87 +31,20 @@ class SeasonPassScreen extends StatelessWidget {
           showBack: true,
           fallbackBackPath: '/plus',
           children: [
-            CatudyStagePanel(
-              eyebrow: season.name,
-              title: store.t('season.heroTitle'),
-              subtitle: season.description,
-              icon: Icons.beach_access_rounded,
-              art: const CatudyMascotBadge(
-                size: 104,
-                accent: CatudyColors.teal,
-              ),
-              progress: ratio,
-              progressLabel: store.t('season.xpProgress', {
-                'xp': progress.focusMinutes,
-                'target': target,
-              }),
-              footer: Row(
-                children: [
-                  Expanded(
-                    child: CatudyMetricTile(
-                      icon: Icons.schedule_rounded,
-                      label: store.t('season.daysLeft'),
-                      value: '$daysLeft',
-                      color: CatudyColors.teal,
-                      dense: true,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: CatudyMetricTile(
-                      icon: Icons.workspace_premium_rounded,
-                      label: store.t('season.status'),
-                      value: store.hasPremiumAccess
-                          ? store.t('premium.statusActive')
-                          : store.t('premium.statusInactive'),
-                      color: CatudyColors.yellow,
-                      dense: true,
-                    ),
-                  ),
-                ],
-              ),
+            _SeasonSummaryCard(
+              store: store,
+              season: season,
+              ratio: ratio,
+              target: target,
+              daysLeft: daysLeft,
             ),
             const SizedBox(height: 14),
             _UpgradeStrip(store: store),
             const SizedBox(height: 14),
-            CatudyPanel(
-              accentColor: CatudyColors.violet,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CatudySectionHeader(
-                          title: store.t('season.freeTrack'),
-                          icon: Icons.card_giftcard_rounded,
-                          accentColor: CatudyColors.teal,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: CatudySectionHeader(
-                          title: store.t('season.premiumTrack'),
-                          icon: Icons.workspace_premium_rounded,
-                          accentColor: CatudyColors.violet,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  CatudyRewardRail(
-                    currentValue: progress.focusMinutes,
-                    freeItems: [
-                      for (final reward in season.freeTrack.rewards)
-                        _railItem(context, store, reward),
-                    ],
-                    premiumItems: [
-                      for (final reward in season.premiumTrack.rewards)
-                        _railItem(context, store, reward),
-                    ],
-                  ),
-                ],
-              ),
+            _RewardPreviewCard(
+              store: store,
+              season: season,
+              progress: progress,
             ),
             const SizedBox(height: 14),
             _DailyQuestPanel(store: store),
@@ -120,38 +53,236 @@ class SeasonPassScreen extends StatelessWidget {
       },
     );
   }
+}
 
-  CatudyRewardRailItem _railItem(
-    BuildContext context,
-    CatudyDemoStore store,
-    SeasonReward reward,
-  ) {
-    final claimed = store.seasonProgress.claimedRewardIds.contains(reward.id);
-    final unlocked =
-        store.seasonProgress.focusMinutes >= reward.thresholdMinutes;
-    final premiumBlocked = reward.premiumOnly && !store.hasPremiumAccess;
-    return CatudyRewardRailItem(
-      title: reward.title,
-      subtitle: store.t('season.unlockAtXp', {'xp': reward.thresholdMinutes}),
-      icon: _rewardIcon(reward.kind),
-      color: reward.premiumOnly ? CatudyColors.violet : CatudyColors.teal,
-      threshold: reward.thresholdMinutes,
-      claimed: claimed,
-      unlocked: unlocked,
-      locked: premiumBlocked,
-      actionLabel: store.t('season.claim'),
-      onClaim: claimed || !unlocked || premiumBlocked
-          ? null
-          : () => store.claimSeasonReward(reward.id),
+class SeasonRewardsScreen extends StatelessWidget {
+  const SeasonRewardsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StoreBuilder(
+      builder: (context, store) {
+        final season = store.currentSeason;
+        final progress = store.seasonProgress;
+        return ScreenScaffold(
+          title: store.t('season.rewardsTitle'),
+          showBack: true,
+          fallbackBackPath: '/season',
+          children: [
+            CatudyPanel(
+              accentColor: CatudyColors.violet,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _TrackHeaders(store: store),
+                  const SizedBox(height: 14),
+                  CatudyRewardRail(
+                    currentValue: progress.focusMinutes,
+                    freeItems: [
+                      for (final reward in season.freeTrack.rewards)
+                        _seasonRailItem(store, reward, claimsEnabled: true),
+                    ],
+                    premiumItems: [
+                      for (final reward in season.premiumTrack.rewards)
+                        _seasonRailItem(store, reward, claimsEnabled: true),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
-
-  IconData _rewardIcon(SeasonRewardKind kind) => switch (kind) {
-    SeasonRewardKind.gold => Icons.monetization_on_rounded,
-    SeasonRewardKind.crate => Icons.inventory_2_rounded,
-    SeasonRewardKind.cosmetic => Icons.auto_awesome_rounded,
-  };
 }
+
+class _SeasonSummaryCard extends StatelessWidget {
+  const _SeasonSummaryCard({
+    required this.store,
+    required this.season,
+    required this.ratio,
+    required this.target,
+    required this.daysLeft,
+  });
+
+  final CatudyDemoStore store;
+  final Season season;
+  final double ratio;
+  final int target;
+  final int daysLeft;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = store.seasonProgress;
+    return CatudyPanel(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      accentColor: CatudyColors.teal,
+      child: Row(
+        children: [
+          const CatudyMascotBadge(size: 58, accent: CatudyColors.teal),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  season.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: CatudyColors.tealDark,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  store.t('season.xpProgress', {
+                    'xp': progress.focusMinutes,
+                    'target': target,
+                  }),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: ratio,
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(999),
+                  color: CatudyColors.teal,
+                  backgroundColor: CatudyColors.surfaceFor(context),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Chip(label: Text('$daysLeft ${store.t('season.daysShort')}')),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardPreviewCard extends StatelessWidget {
+  const _RewardPreviewCard({
+    required this.store,
+    required this.season,
+    required this.progress,
+  });
+
+  final CatudyDemoStore store;
+  final Season season;
+  final SeasonProgress progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.go('/season/rewards'),
+      borderRadius: BorderRadius.circular(28),
+      child: CatudyPanel(
+        accentColor: CatudyColors.violet,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(child: _TrackHeaders(store: store)),
+                const Icon(
+                  Icons.fullscreen_rounded,
+                  color: CatudyColors.violet,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            CatudyRewardRail(
+              currentValue: progress.focusMinutes,
+              freeItems: [
+                for (final reward in season.freeTrack.rewards.take(5))
+                  _seasonRailItem(store, reward, claimsEnabled: false),
+              ],
+              premiumItems: [
+                for (final reward in season.premiumTrack.rewards.take(5))
+                  _seasonRailItem(store, reward, claimsEnabled: false),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                store.t('season.tapRewards'),
+                style: TextStyle(
+                  color: CatudyColors.violet,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackHeaders extends StatelessWidget {
+  const _TrackHeaders({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: CatudySectionHeader(
+            title: store.t('season.freeTrack'),
+            icon: Icons.card_giftcard_rounded,
+            accentColor: CatudyColors.teal,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: CatudySectionHeader(
+            title: store.t('season.premiumTrack'),
+            icon: Icons.workspace_premium_rounded,
+            accentColor: CatudyColors.violet,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+CatudyRewardRailItem _seasonRailItem(
+  CatudyDemoStore store,
+  SeasonReward reward, {
+  required bool claimsEnabled,
+}) {
+  final claimed = store.seasonProgress.claimedRewardIds.contains(reward.id);
+  final unlocked = store.seasonProgress.focusMinutes >= reward.thresholdMinutes;
+  final premiumBlocked = reward.premiumOnly && !store.hasPremiumAccess;
+  return CatudyRewardRailItem(
+    title: reward.title,
+    subtitle: store.t('season.unlockAtXp', {'xp': reward.thresholdMinutes}),
+    icon: _rewardIcon(reward.kind),
+    color: reward.premiumOnly ? CatudyColors.violet : CatudyColors.teal,
+    threshold: reward.thresholdMinutes,
+    claimed: claimed,
+    unlocked: unlocked,
+    locked: premiumBlocked,
+    actionLabel: store.t('season.claim'),
+    onClaim: !claimsEnabled || claimed || !unlocked || premiumBlocked
+        ? null
+        : () => store.claimSeasonReward(reward.id),
+  );
+}
+
+IconData _rewardIcon(SeasonRewardKind kind) => switch (kind) {
+  SeasonRewardKind.gold => Icons.monetization_on_rounded,
+  SeasonRewardKind.crate => Icons.inventory_2_rounded,
+  SeasonRewardKind.cosmetic => Icons.auto_awesome_rounded,
+};
 
 class _UpgradeStrip extends StatelessWidget {
   const _UpgradeStrip({required this.store});

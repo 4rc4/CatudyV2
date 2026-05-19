@@ -11,7 +11,7 @@ import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/shop_item_art.dart';
 import '../../shared/widgets/store_builder.dart';
 
-enum _ShopCategory { room, pet, profile, extras }
+enum _ShopCategory { room, pet, profile, crates, extras }
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -27,7 +27,6 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget build(BuildContext context) {
     return StoreBuilder(
       builder: (context, store) {
-        final roomItems = store.roomFurnitureItems.toList();
         final petItems = store.shopItems
             .where((item) => item.slot == 'pet')
             .toList();
@@ -46,14 +45,6 @@ class _ShopScreenState extends State<ShopScreen> {
           title: store.t('shop.title'),
           showBack: true,
           fallbackBackPath: '/pet-room',
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Chip(
-                label: Text('${store.gold} ${store.t('common.gold')}'),
-              ),
-            ),
-          ],
           children: [
             _ShopWalletSummary(store: store),
             const SizedBox(height: 14),
@@ -64,8 +55,8 @@ class _ShopScreenState extends State<ShopScreen> {
                 CatudyFilterTab(
                   value: _ShopCategory.room,
                   label: store.t('shop.category.room'),
-                  icon: Icons.weekend_rounded,
-                  count: roomItems.length + roomEffects.length,
+                  icon: Icons.imagesearch_roller_rounded,
+                  count: roomEffects.length,
                 ),
                 CatudyFilterTab(
                   value: _ShopCategory.pet,
@@ -81,6 +72,14 @@ class _ShopScreenState extends State<ShopScreen> {
                   label: store.t('shop.category.profile'),
                   icon: Icons.badge_rounded,
                   count: profileItems.length + profileStyles.length,
+                ),
+                CatudyFilterTab(
+                  value: _ShopCategory.crates,
+                  label: store.t('shop.category.crates'),
+                  icon: Icons.inventory_2_rounded,
+                  count: store.lootCrates
+                      .where((crate) => !crate.seasonal)
+                      .length,
                 ),
                 CatudyFilterTab(
                   value: _ShopCategory.extras,
@@ -100,7 +99,6 @@ class _ShopScreenState extends State<ShopScreen> {
                 children: switch (_category) {
                   _ShopCategory.room => _roomChildren(
                     store,
-                    roomItems: roomItems,
                     roomEffects: roomEffects,
                   ),
                   _ShopCategory.pet => _petChildren(
@@ -113,6 +111,7 @@ class _ShopScreenState extends State<ShopScreen> {
                     profileItems: profileItems,
                     profileStyles: profileStyles,
                   ),
+                  _ShopCategory.crates => _crateChildren(store),
                   _ShopCategory.extras => _extraChildren(store, extras: extras),
                 },
               ),
@@ -125,46 +124,25 @@ class _ShopScreenState extends State<ShopScreen> {
 
   List<Widget> _roomChildren(
     CatudyDemoStore store, {
-    required List<ShopItem> roomItems,
     required List<CosmeticItem> roomEffects,
   }) {
-    final children = <Widget>[];
-    for (final slot in const [
-      'room_study',
-      'room_bed',
-      'room_decor',
-      'room_shelf',
-    ]) {
-      final items = roomItems.where((item) => item.slot == slot).toList();
-      if (items.isEmpty) {
-        continue;
-      }
-      children.add(
+    return [
+      if (roomEffects.isNotEmpty)
         _CatalogPanel(
-          title: _roomSlotTitle(store, slot),
-          icon: _roomSlotIcon(slot),
-          accentColor: _roomSlotColor(slot),
-          children: [
-            for (final item in items) _ShopItemCard(store: store, item: item),
-          ],
-        ),
-      );
-      children.add(const SizedBox(height: 12));
-    }
-    if (roomEffects.isNotEmpty) {
-      children.add(
-        _CatalogPanel(
-          title: store.t('shop.section.roomEffects'),
+          title: store.t('shop.section.roomBackgrounds'),
           icon: Icons.auto_awesome_motion_rounded,
           accentColor: CatudyColors.violet,
           children: [
             for (final item in roomEffects)
               _PremiumCosmeticCard(store: store, item: item),
           ],
+        )
+      else
+        CatudyPanel(
+          accentColor: CatudyColors.violet,
+          child: Text(store.t('shop.noRoomBackgrounds')),
         ),
-      );
-    }
-    return children;
+    ];
   }
 
   List<Widget> _petChildren(
@@ -251,8 +229,6 @@ class _ShopScreenState extends State<ShopScreen> {
     required List<CosmeticItem> extras,
   }) {
     return [
-      _CratesPromoPanel(store: store),
-      const SizedBox(height: 12),
       if (extras.isNotEmpty)
         _CatalogPanel(
           title: store.t('shop.section.extras'),
@@ -272,40 +248,28 @@ class _ShopScreenState extends State<ShopScreen> {
     ];
   }
 
+  List<Widget> _crateChildren(CatudyDemoStore store) {
+    return [
+      _CratesPromoPanel(store: store),
+      const SizedBox(height: 12),
+      _CatalogPanel(
+        title: store.t('shop.category.crates'),
+        icon: Icons.inventory_2_rounded,
+        accentColor: CatudyColors.teal,
+        children: [
+          for (final crate in store.lootCrates.where(
+            (crate) => !crate.seasonal,
+          ))
+            _CrateCard(store: store, crate: crate),
+        ],
+      ),
+    ];
+  }
+
   List<CosmeticItem> _cosmeticsFor(CatudyDemoStore store, Set<String> slots) {
     return store.directPurchaseCosmetics
         .where((item) => slots.contains(item.slot))
         .toList();
-  }
-
-  String _roomSlotTitle(CatudyDemoStore store, String slot) {
-    return switch (slot) {
-      'room_study' => store.t('shop.room.slot.study'),
-      'room_bed' => store.t('shop.room.slot.bed'),
-      'room_decor' => store.t('shop.room.slot.decor'),
-      'room_shelf' => store.t('shop.room.slot.shelf'),
-      _ => store.t('shop.roomFurniture'),
-    };
-  }
-
-  IconData _roomSlotIcon(String slot) {
-    return switch (slot) {
-      'room_study' => Icons.auto_stories_rounded,
-      'room_bed' => Icons.bed_rounded,
-      'room_decor' => Icons.lightbulb_rounded,
-      'room_shelf' => Icons.menu_book_rounded,
-      _ => Icons.weekend_rounded,
-    };
-  }
-
-  Color _roomSlotColor(String slot) {
-    return switch (slot) {
-      'room_study' => CatudyColors.teal,
-      'room_bed' => CatudyColors.lavender,
-      'room_decor' => CatudyColors.yellow,
-      'room_shelf' => CatudyColors.tealDark,
-      _ => CatudyColors.violet,
-    };
   }
 }
 
@@ -504,6 +468,37 @@ class _PremiumCosmeticCard extends StatelessWidget {
               ? store.t('shop.plusOnly')
               : store.t('shop.buy'),
         ),
+      ),
+    );
+  }
+}
+
+class _CrateCard extends StatelessWidget {
+  const _CrateCard({required this.store, required this.crate});
+
+  final CatudyDemoStore store;
+  final LootCrate crate;
+
+  @override
+  Widget build(BuildContext context) {
+    final owned = store.crateInventory[crate.id] ?? 0;
+    final accent = switch (crate.type) {
+      LootCrateType.cat => CatudyColors.coral,
+      LootCrateType.room => CatudyColors.violet,
+      LootCrateType.style => CatudyColors.teal,
+    };
+    return _ProductCard(
+      accent: accent,
+      art: Icon(Icons.inventory_2_rounded, color: accent, size: 58),
+      title: crate.name,
+      body: crate.description,
+      chips: [
+        _MetaChip(label: '${crate.price} ${store.t('common.gold')}'),
+        if (owned > 0) _MetaChip(label: 'x$owned'),
+      ],
+      action: FilledButton(
+        onPressed: () => context.go('/crates'),
+        child: Text(store.t('shop.openCrates')),
       ),
     );
   }

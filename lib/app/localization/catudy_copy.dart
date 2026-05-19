@@ -32,6 +32,8 @@ class CatudyCopy {
     'common.gold': 'altın',
     'common.hoursShort': 's',
     'common.points': 'puan',
+    'common.delete': 'Sil',
+    'common.clear': 'Temizle',
     'error.network':
         'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.',
     'error.auth': 'Giriş bilgilerini kontrol edip tekrar dene.',
@@ -39,6 +41,22 @@ class CatudyCopy {
     'lobby.genericError': 'Lobi işlemi tamamlanamadı. Biraz sonra tekrar dene.',
     'app.exitTitle': 'Uygulamadan çıkılsın mı?',
     'app.exitBody': 'Catudy kapatılacak. Emin misin?',
+    'terms.title': 'Kullan?c? s?zle?mesi',
+    'terms.intro':
+        'Catudy oda??n?, hat?rlatmalar?n?, pet ilerlemeni ve sosyal ?zelliklerini ?al??t?rmak i?in bu k?sa kurallar? ister.',
+    'terms.bulletAge':
+        'Catudy 13 ya? ve ?zeri kullan?c?lar i?indir; daha k???ksen ebeveyn izni gerekir.',
+    'terms.bulletData':
+        'Odak kay?tlar?n, hedeflerin, profil ad?n ve sosyal/lobi verilerin uygulamay? ?al??t?rmak i?in saklan?r.',
+    'terms.bulletContent':
+        'Ekledi?in not ve profil i?eriklerinden sen sorumlusun; ba?kalar?n?n hakk?n? ihlal eden i?erik ekleme.',
+    'terms.bulletFairUse':
+        'Hile, spam, taciz, tersine m?hendislik veya yasa d??? kullan?m yasakt?r.',
+    'terms.bulletDeletion':
+        'Ayarlar b?l?m?nden ??k?? yapabilir ve yerel hesap verilerini silebilirsin.',
+    'terms.acceptCheck':
+        'Kullan?c? s?zle?mesini ve gizlilik ?zetini kabul ediyorum.',
+    'terms.accept': 'Kabul et',
 
     'auth.title': 'Giriş',
     'auth.subtitle': 'Catudy hesabına gir, lobileri ve ilerlemeyi eşitle.',
@@ -94,6 +112,7 @@ class CatudyCopy {
     'home.unlockCoach': 'Koçu aç',
     'home.dailyGoal': 'Günlük hedef',
     'home.dailyGoalProgress': '{done}/{goal} dk tamamlandı. Kalan: {left} dk.',
+    'home.dailyGoalRemaining': 'Kalan: {left} dk',
     'home.editDailyGoal': 'Günlük hedefi düzenle',
     'home.goalMinutes': 'Hedef dakika',
     'home.petWhisperTitle': '{pet} yanında',
@@ -186,6 +205,9 @@ class CatudyCopy {
     'season.questFocusTitle': 'Günlük odak hedefini ilerlet',
     'season.questReminderTitle': 'Bugünkü görevleri tamamla',
     'season.focusXp': 'Season XP',
+    'season.daysShort': 'g?n',
+    'season.rewardsTitle': 'Focus Pass ?d?lleri',
+    'season.tapRewards': '?d?lleri tam ekran g?r',
 
     'calendar.todayBadge': 'Bugün',
     'calendar.focusCompleted': '{minutes} dk odak tamamlandı',
@@ -197,13 +219,22 @@ class CatudyCopy {
     'stats.sessionsDelta': '+8 geçen aya göre',
     'stats.averageDelta': '+6 dk geçen aya göre',
     'stats.bestDay': 'En iyi gün',
-    'stats.focusTimeThisPeriod': 'Bu dönemin odak süresi',
+    'stats.focusTimeThisPeriod': 'Odak s?resi',
     'stats.emptyMochiInsight':
         'Mochi veri topluyor; birkaç seans sonra ritmin daha görünür olacak.',
     'stats.mochiBestInsight': '{day} günleri odak süren yüksek görünüyor.',
+    'stats.sessionsInfo': 'Bu aral?kta tamamlanan ger?ek odak seans?: {count}.',
+    'stats.averageSessionInfo': 'Seans ba??na ortalama s?re: {minutes} dk.',
+    'stats.bestDayInfo': '{day} g?n? {minutes} dk ile en g??l? g?n.',
+    'stats.bestDayInfoEmpty': 'Bu aral?kta hen?z en iyi g?n olu?mad?.',
+    'stats.focusedTimeInfo': 'Bu aral?kta toplam {minutes} dk odak kayd? var.',
+    'stats.categoryDistributionInfo':
+        'Odak dakikalar?n?n kategorilere da??l?m?.',
+    'stats.dayFocusInfo': 'Bu g?n {minutes} dk odakland?.',
 
     'profile.profileHeroBody': '{pet} senin en yakın odak dostun.',
     'profile.level': 'Lv. {level}',
+    'profile.levelTitle': 'Seviye',
     'profile.interests': 'İlgi Alanları / Kategoriler',
     'profile.collection': 'Koleksiyon',
     'profile.monthlyTitle': 'Bu Ay',
@@ -216,6 +247,7 @@ class CatudyCopy {
     'pet.play': 'Oyna',
     'pet.sleep': 'Uyu',
     'pet.love': 'Sev',
+    'pet.rename': '?smi de?i?tir',
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
@@ -230,7 +262,7 @@ class CatudyCopy {
     'leaderboard.viewAll': 'Sonrasını görüntüle',
 
     'calendar.title': 'Takvim',
-    'calendar.manualAdd': 'Manuel Ekle',
+    'calendar.manualAdd': 'Kay?t Ekle',
     'calendar.reminderAdd': 'Hatırlatma',
     'calendar.reminders': 'Hatırlatmalar',
     'calendar.noReminders': 'Bugün için hatırlatma yok.',
@@ -244,6 +276,11 @@ class CatudyCopy {
     'calendar.reminderHint': 'Örn. Matematik tekrarını bitir',
     'calendar.enterText': 'Metin gir.',
     'calendar.time': 'Saat: {time}',
+    'calendar.batchSelected': '{count} g?n se?ildi',
+    'calendar.batchHint':
+        '{count} g?n se?ildi. Kay?t veya hat?rlatma se?ili g?nlere uygulan?r.',
+    'calendar.enterMinutes': 'Dakika gir.',
+    'calendar.recordNote': 'Not',
 
     'manual.title': 'Manuel Kayıt',
     'manual.info': 'Manuel kayıtlar açıkça etiketlenir ve ödül kazandırmaz.',
@@ -374,6 +411,9 @@ class CatudyCopy {
     'shop.category.pet': 'Pet',
     'shop.category.profile': 'Profil',
     'shop.category.extras': 'Ekstralar',
+    'shop.category.crates': 'Kutular',
+    'shop.section.roomBackgrounds': 'Oda temalar?',
+    'shop.noRoomBackgrounds': '?imdilik sat?lacak oda temas? yok.',
     'shop.section.petItems': 'Pet aksesuarları',
     'shop.section.petStyles': 'Pet stilleri',
     'shop.section.profileItems': 'Profil aksesuarları',
@@ -535,7 +575,7 @@ class CatudyCopy {
     'buddy.redeemed': 'Buddy Pass kullanıldı.',
     'buddy.invalid': 'Kod kullanılamadı.',
 
-    'season.title': 'Sezon Pass',
+    'season.title': 'Focus Pass',
     'season.progress': '{minutes} gerçek odak dakikası',
     'season.freeTrack': 'Ücretsiz yol',
     'season.premiumTrack': 'Plus yolu',
@@ -593,8 +633,7 @@ class CatudyCopy {
     'settings.dailyGoalReminderBody': 'Her gün {time} saatinde hatırlat.',
     'settings.changeReminderTime': 'Hatırlatma saatini değiştir',
     'settings.monthlyGoal': 'Aylık hedef',
-    'settings.monthlyGoalBody':
-        'Profildeki Bu Ay ilerlemesi için dakika hedefi.',
+    'settings.monthlyGoalBody': 'Bu Ay hedefi.',
     'settings.save': 'Ayarları kaydet',
     'settings.saved': 'Ayarlar kaydedildi',
     'settings.offline':
@@ -605,6 +644,10 @@ class CatudyCopy {
     'settings.authSignedOut': 'Henüz giriş yapılmadı.',
     'settings.signOut': 'Çıkış yap',
     'settings.openLogin': 'Giriş ekranını aç',
+    'settings.deleteAccount': 'Hesab? sil',
+    'settings.deleteAccountBody':
+        'Bu cihazdaki Catudy verileri silinir ve oturum kapat?l?r. Online hesab?n sunucu taraf?nda kal?c? silinmesi i?in backend deste?i gerekir.',
+    'settings.deleteAccountConfirm': 'Hesab? sil',
     'settings.demoWallet': 'Demo Bakiyesi',
     'settings.demoWalletBody':
         'Mağaza denemeleri için altını 5000, puanı 2500 seviyesine tamamlar. Satın alınan eşyaları sıfırlamaz.',
@@ -706,6 +749,8 @@ class CatudyCopy {
     'common.gold': 'gold',
     'common.hoursShort': 'h',
     'common.points': 'points',
+    'common.delete': 'Delete',
+    'common.clear': 'Clear',
     'error.network': 'Could not connect. Check your internet and try again.',
     'error.auth': 'Check your sign-in details and try again.',
     'auth.genericError': 'Sign-in could not be completed. Try again shortly.',
@@ -713,6 +758,21 @@ class CatudyCopy {
         'Lobby action could not be completed. Try again shortly.',
     'app.exitTitle': 'Exit the app?',
     'app.exitBody': 'Catudy will close. Are you sure?',
+    'terms.title': 'User agreement',
+    'terms.intro':
+        'Catudy needs these short rules to run focus tracking, reminders, pet progress, and social features.',
+    'terms.bulletAge':
+        'Catudy is for users 13 and older; younger users need parent permission.',
+    'terms.bulletData':
+        'Your focus records, goals, profile name, and social/lobby data are stored to provide the app.',
+    'terms.bulletContent':
+        'You are responsible for notes and profile content you add; do not add content that violates others rights.',
+    'terms.bulletFairUse':
+        'Cheating, spam, harassment, reverse engineering, or illegal use is not allowed.',
+    'terms.bulletDeletion':
+        'You can sign out and delete local account data from Settings.',
+    'terms.acceptCheck': 'I accept the user agreement and privacy summary.',
+    'terms.accept': 'Accept',
 
     'auth.title': 'Sign in',
     'auth.subtitle': 'Sign in to Catudy and sync lobbies and progress.',
@@ -769,6 +829,7 @@ class CatudyCopy {
     'home.dailyGoal': 'Daily target',
     'home.dailyGoalProgress':
         '{done}/{goal} min completed. Remaining: {left} min.',
+    'home.dailyGoalRemaining': 'Remaining: {left} min',
     'home.editDailyGoal': 'Edit daily target',
     'home.goalMinutes': 'Target minutes',
     'home.petWhisperTitle': '{pet} is with you',
@@ -864,6 +925,9 @@ class CatudyCopy {
     'season.questFocusTitle': 'Progress today?s focus target',
     'season.questReminderTitle': 'Complete today?s tasks',
     'season.focusXp': 'Season XP',
+    'season.daysShort': 'days',
+    'season.rewardsTitle': 'Focus Pass Rewards',
+    'season.tapRewards': 'Open rewards full screen',
 
     'calendar.todayBadge': 'Today',
     'calendar.focusCompleted': '{minutes} min focus completed',
@@ -875,13 +939,24 @@ class CatudyCopy {
     'stats.sessionsDelta': '+8 vs last month',
     'stats.averageDelta': '+6 min vs last month',
     'stats.bestDay': 'Best day',
-    'stats.focusTimeThisPeriod': 'Focus time this period',
+    'stats.focusTimeThisPeriod': 'Focused time',
     'stats.emptyMochiInsight':
         'Mochi is gathering data; your rhythm will become clearer after a few sessions.',
     'stats.mochiBestInsight': 'Your focus time looks strong on {day}.',
+    'stats.sessionsInfo':
+        'Real focus sessions completed in this range: {count}.',
+    'stats.averageSessionInfo': 'Average length per session: {minutes} min.',
+    'stats.bestDayInfo': '{day} is strongest with {minutes} min.',
+    'stats.bestDayInfoEmpty': 'No best day yet in this range.',
+    'stats.focusedTimeInfo':
+        'Total focus recorded in this range: {minutes} min.',
+    'stats.categoryDistributionInfo':
+        'How your focus minutes split by category.',
+    'stats.dayFocusInfo': 'Focused {minutes} min on this day.',
 
     'profile.profileHeroBody': '{pet} is your closest focus buddy.',
     'profile.level': 'Lv. {level}',
+    'profile.levelTitle': 'Level',
     'profile.interests': 'Interests / Categories',
     'profile.collection': 'Collection',
     'profile.monthlyTitle': 'This Month',
@@ -894,6 +969,7 @@ class CatudyCopy {
     'pet.play': 'Play',
     'pet.sleep': 'Sleep',
     'pet.love': 'Love',
+    'pet.rename': 'Rename',
 
     'leaderboard.title': 'Leaderboard',
     'leaderboard.body':
@@ -908,7 +984,7 @@ class CatudyCopy {
     'leaderboard.viewAll': 'View the rest',
 
     'calendar.title': 'Calendar',
-    'calendar.manualAdd': 'Add Manual',
+    'calendar.manualAdd': 'Add Record',
     'calendar.reminderAdd': 'Reminder',
     'calendar.reminders': 'Reminders',
     'calendar.noReminders': 'No reminders for this day.',
@@ -922,6 +998,11 @@ class CatudyCopy {
     'calendar.reminderHint': 'E.g. finish math review',
     'calendar.enterText': 'Enter text.',
     'calendar.time': 'Time: {time}',
+    'calendar.batchSelected': '{count} days selected',
+    'calendar.batchHint':
+        '{count} days selected. A record or reminder applies to selected days.',
+    'calendar.enterMinutes': 'Enter minutes.',
+    'calendar.recordNote': 'Note',
 
     'manual.title': 'Manual Record',
     'manual.info':
@@ -1052,6 +1133,9 @@ class CatudyCopy {
     'shop.category.pet': 'Pet',
     'shop.category.profile': 'Profile',
     'shop.category.extras': 'Extras',
+    'shop.category.crates': 'Crates',
+    'shop.section.roomBackgrounds': 'Room themes',
+    'shop.noRoomBackgrounds': 'No room themes are available yet.',
     'shop.section.petItems': 'Pet accessories',
     'shop.section.petStyles': 'Pet styles',
     'shop.section.profileItems': 'Profile accessories',
@@ -1213,7 +1297,7 @@ class CatudyCopy {
     'buddy.redeemed': 'Buddy Pass redeemed.',
     'buddy.invalid': 'That code could not be used.',
 
-    'season.title': 'Season Pass',
+    'season.title': 'Focus Pass',
     'season.progress': '{minutes} real focus minutes',
     'season.freeTrack': 'Free track',
     'season.premiumTrack': 'Plus track',
@@ -1271,8 +1355,7 @@ class CatudyCopy {
     'settings.dailyGoalReminderBody': 'Remind every day at {time}.',
     'settings.changeReminderTime': 'Change reminder time',
     'settings.monthlyGoal': 'Monthly goal',
-    'settings.monthlyGoalBody':
-        'Minute target for This Month progress on the profile.',
+    'settings.monthlyGoalBody': 'This Month target.',
     'settings.save': 'Save settings',
     'settings.saved': 'Settings saved',
     'settings.offline': 'Offline use is on. Data is kept on this device.',
@@ -1282,6 +1365,10 @@ class CatudyCopy {
     'settings.authSignedOut': 'Not signed in yet.',
     'settings.signOut': 'Sign out',
     'settings.openLogin': 'Open sign-in screen',
+    'settings.deleteAccount': 'Delete account',
+    'settings.deleteAccountBody':
+        'This deletes Catudy data on this device and signs you out. Permanent server-side account deletion requires backend support.',
+    'settings.deleteAccountConfirm': 'Delete account',
     'settings.demoWallet': 'Demo Wallet',
     'settings.demoWalletBody':
         'Tops gold up to 5000 and points up to 2500 for shop testing. Purchased items are kept.',

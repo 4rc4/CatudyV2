@@ -42,7 +42,7 @@ class CatudyRouter {
       ),
       ShellRoute(
         builder: (context, state, child) {
-          return CatudyShell(location: state.uri.path, child: child);
+          return CatudyShell(location: state.uri.toString(), child: child);
         },
         routes: [
           GoRoute(
@@ -105,6 +105,11 @@ class CatudyRouter {
             path: '/season',
             pageBuilder: (context, state) =>
                 _animatedPage(state, const SeasonPassScreen()),
+          ),
+          GoRoute(
+            path: '/season/rewards',
+            pageBuilder: (context, state) =>
+                _animatedPage(state, const SeasonRewardsScreen()),
           ),
           GoRoute(
             path: '/crates',

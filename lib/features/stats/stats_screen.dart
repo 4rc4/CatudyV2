@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
+import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/catudy_visual_system.dart';
@@ -92,45 +93,68 @@ class _StatsScreenState extends State<StatsScreen> {
                       'day': best.label,
                       'minutes': best.minutes,
                     }),
-              icon: Icons.query_stats_rounded,
               art: const CatudyMascotBadge(size: 92, accent: CatudyColors.teal),
-              footer: Row(
-                children: [
-                  Expanded(
-                    child: CatudyMetricTile(
-                      icon: Icons.check_circle_rounded,
-                      label: store.t('stats.sessions'),
-                      value: '$sessions',
-                      caption: store.t('stats.sessionsDelta'),
-                      color: CatudyColors.teal,
-                      dense: true,
+              footer: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _InfoMetricTile(
+                        title: store.t('stats.sessions'),
+                        message: store.t('stats.sessionsInfo', {
+                          'count': sessions,
+                        }),
+                        child: CatudyMetricTile(
+                          icon: Icons.check_circle_rounded,
+                          label: store.t('stats.sessions'),
+                          value: '$sessions',
+                          caption: store.t('stats.sessionsDelta'),
+                          color: CatudyColors.teal,
+                          dense: true,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: CatudyMetricTile(
-                      icon: Icons.schedule_rounded,
-                      label: store.t('stats.averageSession'),
-                      value: '$average${store.t('common.minutesShort')}',
-                      caption: store.t('stats.averageDelta'),
-                      color: CatudyColors.violet,
-                      dense: true,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _InfoMetricTile(
+                        title: store.t('stats.averageSession'),
+                        message: store.t('stats.averageSessionInfo', {
+                          'minutes': average,
+                        }),
+                        child: CatudyMetricTile(
+                          icon: Icons.schedule_rounded,
+                          label: store.t('stats.averageSession'),
+                          value: '$average${store.t('common.minutesShort')}',
+                          caption: store.t('stats.averageDelta'),
+                          color: CatudyColors.violet,
+                          dense: true,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: CatudyMetricTile(
-                      icon: Icons.star_rounded,
-                      label: store.t('stats.bestDay'),
-                      value: best?.label ?? '-',
-                      caption: best == null
-                          ? null
-                          : '${best.minutes}${store.t('common.minutesShort')}',
-                      color: CatudyColors.yellow,
-                      dense: true,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _InfoMetricTile(
+                        title: store.t('stats.bestDay'),
+                        message: best == null
+                            ? store.t('stats.bestDayInfoEmpty')
+                            : store.t('stats.bestDayInfo', {
+                                'day': best.label,
+                                'minutes': best.minutes,
+                              }),
+                        child: CatudyMetricTile(
+                          icon: Icons.star_rounded,
+                          label: store.t('stats.bestDay'),
+                          value: best?.label ?? '-',
+                          caption: best == null
+                              ? null
+                              : '${best.minutes}${store.t('common.minutesShort')}',
+                          color: CatudyColors.yellow,
+                          dense: true,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -152,7 +176,13 @@ class _StatsScreenState extends State<StatsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _FocusBarChart(data: chartData, store: store),
+                  CatudyInfoTap(
+                    title: store.t('stats.focusTimeThisPeriod'),
+                    message: store.t('stats.focusedTimeInfo', {
+                      'minutes': minutes,
+                    }),
+                    child: _FocusBarChart(data: chartData, store: store),
+                  ),
                   const SizedBox(height: 12),
                   _InsightStrip(
                     icon: Icons.pets_rounded,
@@ -183,10 +213,14 @@ class _StatsScreenState extends State<StatsScreen> {
                       style: TextStyle(color: CatudyColors.mutedFor(context)),
                     )
                   else
-                    _CategoryDonut(
-                      slices: categorySlices,
-                      totalMinutes: minutes,
-                      minutesSuffix: store.t('common.minutesShort'),
+                    CatudyInfoTap(
+                      title: store.t('stats.categoryDistribution'),
+                      message: store.t('stats.categoryDistributionInfo'),
+                      child: _CategoryDonut(
+                        slices: categorySlices,
+                        totalMinutes: minutes,
+                        minutesSuffix: store.t('common.minutesShort'),
+                      ),
                     ),
                 ],
               ),
@@ -397,58 +431,67 @@ class _FocusBarChart extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      point.minutes == 0
-                          ? ''
-                          : '${point.minutes}${store.t('common.minutesShort')}',
-                      style: TextStyle(
-                        color: CatudyColors.mutedFor(context),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11,
+                child: CatudyInfoTap(
+                  title: point.label,
+                  message: store.t('stats.dayFocusInfo', {
+                    'minutes': point.minutes,
+                  }),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        point.minutes == 0
+                            ? ''
+                            : '${point.minutes}${store.t('common.minutesShort')}',
+                        style: TextStyle(
+                          color: CatudyColors.mutedFor(context),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          width: double.infinity,
-                          height: 24 + (112 * (point.minutes / maxValue)),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(999),
-                            gradient: const LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [CatudyColors.teal, CatudyColors.violet],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: CatudyColors.teal.withValues(
-                                  alpha: 0.20,
-                                ),
-                                blurRadius: 14,
+                      const SizedBox(height: 5),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            width: double.infinity,
+                            height: 24 + (112 * (point.minutes / maxValue)),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  CatudyColors.teal,
+                                  CatudyColors.violet,
+                                ],
                               ),
-                            ],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: CatudyColors.teal.withValues(
+                                    alpha: 0.20,
+                                  ),
+                                  blurRadius: 14,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 7),
-                    Text(
-                      point.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: CatudyColors.mutedFor(context),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11,
+                      const SizedBox(height: 7),
+                      Text(
+                        point.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: CatudyColors.mutedFor(context),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -582,6 +625,26 @@ class _InsightStrip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _InfoMetricTile extends StatelessWidget {
+  const _InfoMetricTile({
+    required this.title,
+    required this.message,
+    required this.child,
+  });
+
+  final String title;
+  final String message;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 142,
+      child: CatudyInfoTap(title: title, message: message, child: child),
     );
   }
 }

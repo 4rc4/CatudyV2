@@ -26,6 +26,9 @@ class _CatudyShellState extends State<CatudyShell> {
   CatudyCelebration? _celebration;
 
   static const _paths = ['/', '/stats', '/calendar', '/pet-room', '/profile'];
+  static final Map<int, String> _lastPathByIndex = {
+    for (var i = 0; i < _paths.length; i++) i: _paths[i],
+  };
   static const _items = [
     _NavItem(
       labelKey: 'nav.home',
@@ -70,7 +73,9 @@ class _CatudyShellState extends State<CatudyShell> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedIndex = _selectedIndex(widget.location);
+    final currentPath = _pathOnly(widget.location);
+    final selectedIndex = _selectedIndex(currentPath);
+    _rememberLocation(selectedIndex, widget.location);
     final dark = CatudyColors.isDark(context);
 
     return PopScope<Object?>(
@@ -83,7 +88,7 @@ class _CatudyShellState extends State<CatudyShell> {
           context.pop();
           return;
         }
-        final target = _backTarget(widget.location);
+        final target = _backTarget(currentPath);
         if (target == null) {
           unawaited(_confirmAndExit(context));
           return;
@@ -163,14 +168,18 @@ class _CatudyShellState extends State<CatudyShell> {
                               selected: selectedIndex == index,
                               isPet: index == 3,
                               onTap: () {
-                                if (index == 3) {
+                                final focusRoute = index == 0
+                                    ? catudyDemoStore
+                                          .consumeFocusNavigationRoute()
+                                    : null;
+                                final target =
+                                    focusRoute ??
+                                    _lastPathByIndex[index] ??
+                                    _paths[index];
+                                if (index == 3 &&
+                                    _pathOnly(target) == '/pet-room') {
                                   catudyDemoStore.clearVisitedRoom();
                                 }
-                                final target = index == 0
-                                    ? (catudyDemoStore
-                                              .consumeFocusNavigationRoute() ??
-                                          _paths[index])
-                                    : _paths[index];
                                 context.go(target);
                               },
                             ),
@@ -222,6 +231,19 @@ class _CatudyShellState extends State<CatudyShell> {
       setState(() => _celebration = null);
       _scheduleCelebrationDrain();
     });
+  }
+
+  String _pathOnly(String location) {
+    final uri = Uri.tryParse(location);
+    return uri?.path.isNotEmpty == true ? uri!.path : location;
+  }
+
+  void _rememberLocation(int index, String location) {
+    final path = _pathOnly(location);
+    if (path == '/auth' || path.startsWith('/focus/')) {
+      return;
+    }
+    _lastPathByIndex[index] = location;
   }
 
   Future<void> _confirmAndExit(BuildContext context) async {
@@ -300,20 +322,18 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path.startsWith('/stats')) {
       return 1;
     }
-    if (path.startsWith('/calendar')) {
+    if (path.startsWith('/calendar') || path.startsWith('/manual-entry')) {
       return 2;
     }
     if (path.startsWith('/pet-room') ||
         path.startsWith('/shop') ||
-        path.startsWith('/inventory')) {
+        path.startsWith('/inventory') ||
+        path.startsWith('/crates')) {
       return 3;
     }
     if (path.startsWith('/profile') ||
         path.startsWith('/settings') ||
-        path.startsWith('/public-profile') ||
-        path.startsWith('/plus') ||
-        path.startsWith('/season') ||
-        path.startsWith('/crates')) {
+        path.startsWith('/public-profile')) {
       return 4;
     }
     return 0;
