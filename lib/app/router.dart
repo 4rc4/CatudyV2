@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/calendar/calendar_screen.dart';
+import '../features/app_lock/app_lock_screen.dart';
 import '../features/auth/auth_screen.dart';
 import '../features/calendar/manual_entry_screen.dart';
 import '../features/focus/category_screen.dart';
@@ -118,8 +119,12 @@ class CatudyRouter {
           ),
           GoRoute(
             path: '/focus/start',
-            pageBuilder: (context, state) =>
-                _animatedPage(state, const FocusStartScreen()),
+            pageBuilder: (context, state) => _animatedPage(
+              state,
+              FocusStartScreen(
+                unlockPackageName: state.uri.queryParameters['unlockApp'],
+              ),
+            ),
           ),
           GoRoute(
             path: '/focus/category',
@@ -186,6 +191,11 @@ class CatudyRouter {
             path: '/settings',
             pageBuilder: (context, state) =>
                 _animatedPage(state, const SettingsScreen()),
+          ),
+          GoRoute(
+            path: '/app-lock',
+            pageBuilder: (context, state) =>
+                _animatedPage(state, const AppLockScreen()),
           ),
         ],
       ),

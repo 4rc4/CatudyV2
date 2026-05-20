@@ -118,6 +118,22 @@ class CatudyAuthService {
 
   Future<void> signOut() => _client.auth.signOut();
 
+  Future<void> deleteCurrentUser() async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      return;
+    }
+    final deleted = await _client.rpc('catudy_delete_current_user');
+    if (deleted != true) {
+      throw StateError('Account deletion was not completed.');
+    }
+    try {
+      await _client.auth.signOut();
+    } catch (_) {
+      // The Supabase session may already be invalid after deleting auth.users.
+    }
+  }
+
   Future<void> _signInWithOAuth(OAuthProvider provider) async {
     final opened = await _client.auth.signInWithOAuth(
       provider,

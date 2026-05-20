@@ -109,6 +109,7 @@ class ProfileScreen extends StatelessWidget {
     return records
         .where(
           (item) =>
+              !item.manual &&
               item.createdAt.year == now.year &&
               item.createdAt.month == now.month,
         )
@@ -244,13 +245,13 @@ class _ProfileHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CatudyPanel(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(13),
       accentColor: CatudyColors.violet,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
                 child: Text(
@@ -264,23 +265,17 @@ class _ProfileHeroCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-              _ProfileAvatar(store: store, size: 92),
+              const SizedBox(width: 10),
+              IconButton.filledTonal(
+                onPressed: onEdit,
+                tooltip: store.t('profile.edit'),
+                icon: const Icon(Icons.edit_rounded),
+              ),
+              const SizedBox(width: 8),
+              _ProfileAvatar(store: store, size: 74),
             ],
           ),
-          const SizedBox(height: 14),
-          FilledButton.icon(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_rounded, size: 18),
-            label: Text(store.t('profile.edit')),
-            style: FilledButton.styleFrom(
-              backgroundColor: CatudyColors.violet,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(0, 40),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -336,18 +331,35 @@ class _ProfileStatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 94,
-      padding: const EdgeInsets.all(11),
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
       decoration: BoxDecoration(
         color: CatudyColors.surfaceFor(context),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color, size: 20),
-          const Spacer(),
+          Row(
+            children: [
+              Icon(icon, color: color, size: 16),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 7),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -359,17 +371,6 @@ class _ProfileStatTile extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 height: 1,
               ),
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w900,
-              fontSize: 11,
             ),
           ),
         ],

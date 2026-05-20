@@ -5,6 +5,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../lock/catudy_app_lock_models.dart';
+import '../lock/catudy_app_lock_service.dart';
 import '../localization/catudy_copy.dart';
 import '../online/catudy_auth_service.dart';
 import '../online/catudy_backup_service.dart';
@@ -194,6 +196,7 @@ class ActiveFocusSession {
     required this.startedAt,
     required this.lobbyMode,
     this.todoId,
+    this.unlockPackageName,
   });
 
   factory ActiveFocusSession.fromJson(Map<String, dynamic> json) {
@@ -203,6 +206,7 @@ class ActiveFocusSession {
       startedAt: _readDate(json, 'startedAt', DateTime.now()),
       lobbyMode: _readBool(json, 'lobbyMode', false),
       todoId: _readNullableString(json, 'todoId'),
+      unlockPackageName: _readNullableString(json, 'unlockPackageName'),
     );
   }
 
@@ -211,6 +215,7 @@ class ActiveFocusSession {
   final DateTime startedAt;
   final bool lobbyMode;
   final String? todoId;
+  final String? unlockPackageName;
 
   DateTime get plannedEndAt =>
       startedAt.add(Duration(minutes: durationMinutes));
@@ -221,6 +226,7 @@ class ActiveFocusSession {
     'startedAt': startedAt.toIso8601String(),
     'lobbyMode': lobbyMode,
     'todoId': todoId,
+    'unlockPackageName': unlockPackageName,
   };
 }
 
@@ -463,6 +469,8 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   static const supportedLanguageCodes = ['tr', 'en'];
+  static const freeLockedAppLimit = 5;
+  static const freeLockLocationLimit = 3;
 
   final CatudyLocalStorage _storage;
   CatudyAuthService? _authService;
@@ -515,6 +523,9 @@ class CatudyDemoStore extends ChangeNotifier {
   final equippedRoomItemIds = <String, String>{};
   final unlockedPetIds = <String>{};
   final _pendingUnlockedPetIds = <String>[];
+  final lockedApps = <LockedApp>[];
+  final lockLocations = <LockLocation>[];
+  final unlockSessions = <UnlockSession>[];
 
   final cosmeticItems = <CosmeticItem>[
     const CosmeticItem(
@@ -997,6 +1008,8 @@ class CatudyDemoStore extends ChangeNotifier {
   String? equippedPetItemId = 'violet_collar';
   String? equippedProfileItemId;
   PremiumEntitlement premiumEntitlement = const PremiumEntitlement.inactive();
+  LockSettings lockSettings = const LockSettings();
+  String? pendingUnlockPackageName;
   final issuedBuddyPasses = <BuddyPass>[];
   BuddyPassRedemption buddyPassRedemption = const BuddyPassRedemption(
     code: '',
@@ -1026,6 +1039,24 @@ class CatudyDemoStore extends ChangeNotifier {
 
   bool get hasPremiumAccess => premiumEntitlement.active;
 
+  int get lockedAppLimit =>
+      hasPremiumAccess ? 999 : CatudyDemoStore.freeLockedAppLimit;
+
+  int get lockLocationLimit =>
+      hasPremiumAccess ? 999 : CatudyDemoStore.freeLockLocationLimit;
+
+  bool get canAddLockedApp =>
+      hasPremiumAccess ||
+      lockedApps.length < CatudyDemoStore.freeLockedAppLimit;
+
+  bool get canAddLockLocation =>
+      hasPremiumAccess ||
+      lockLocations.length < CatudyDemoStore.freeLockLocationLimit;
+
+  bool get hasActiveStrictLockLocation =>
+      lockSettings.strictLocationLocksEnabled &&
+      lockLocations.any((item) => item.active);
+
   bool get canSendBuddyPass {
     if (!hasPremiumAccess) {
       return false;
@@ -1048,9 +1079,12 @@ class CatudyDemoStore extends ChangeNotifier {
 
   FocusCategory get selectedCategory => _categoryById(selectedCategoryId);
 
+  Iterable<FocusRecord> get _realFocusRecords =>
+      history.where((item) => !item.manual && item.minutes > 0);
+
   int get todayMinutes {
     final now = DateTime.now();
-    return history
+    return _realFocusRecords
         .where(
           (item) =>
               item.createdAt.year == now.year &&
@@ -1060,7 +1094,7 @@ class CatudyDemoStore extends ChangeNotifier {
         .fold(0, (total, item) => total + item.minutes);
   }
 
-  int get weeklyMinutes => minutesInRange(
+  int get weeklyMinutes => realMinutesInRange(
     DateTime.now().subtract(const Duration(days: 6)),
     DateTime.now(),
   );
@@ -1071,7 +1105,7 @@ class CatudyDemoStore extends ChangeNotifier {
   );
 
   int get totalFocusMinutes =>
-      history.fold(0, (total, item) => total + item.minutes);
+      _realFocusRecords.fold(0, (total, item) => total + item.minutes);
 
   int get sessionsCount => history.where((item) => !item.manual).length;
 
@@ -1507,7 +1541,7 @@ class CatudyDemoStore extends ChangeNotifier {
     final now = DateTime.now();
     return [
       for (var i = 6; i >= 0; i--)
-        minutesForDay(now.subtract(Duration(days: i))),
+        realMinutesForDay(now.subtract(Duration(days: i))),
     ];
   }
 
@@ -1753,11 +1787,12 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   FocusCategory get favoriteCategory {
-    if (history.isEmpty) {
+    final records = _realFocusRecords.toList();
+    if (records.isEmpty) {
       return selectedCategory;
     }
     final totals = <String, int>{};
-    for (final record in history) {
+    for (final record in records) {
       totals[record.categoryId] =
           (totals[record.categoryId] ?? 0) + record.minutes;
     }
@@ -1837,7 +1872,7 @@ class CatudyDemoStore extends ChangeNotifier {
       _watchSocialState();
       _mergeBackupForCurrentUser();
       _refreshPremiumState();
-    }, onError: _setAuthError);
+    }, onError: (Object error) => _setAuthError(error));
     notifyListeners();
     unawaited(_save());
     _mergeBackupForCurrentUser();
@@ -2034,6 +2069,17 @@ class CatudyDemoStore extends ChangeNotifier {
     return recordsForDay(day).fold(0, (sum, item) => sum + item.minutes);
   }
 
+  int realMinutesForDay(DateTime day) {
+    return _realFocusRecords
+        .where(
+          (item) =>
+              item.createdAt.year == day.year &&
+              item.createdAt.month == day.month &&
+              item.createdAt.day == day.day,
+        )
+        .fold(0, (sum, item) => sum + item.minutes);
+  }
+
   List<FocusRecord> recordsForDay(DateTime day) {
     return history
         .where(
@@ -2049,6 +2095,18 @@ class CatudyDemoStore extends ChangeNotifier {
     final startDay = DateTime(start.year, start.month, start.day);
     final endDay = DateTime(end.year, end.month, end.day, 23, 59, 59);
     return history
+        .where(
+          (item) =>
+              !item.createdAt.isBefore(startDay) &&
+              !item.createdAt.isAfter(endDay),
+        )
+        .fold(0, (sum, item) => sum + item.minutes);
+  }
+
+  int realMinutesInRange(DateTime start, DateTime end) {
+    final startDay = DateTime(start.year, start.month, start.day);
+    final endDay = DateTime(end.year, end.month, end.day, 23, 59, 59);
+    return _realFocusRecords
         .where(
           (item) =>
               !item.createdAt.isBefore(startDay) &&
@@ -2485,7 +2543,9 @@ class CatudyDemoStore extends ChangeNotifier {
       startedAt: DateTime.now(),
       lobbyMode: lobbyMode,
       todoId: focusTodo?.id,
+      unlockPackageName: pendingUnlockPackageName,
     );
+    pendingUnlockPackageName = null;
     lastResult = null;
     selectedTodoId = focusTodo?.id;
     localBreakVote = null;
@@ -2503,6 +2563,7 @@ class CatudyDemoStore extends ChangeNotifier {
     lobbyStarted = false;
     currentUserReady = false;
     localBreakVote = null;
+    pendingUnlockPackageName = null;
     _restoredCompletedSession = false;
     _focusCompletionTimer?.cancel();
     _commit();
@@ -2549,6 +2610,178 @@ class CatudyDemoStore extends ChangeNotifier {
       ),
     );
     _commit();
+  }
+
+  bool addLockedApp(CatudyInstalledApp app, {int? requiredFocusMinutes}) {
+    final packageName = app.packageName.trim();
+    final appName = app.appName.trim();
+    if (packageName.isEmpty || appName.isEmpty) {
+      return false;
+    }
+    final existingIndex = lockedApps.indexWhere(
+      (item) => item.packageName == packageName,
+    );
+    if (existingIndex != -1) {
+      lockedApps[existingIndex] = lockedApps[existingIndex].copyWith(
+        appName: appName,
+        requiredFocusMinutes: requiredFocusMinutes,
+        enabled: true,
+      );
+      _commitAppLockRules();
+      return true;
+    }
+    if (!canAddLockedApp) {
+      return false;
+    }
+    lockedApps.add(
+      LockedApp(
+        packageName: packageName,
+        appName: appName,
+        requiredFocusMinutes:
+            requiredFocusMinutes ?? lockSettings.defaultRequiredFocusMinutes,
+        enabled: true,
+      ),
+    );
+    lockSettings = lockSettings.copyWith(enabled: true);
+    _commitAppLockRules();
+    return true;
+  }
+
+  LockedApp? lockedAppByPackage(String packageName) {
+    for (final item in lockedApps) {
+      if (item.packageName == packageName) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  void removeLockedApp(String packageName) {
+    lockedApps.removeWhere((item) => item.packageName == packageName);
+    if (pendingUnlockPackageName == packageName) {
+      pendingUnlockPackageName = null;
+    }
+    unlockSessions.removeWhere((item) => item.packageName == packageName);
+    _commitAppLockRules();
+  }
+
+  void updateLockedAppMinutes(String packageName, int minutes) {
+    final index = lockedApps.indexWhere(
+      (item) => item.packageName == packageName,
+    );
+    if (index == -1) {
+      return;
+    }
+    lockedApps[index] = lockedApps[index].copyWith(
+      requiredFocusMinutes: minutes.clamp(1, 240).toInt(),
+      clearUnlockedUntil: true,
+    );
+    _commitAppLockRules();
+  }
+
+  void setLockedAppEnabled(String packageName, bool enabled) {
+    final index = lockedApps.indexWhere(
+      (item) => item.packageName == packageName,
+    );
+    if (index == -1) {
+      return;
+    }
+    lockedApps[index] = lockedApps[index].copyWith(
+      enabled: enabled,
+      clearUnlockedUntil: !enabled,
+    );
+    _commitAppLockRules();
+  }
+
+  bool addLockLocation({
+    required String name,
+    required double latitude,
+    required double longitude,
+    double radiusMeters = 150,
+  }) {
+    if (!canAddLockLocation) {
+      return false;
+    }
+    lockLocations.add(
+      LockLocation(
+        id: _newEntityId('lock_location'),
+        name: name.trim().isEmpty
+            ? t('appLock.defaultLocationName')
+            : name.trim(),
+        latitude: latitude,
+        longitude: longitude,
+        radiusMeters: radiusMeters,
+        active: true,
+      ),
+    );
+    lockSettings = lockSettings.copyWith(enabled: true);
+    _commitAppLockRules();
+    return true;
+  }
+
+  void removeLockLocation(String id) {
+    lockLocations.removeWhere((item) => item.id == id);
+    _commitAppLockRules();
+  }
+
+  void setLockLocationActive(String id, bool active) {
+    final index = lockLocations.indexWhere((item) => item.id == id);
+    if (index == -1) {
+      return;
+    }
+    lockLocations[index] = lockLocations[index].copyWith(active: active);
+    _commitAppLockRules();
+  }
+
+  void updateLockSettings({
+    bool? enabled,
+    int? defaultRequiredFocusMinutes,
+    bool? strictLocationLocksEnabled,
+  }) {
+    lockSettings = lockSettings.copyWith(
+      enabled: enabled,
+      defaultRequiredFocusMinutes: defaultRequiredFocusMinutes,
+      strictLocationLocksEnabled: strictLocationLocksEnabled,
+    );
+    _commitAppLockRules();
+  }
+
+  void prepareAppUnlockFocus(String packageName) {
+    final lockedApp = lockedAppByPackage(packageName);
+    if (lockedApp == null) {
+      return;
+    }
+    pendingUnlockPackageName = packageName;
+    selectedDurationMinutes = lockedApp.requiredFocusMinutes;
+    _commit();
+  }
+
+  bool isLockedAppUnlocked(
+    String packageName, {
+    DateTime? at,
+    bool strictLocationActive = false,
+  }) {
+    if (strictLocationActive) {
+      return false;
+    }
+    final now = at ?? DateTime.now();
+    final lockedApp = lockedAppByPackage(packageName);
+    return lockedApp?.isUnlockedAt(now) ?? false;
+  }
+
+  bool isLockedAppBlocked(
+    String packageName, {
+    DateTime? at,
+    bool strictLocationActive = false,
+  }) {
+    final lockedApp = lockedAppByPackage(packageName);
+    if (lockedApp == null || !lockedApp.enabled || !lockSettings.enabled) {
+      return false;
+    }
+    if (strictLocationActive && lockSettings.strictLocationLocksEnabled) {
+      return true;
+    }
+    return !lockedApp.isUnlockedAt(at ?? DateTime.now());
   }
 
   bool buyItem(String id) {
@@ -3006,16 +3239,25 @@ class CatudyDemoStore extends ChangeNotifier {
     _commit(touchState: false);
   }
 
-  Future<void> deleteAccount() async {
+  Future<bool> deleteAccount() async {
+    final service = _authService;
+    final shouldDeleteRemoteAccount = service != null && authUserId != null;
     authBusy = true;
     authError = null;
-    _commit(touchState: false);
+    _backupSyncTimer?.cancel();
+    _leaderboardSyncTimer?.cancel();
+    notifyListeners();
+    unawaited(_save());
     final acceptedTerms = acceptedTermsVersion;
     try {
-      await _authService?.signOut();
-    } catch (_) {
-      // Local deletion still proceeds; server-side hard delete requires
-      // backend support and should not block the in-app data wipe.
+      if (shouldDeleteRemoteAccount) {
+        await service.deleteCurrentUser();
+      } else {
+        await service?.signOut();
+      }
+    } catch (error) {
+      _setAuthError(error, fallbackKey: 'auth.deleteError');
+      return false;
     }
     _explicitGuestUserId = null;
     _applyDefaults();
@@ -3024,6 +3266,7 @@ class CatudyDemoStore extends ChangeNotifier {
     authBusy = false;
     _loaded = true;
     _commit(touchState: false);
+    return true;
   }
 
   void toggleReady() {
@@ -3350,9 +3593,9 @@ class CatudyDemoStore extends ChangeNotifier {
     equippedProfileItemId = null;
   }
 
-  void _setAuthError(Object error) {
+  void _setAuthError(Object error, {String fallbackKey = 'auth.genericError'}) {
     authBusy = false;
-    authError = _friendlyError(error, 'auth.genericError');
+    authError = _friendlyError(error, fallbackKey);
     notifyListeners();
     unawaited(_save());
   }
@@ -3781,7 +4024,10 @@ class CatudyDemoStore extends ChangeNotifier {
         return;
       }
       if (snapshot != null && snapshot.data.isNotEmpty) {
-        final merged = mergeCatudyBackupStates(_toJson(), snapshot.data);
+        final merged = mergeCatudyBackupStates(
+          _toJson(includeLocalOnly: false),
+          snapshot.data,
+        )..addAll(_localOnlyAppLockJson());
         _backupMergeInProgress = true;
         try {
           _restoreFromJson(merged);
@@ -3820,7 +4066,7 @@ class CatudyDemoStore extends ChangeNotifier {
         unawaited(
           service
               .upsertCurrentBackup(
-                data: _toJson(),
+                data: _toJson(includeLocalOnly: false),
                 clientUpdatedAt: stateUpdatedAt,
               )
               .catchError((Object _) {}),
@@ -3885,6 +4131,7 @@ class CatudyDemoStore extends ChangeNotifier {
           durationMinutes: selectedDurationMinutes,
           startedAt: DateTime.now(),
           lobbyMode: false,
+          unlockPackageName: pendingUnlockPackageName,
         );
     final plannedSeconds = session.durationMinutes * 60;
     final elapsedSeconds = completedAt
@@ -3933,12 +4180,17 @@ class CatudyDemoStore extends ChangeNotifier {
     );
     streakDays = streakDays < 1 ? 1 : streakDays;
     _unlockEligiblePets();
+    _unlockEligibleAppsForFocus(
+      record,
+      unlockPackageName: session.unlockPackageName,
+    );
     _queueCompletionCelebrations(
       record: record,
       goalWasCompleted: goalWasCompleted,
       unlockedBefore: unlockedBefore,
     );
     activeSession = null;
+    pendingUnlockPackageName = null;
     selectedTodoId = null;
     lobbyStarted = false;
     currentUserReady = false;
@@ -4139,6 +4391,9 @@ class CatudyDemoStore extends ChangeNotifier {
       ..clear()
       ..add('mochi');
     _pendingUnlockedPetIds.clear();
+    lockedApps.clear();
+    lockLocations.clear();
+    unlockSessions.clear();
     selectedCategoryId = 'study';
     selectedDurationMinutes = 25;
     gold = 0;
@@ -4196,6 +4451,8 @@ class CatudyDemoStore extends ChangeNotifier {
     equippedPetItemId = 'violet_collar';
     equippedProfileItemId = null;
     premiumEntitlement = const PremiumEntitlement.inactive();
+    lockSettings = const LockSettings();
+    pendingUnlockPackageName = null;
     issuedBuddyPasses.clear();
     buddyPassRedemption = const BuddyPassRedemption(code: '', redeemedAt: null);
     shardWallet = const ShardWallet(shards: 0);
@@ -4253,6 +4510,35 @@ class CatudyDemoStore extends ChangeNotifier {
     reportedUserIds
       ..clear()
       ..addAll(_readStringList(json['reportedUserIds']));
+    lockedApps
+      ..clear()
+      ..addAll(
+        _readMapList(
+          json['lockedApps'],
+        ).map(LockedApp.fromJson).where((item) => item.packageName.isNotEmpty),
+      );
+    lockLocations
+      ..clear()
+      ..addAll(
+        _readMapList(
+          json['lockLocations'],
+        ).map(LockLocation.fromJson).where((item) => item.id.isNotEmpty),
+      );
+    unlockSessions
+      ..clear()
+      ..addAll(
+        _readMapList(
+          json['unlockSessions'],
+        ).map(UnlockSession.fromJson).where((item) => item.id.isNotEmpty),
+      );
+    lockSettings = LockSettings.fromJson(
+      _readNullableMap(json['lockSettings']),
+    );
+    pendingUnlockPackageName = _readNullableString(
+      json,
+      'pendingUnlockPackageName',
+    );
+    _pruneExpiredAppUnlocks();
 
     selectedCategoryId = _readString(json, 'selectedCategoryId', 'study');
     if (!categories.any((item) => item.id == selectedCategoryId)) {
@@ -4447,7 +4733,90 @@ class CatudyDemoStore extends ChangeNotifier {
     }
   }
 
-  Map<String, dynamic> _toJson() => {
+  void _unlockEligibleAppsForFocus(
+    FocusRecord record, {
+    String? unlockPackageName,
+  }) {
+    if (!lockSettings.enabled || record.manual || record.minutes <= 0) {
+      return;
+    }
+    final until = _endOfDay(record.createdAt);
+    for (var index = 0; index < lockedApps.length; index += 1) {
+      final app = lockedApps[index];
+      if (!app.enabled) {
+        continue;
+      }
+      if (unlockPackageName != null && app.packageName != unlockPackageName) {
+        continue;
+      }
+      if (record.minutes < app.requiredFocusMinutes) {
+        continue;
+      }
+      lockedApps[index] = app.copyWith(unlockedUntil: until);
+      unlockSessions.insert(
+        0,
+        UnlockSession(
+          id: _newEntityId('unlock'),
+          packageName: app.packageName,
+          focusRecordId: record.id,
+          focusMinutes: record.minutes,
+          unlockedUntil: until,
+          createdAt: record.createdAt,
+        ),
+      );
+    }
+    _pruneUnlockSessions(record.createdAt);
+    _syncAppLockRulesToPlatform();
+  }
+
+  DateTime _endOfDay(DateTime date) {
+    return DateTime(date.year, date.month, date.day, 23, 59, 59);
+  }
+
+  void _pruneExpiredAppUnlocks([DateTime? now]) {
+    final current = now ?? DateTime.now();
+    for (var index = 0; index < lockedApps.length; index += 1) {
+      final app = lockedApps[index];
+      final until = app.unlockedUntil;
+      if (until != null && !until.isAfter(current)) {
+        lockedApps[index] = app.copyWith(clearUnlockedUntil: true);
+      }
+    }
+    _pruneUnlockSessions(current);
+  }
+
+  void _pruneUnlockSessions([DateTime? now]) {
+    final cutoff = (now ?? DateTime.now()).subtract(const Duration(days: 14));
+    unlockSessions.removeWhere((item) => item.createdAt.isBefore(cutoff));
+  }
+
+  void _commitAppLockRules() {
+    _pruneExpiredAppUnlocks();
+    _commit();
+    _syncAppLockRulesToPlatform();
+  }
+
+  void _syncAppLockRulesToPlatform() {
+    unawaited(
+      CatudyAppLockService.instance
+          .syncLockRules(
+            lockedApps: lockedApps,
+            lockLocations: lockLocations,
+            settings: lockSettings,
+          )
+          .catchError((Object _) {}),
+    );
+  }
+
+  Map<String, dynamic> _localOnlyAppLockJson() => {
+    'lockedApps': lockedApps.map((item) => item.toJson()).toList(),
+    'lockLocations': lockLocations.map((item) => item.toJson()).toList(),
+    'unlockSessions': unlockSessions.map((item) => item.toJson()).toList(),
+    'lockSettings': lockSettings.toJson(),
+    'pendingUnlockPackageName': pendingUnlockPackageName,
+  };
+
+  Map<String, dynamic> _toJson({bool includeLocalOnly = true}) => {
     'version': 3,
     'stateUpdatedAt': stateUpdatedAt.toIso8601String(),
     'categories': categories.map((item) => item.toJson()).toList(),
@@ -4457,6 +4826,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'friendRequests': friendRequests.map((item) => item.toJson()).toList(),
     'blockedUserIds': blockedUserIds.toList(),
     'reportedUserIds': reportedUserIds.toList(),
+    if (includeLocalOnly) ..._localOnlyAppLockJson(),
     'selectedCategoryId': selectedCategoryId,
     'selectedDurationMinutes': selectedDurationMinutes,
     'gold': gold,

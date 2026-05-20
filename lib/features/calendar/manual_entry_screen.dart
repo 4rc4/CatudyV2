@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/screen_scaffold.dart';
@@ -66,24 +67,48 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: store.selectedCategoryId,
-                  decoration: InputDecoration(
-                    labelText: store.t('manual.category'),
-                    border: const OutlineInputBorder(),
-                  ),
-                  items: [
-                    for (final category in store.categories)
-                      DropdownMenuItem(
-                        value: category.id,
-                        child: Text(category.name),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: store.selectedCategoryId,
+                        decoration: InputDecoration(
+                          labelText: store.t('manual.category'),
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: [
+                          for (final category in store.categories)
+                            DropdownMenuItem(
+                              value: category.id,
+                              child: Text(category.name),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            store.selectCategory(value);
+                          }
+                        },
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 56,
+                      child: FilledButton.tonalIcon(
+                        onPressed: () async {
+                          final categoryId = await _showQuickCategoryDialog(
+                            context,
+                            store,
+                          );
+                          if (categoryId != null) {
+                            store.selectCategory(categoryId);
+                          }
+                        },
+                        icon: const Icon(Icons.add_rounded),
+                        label: Text(store.t('focus.addCategory')),
+                      ),
+                    ),
                   ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      store.selectCategory(value);
-                    }
-                  },
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -162,4 +187,107 @@ class _ManualEntryScreenState extends State<ManualEntryScreen> {
     final names = languageCode == 'en' ? enMonths : months;
     return '${date.day} ${names[date.month - 1]} ${date.year}';
   }
+}
+
+Future<String?> _showQuickCategoryDialog(
+  BuildContext context,
+  CatudyDemoStore store,
+) async {
+  final controller = TextEditingController();
+  var selectedColor = CatudyColors.violet;
+  const palette = [
+    CatudyColors.violet,
+    CatudyColors.teal,
+    CatudyColors.coral,
+    CatudyColors.yellow,
+    CatudyColors.lavender,
+  ];
+
+  try {
+    return await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(store.t('focus.addCategory')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: store.t('focus.categoryName'),
+                  border: const OutlineInputBorder(),
+                ),
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submitQuickCategory(
+                  dialogContext,
+                  store,
+                  controller.text,
+                  selectedColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final color in palette)
+                    InkWell(
+                      onTap: () => setDialogState(() => selectedColor = color),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: selectedColor == color
+                                ? CatudyColors.blueFor(context)
+                                : Colors.white,
+                            width: 3,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(store.t('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: () => _submitQuickCategory(
+                dialogContext,
+                store,
+                controller.text,
+                selectedColor,
+              ),
+              child: Text(store.t('focus.addCategory')),
+            ),
+          ],
+        ),
+      ),
+    );
+  } finally {
+    controller.dispose();
+  }
+}
+
+void _submitQuickCategory(
+  BuildContext context,
+  CatudyDemoStore store,
+  String name,
+  Color color,
+) {
+  if (name.trim().isEmpty) {
+    return;
+  }
+  store.addCategory(name, color);
+  Navigator.of(context).pop(store.selectedCategoryId);
 }

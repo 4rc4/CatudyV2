@@ -150,45 +150,84 @@ class _TermsAgreementDialog extends StatefulWidget {
 
 class _TermsAgreementDialogState extends State<_TermsAgreementDialog> {
   bool _checked = false;
+  late String _language;
+
+  @override
+  void initState() {
+    super.initState();
+    _language = catudyDemoStore.languageCode;
+  }
 
   @override
   Widget build(BuildContext context) {
     final store = catudyDemoStore;
     return AlertDialog(
       title: Text(store.t('terms.title')),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 360),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                store.t('terms.intro'),
+      content: SizedBox(
+        width: 360,
+        height: MediaQuery.sizeOf(context).height * 0.62,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DropdownButtonFormField<String>(
+              initialValue: _language,
+              decoration: InputDecoration(
+                labelText: store.t('terms.language'),
+                border: const OutlineInputBorder(),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'tr',
+                  child: Text(store.t('settings.turkish')),
+                ),
+                DropdownMenuItem(
+                  value: 'en',
+                  child: Text(store.t('settings.english')),
+                ),
+              ],
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() => _language = value);
+                store.updateLanguage(value);
+              },
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      store.t('terms.intro'),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      store.t('terms.fullText'),
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            CheckboxListTile(
+              value: _checked,
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              onChanged: (value) => setState(() => _checked = value ?? false),
+              title: Text(
+                store.t('terms.acceptCheck'),
                 style: const TextStyle(fontWeight: FontWeight.w800),
               ),
-              const SizedBox(height: 12),
-              Text(
-                store.t('terms.fullText'),
-                style: TextStyle(
-                  color: CatudyColors.mutedFor(context),
-                  fontWeight: FontWeight.w700,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 12),
-              CheckboxListTile(
-                value: _checked,
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                onChanged: (value) => setState(() => _checked = value ?? false),
-                title: Text(
-                  store.t('terms.acceptCheck'),
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       actions: [

@@ -10,7 +10,9 @@ import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
 class FocusStartScreen extends StatefulWidget {
-  const FocusStartScreen({super.key});
+  const FocusStartScreen({super.key, this.unlockPackageName});
+
+  final String? unlockPackageName;
 
   @override
   State<FocusStartScreen> createState() => _FocusStartScreenState();
@@ -36,6 +38,11 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
     _minutesController = TextEditingController(
       text: '${catudyDemoStore.selectedDurationMinutes}',
     );
+    final unlockPackageName = widget.unlockPackageName;
+    if (unlockPackageName != null && unlockPackageName.isNotEmpty) {
+      catudyDemoStore.prepareAppUnlockFocus(unlockPackageName);
+      _minutesController.text = '${catudyDemoStore.selectedDurationMinutes}';
+    }
   }
 
   @override

@@ -247,6 +247,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 14),
           CatudyPanel(
+            accentColor: CatudyColors.tealDark,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.lock_clock_rounded,
+                  color: CatudyColors.tealDark,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        store.t('appLock.title'),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        store.t('appLock.headerBody'),
+                        style: TextStyle(color: CatudyColors.mutedFor(context)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                FilledButton.tonalIcon(
+                  onPressed: () => context.push('/app-lock'),
+                  icon: const Icon(Icons.tune_rounded),
+                  label: Text(store.t('appLock.open')),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          CatudyPanel(
             color: store.offlineMode
                 ? CatudyColors.lavenderSoft
                 : CatudyColors.surface,
@@ -338,7 +374,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           if (!confirmed) {
                             return;
                           }
-                          await store.deleteAccount();
+                          final deleted = await store.deleteAccount();
+                          if (!deleted) {
+                            if (context.mounted && store.authError != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(store.authError!)),
+                              );
+                            }
+                            return;
+                          }
                           if (context.mounted) {
                             context.go('/auth');
                           }

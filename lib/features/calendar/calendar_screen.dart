@@ -49,6 +49,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         final records = store.recordsForDay(selected);
         final todos = store.todosForDay(selected);
         final totalMinutes = records.fold(0, (sum, item) => sum + item.minutes);
+        final realMinutes = store.realMinutesForDay(selected);
         final relation = _dayRelation(selected);
         final targetDates = _targetDates(selected);
 
@@ -143,6 +144,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               store: store,
               selected: selected,
               totalMinutes: totalMinutes,
+              goalProgressMinutes: realMinutes,
               batchCount: _batchSelectedDays.length,
               onAddRecord: relation == _DayRelation.future
                   ? null
@@ -155,9 +157,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   : null,
             ),
             const SizedBox(height: 14),
-            _SessionTimeline(records: records, store: store),
-            const SizedBox(height: 14),
             _ReminderPanel(todos: todos, store: store),
+            const SizedBox(height: 14),
+            _SessionTimeline(records: records, store: store),
           ],
         );
       },
@@ -324,6 +326,7 @@ class _SelectedDaySummary extends StatelessWidget {
     required this.store,
     required this.selected,
     required this.totalMinutes,
+    required this.goalProgressMinutes,
     required this.batchCount,
     required this.onAddRecord,
     required this.onAddReminder,
@@ -332,6 +335,7 @@ class _SelectedDaySummary extends StatelessWidget {
   final CatudyDemoStore store;
   final DateTime selected;
   final int totalMinutes;
+  final int goalProgressMinutes;
   final int batchCount;
   final VoidCallback? onAddRecord;
   final VoidCallback? onAddReminder;
@@ -339,7 +343,7 @@ class _SelectedDaySummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final goal = store.todayGoalProgress.goalMinutes;
-    final remaining = (goal - totalMinutes).clamp(0, 999999);
+    final remaining = (goal - goalProgressMinutes).clamp(0, 999999);
     return CatudyPanel(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       accentColor: CatudyColors.teal,
@@ -370,7 +374,7 @@ class _SelectedDaySummary extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           LinearProgressIndicator(
-            value: goal == 0 ? 0 : (totalMinutes / goal).clamp(0.0, 1.0),
+            value: goal == 0 ? 0 : (goalProgressMinutes / goal).clamp(0.0, 1.0),
             minHeight: 8,
             borderRadius: BorderRadius.circular(999),
             color: CatudyColors.teal,
@@ -999,31 +1003,55 @@ class _ManualRecordDialogState extends State<_ManualRecordDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DropdownButtonFormField<String>(
-            initialValue: _categoryId,
-            decoration: InputDecoration(
-              labelText: store.t('focus.categoryTitle'),
-              border: const OutlineInputBorder(),
-            ),
-            items: [
-              for (final category in store.categories)
-                DropdownMenuItem(
-                  value: category.id,
-                  child: Text(category.name),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _categoryId,
+                  decoration: InputDecoration(
+                    labelText: store.t('manual.category'),
+                    border: const OutlineInputBorder(),
+                  ),
+                  items: [
+                    for (final category in store.categories)
+                      DropdownMenuItem(
+                        value: category.id,
+                        child: Text(category.name),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _categoryId = value);
+                    }
+                  },
                 ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                height: 56,
+                child: FilledButton.tonalIcon(
+                  onPressed: () async {
+                    final categoryId = await _showQuickCategoryDialog(
+                      context,
+                      store,
+                    );
+                    if (categoryId != null) {
+                      setState(() => _categoryId = categoryId);
+                    }
+                  },
+                  icon: const Icon(Icons.add_rounded),
+                  label: Text(store.t('focus.addCategory')),
+                ),
+              ),
             ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() => _categoryId = value);
-              }
-            },
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _minutesController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              labelText: store.t('home.goalMinutes'),
+              labelText: store.t('manual.minutes'),
               border: const OutlineInputBorder(),
               errorText: hasError ? store.t('calendar.enterMinutes') : null,
             ),
@@ -1068,6 +1096,109 @@ class _ManualRecordDialogState extends State<_ManualRecordDialog> {
       ),
     );
   }
+}
+
+Future<String?> _showQuickCategoryDialog(
+  BuildContext context,
+  CatudyDemoStore store,
+) async {
+  final controller = TextEditingController();
+  var selectedColor = CatudyColors.violet;
+  const palette = [
+    CatudyColors.violet,
+    CatudyColors.teal,
+    CatudyColors.coral,
+    CatudyColors.yellow,
+    CatudyColors.lavender,
+  ];
+
+  try {
+    return await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(store.t('focus.addCategory')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: store.t('focus.categoryName'),
+                  border: const OutlineInputBorder(),
+                ),
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submitQuickCategory(
+                  dialogContext,
+                  store,
+                  controller.text,
+                  selectedColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final color in palette)
+                    InkWell(
+                      onTap: () => setDialogState(() => selectedColor = color),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: selectedColor == color
+                                ? CatudyColors.blueFor(context)
+                                : Colors.white,
+                            width: 3,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(store.t('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: () => _submitQuickCategory(
+                dialogContext,
+                store,
+                controller.text,
+                selectedColor,
+              ),
+              child: Text(store.t('focus.addCategory')),
+            ),
+          ],
+        ),
+      ),
+    );
+  } finally {
+    controller.dispose();
+  }
+}
+
+void _submitQuickCategory(
+  BuildContext context,
+  CatudyDemoStore store,
+  String name,
+  Color color,
+) {
+  if (name.trim().isEmpty) {
+    return;
+  }
+  store.addCategory(name, color);
+  Navigator.of(context).pop(store.selectedCategoryId);
 }
 
 class _ReminderDraft {

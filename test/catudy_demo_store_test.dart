@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:catudy_app/app/demo/catudy_demo_store.dart';
+import 'package:catudy_app/app/lock/catudy_app_lock_models.dart';
 import 'package:catudy_app/app/online/catudy_auth_service.dart';
 import 'package:catudy_app/app/online/catudy_leaderboard_service.dart';
 import 'package:catudy_app/app/online/catudy_premium_service.dart';
@@ -193,6 +194,189 @@ void main() {
     expect(storage.state?['petName'], 'Minik');
     expect(storage.state?['petNameChosen'], isTrue);
   });
+
+  test('manual records do not advance goals or public progress', () async {
+    final today = DateTime.now();
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+    await store.load();
+    store.addLockedApp(
+      const CatudyInstalledApp(
+        packageName: 'com.example.blocked',
+        appName: 'Blocked App',
+      ),
+      requiredFocusMinutes: 25,
+    );
+    store.updateDailyGoal(30);
+    store.addManualEntry(
+      categoryId: store.selectedCategoryId,
+      minutes: 45,
+      note: 'Past study',
+      date: today,
+    );
+
+    expect(store.recordsForDay(today).single.manual, isTrue);
+    expect(store.minutesForDay(today), 45);
+    expect(store.todayMinutes, 0);
+    expect(store.todayGoalProgress.completedMinutes, 0);
+    expect(store.todayGoalProgress.completed, isFalse);
+    expect(store.totalFocusMinutes, 0);
+    expect(store.weeklyMinutes, 0);
+    expect(store.isLockedAppUnlocked('com.example.blocked'), isFalse);
+    expect(store.leaderboardProfiles.single.totalMinutes, 0);
+    expect(
+      store.unlockedAchievements.map((item) => item.id),
+      isNot(contains('ten_hours')),
+    );
+  });
+
+  test('app lock free limits and Plus expansion are enforced', () async {
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+    await store.load();
+
+    for (var index = 0; index < CatudyDemoStore.freeLockedAppLimit; index++) {
+      expect(
+        store.addLockedApp(
+          CatudyInstalledApp(
+            packageName: 'com.example.app$index',
+            appName: 'App $index',
+          ),
+        ),
+        isTrue,
+      );
+    }
+    expect(store.canAddLockedApp, isFalse);
+    expect(
+      store.addLockedApp(
+        const CatudyInstalledApp(
+          packageName: 'com.example.extra',
+          appName: 'Extra',
+        ),
+      ),
+      isFalse,
+    );
+
+    for (
+      var index = 0;
+      index < CatudyDemoStore.freeLockLocationLimit;
+      index++
+    ) {
+      expect(
+        store.addLockLocation(
+          name: 'Area $index',
+          latitude: 41.0 + index,
+          longitude: 29.0 + index,
+        ),
+        isTrue,
+      );
+    }
+    expect(store.canAddLockLocation, isFalse);
+    expect(
+      store.addLockLocation(name: 'Extra area', latitude: 0, longitude: 0),
+      isFalse,
+    );
+
+    store.activatePremiumDemo();
+
+    expect(
+      store.addLockedApp(
+        const CatudyInstalledApp(
+          packageName: 'com.example.plus',
+          appName: 'Plus App',
+        ),
+      ),
+      isTrue,
+    );
+    expect(
+      store.addLockLocation(name: 'Plus area', latitude: 1, longitude: 1),
+      isTrue,
+    );
+  });
+
+  test('real focus unlocks the targeted locked app until end of day', () async {
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+    await store.load();
+    store.addLockedApp(
+      const CatudyInstalledApp(
+        packageName: 'com.example.locked',
+        appName: 'Locked App',
+      ),
+      requiredFocusMinutes: 25,
+    );
+    store.activeSession = ActiveFocusSession(
+      categoryId: 'study',
+      durationMinutes: 25,
+      startedAt: DateTime.now().subtract(const Duration(minutes: 25)),
+      lobbyMode: false,
+      unlockPackageName: 'com.example.locked',
+    );
+
+    final record = store.completeFocus();
+
+    expect(record.minutes, 25);
+    expect(store.isLockedAppUnlocked('com.example.locked'), isTrue);
+    expect(store.unlockSessions.single.packageName, 'com.example.locked');
+    expect(
+      store.lockedAppByPackage('com.example.locked')?.unlockedUntil?.hour,
+      23,
+    );
+  });
+
+  test(
+    'short focus and strict location rules keep locked apps blocked',
+    () async {
+      final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+      await store.load();
+      store.addLockedApp(
+        const CatudyInstalledApp(
+          packageName: 'com.example.strict',
+          appName: 'Strict App',
+        ),
+        requiredFocusMinutes: 40,
+      );
+      store.activeSession = ActiveFocusSession(
+        categoryId: 'study',
+        durationMinutes: 40,
+        startedAt: DateTime.now().subtract(const Duration(minutes: 25)),
+        lobbyMode: false,
+        unlockPackageName: 'com.example.strict',
+      );
+
+      store.completeFocus();
+
+      expect(store.isLockedAppBlocked('com.example.strict'), isTrue);
+
+      store.updateLockedAppMinutes('com.example.strict', 25);
+      store.activeSession = ActiveFocusSession(
+        categoryId: 'study',
+        durationMinutes: 25,
+        startedAt: DateTime.now().subtract(const Duration(minutes: 25)),
+        lobbyMode: false,
+        unlockPackageName: 'com.example.strict',
+      );
+      store.completeFocus();
+      store.addLockLocation(name: 'School', latitude: 41, longitude: 29);
+
+      expect(store.isLockedAppUnlocked('com.example.strict'), isTrue);
+      expect(
+        store.isLockedAppBlocked(
+          'com.example.strict',
+          strictLocationActive: true,
+        ),
+        isTrue,
+      );
+      expect(
+        store.isLockedAppUnlocked(
+          'com.example.strict',
+          strictLocationActive: true,
+        ),
+        isFalse,
+      );
+    },
+  );
 
   test('selected focus task is completed with the session', () async {
     final storage = _MemoryStorage(null);
@@ -451,6 +635,76 @@ void main() {
     expect(auth.signOutCalls, 0);
     expect(store.isAuthenticated, isTrue);
     expect(store.authProvider, 'guest');
+  });
+
+  test(
+    'account deletion removes remote user before wiping local state',
+    () async {
+      final storage = _MemoryStorage(null);
+      final store = CatudyDemoStore(storage: storage);
+      final auth = _FakeAuthService(
+        const CatudyAuthSession(
+          userId: 'delete-user',
+          email: 'delete@example.com',
+          displayName: 'Delete Cat',
+          provider: 'email',
+          anonymous: false,
+        ),
+      );
+
+      await store.load();
+      store.attachAuthService(auth);
+      store.updateProfile(name: 'Delete Cat', avatarId: 'star');
+      store.history.add(
+        FocusRecord(
+          id: 'focus-delete',
+          categoryId: store.selectedCategoryId,
+          minutes: 45,
+          createdAt: DateTime(2026, 5, 1),
+          updatedAt: DateTime(2026, 5, 1),
+          manual: false,
+          note: 'Delete me',
+          gold: 45,
+        ),
+      );
+
+      final deleted = await store.deleteAccount();
+
+      expect(deleted, isTrue);
+      expect(auth.deleteCurrentUserCalls, 1);
+      expect(store.isAuthenticated, isFalse);
+      expect(store.displayName, 'Guest Cat');
+      expect(store.history, isEmpty);
+      expect(store.profileAvatarId, 'catudy');
+      expect(storage.state?['history'], isEmpty);
+    },
+  );
+
+  test('account deletion failure keeps local state', () async {
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+    final auth = _FakeAuthService(
+      const CatudyAuthSession(
+        userId: 'delete-user',
+        email: 'delete@example.com',
+        displayName: 'Delete Cat',
+        provider: 'email',
+        anonymous: false,
+      ),
+      deleteError: StateError('rpc failed'),
+    );
+
+    await store.load();
+    store.attachAuthService(auth);
+    store.updateProfile(name: 'Still Here', avatarId: 'star');
+
+    final deleted = await store.deleteAccount();
+
+    expect(deleted, isFalse);
+    expect(auth.deleteCurrentUserCalls, 1);
+    expect(store.isAuthenticated, isTrue);
+    expect(store.displayName, 'Still Here');
+    expect(store.profileAvatarId, 'star');
+    expect(store.authError, isNotNull);
   });
 
   test('shop item names follow selected language', () async {
@@ -902,11 +1156,14 @@ class _FakeLeaderboardService extends CatudyLeaderboardService {
 }
 
 class _FakeAuthService extends CatudyAuthService {
-  _FakeAuthService(this._session) : super(_testSupabaseClient());
+  _FakeAuthService(this._session, {this.deleteError})
+    : super(_testSupabaseClient());
 
   final _controller = StreamController<CatudyAuthSession?>.broadcast();
+  final Object? deleteError;
   CatudyAuthSession? _session;
   int signOutCalls = 0;
+  int deleteCurrentUserCalls = 0;
 
   @override
   CatudyAuthSession? get currentSession => _session;
@@ -917,6 +1174,17 @@ class _FakeAuthService extends CatudyAuthService {
   @override
   Future<void> signOut() async {
     signOutCalls++;
+    _session = null;
+    _controller.add(null);
+  }
+
+  @override
+  Future<void> deleteCurrentUser() async {
+    deleteCurrentUserCalls++;
+    final error = deleteError;
+    if (error != null) {
+      throw error;
+    }
     _session = null;
     _controller.add(null);
   }

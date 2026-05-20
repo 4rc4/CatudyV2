@@ -28,6 +28,7 @@ class CatudyCopy {
     'common.save': 'Kaydet',
     'common.selected': 'Seçili',
     'common.select': 'Seç',
+    'common.refresh': 'Yenile',
     'common.yes': 'Evet',
     'common.gold': 'altın',
     'common.hoursShort': 's',
@@ -38,10 +39,13 @@ class CatudyCopy {
         'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.',
     'error.auth': 'Giriş bilgilerini kontrol edip tekrar dene.',
     'auth.genericError': 'Giriş işlemi tamamlanamadı. Biraz sonra tekrar dene.',
+    'auth.deleteError':
+        'Hesap silinemedi. Bağlantını kontrol edip tekrar dene.',
     'lobby.genericError': 'Lobi işlemi tamamlanamadı. Biraz sonra tekrar dene.',
     'app.exitTitle': 'Uygulamadan çıkılsın mı?',
     'app.exitBody': 'Catudy kapatılacak. Emin misin?',
     'terms.title': 'Kullanıcı sözleşmesi',
+    'terms.language': 'Sözleşme dili',
     'terms.intro':
         'Catudy’yi kullanarak aşağıdaki gizlilik ve kullanım şartlarını kabul etmiş olursun.',
     'terms.fullText': '''Gizlilik Özeti
@@ -326,7 +330,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'manual.title': 'Manuel Kayıt',
     'manual.info': 'Manuel kayıtlar açıkça etiketlenir ve ödül kazandırmaz.',
     'manual.category': 'Kategori',
-    'manual.minutes': 'Dakika',
+    'manual.minutes': 'Tamamlanan dakika',
     'manual.note': 'Not',
     'manual.save': 'Manuel kaydı kaydet',
 
@@ -723,13 +727,60 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'settings.openLogin': 'Giriş ekranını aç',
     'settings.deleteAccount': 'Hesabı sil',
     'settings.deleteAccountBody':
-        'Bu cihazdaki Catudy verileri silinir ve oturum kapatılır. Online hesabın sunucu tarafında kalıcı silinmesi için backend desteği gerekir.',
+        'Bu işlem geri alınamaz. Hesabın, odak dakikaların, profilin, pet ilerlemen, görevlerin ve senkronize Catudy verilerin kalıcı olarak silinir.',
     'settings.deleteAccountConfirm': 'Hesabı sil',
     'settings.demoWallet': 'Demo Bakiyesi',
     'settings.demoWalletBody':
         'Mağaza denemeleri için altını 5000, puanı 2500 seviyesine tamamlar. Satın alınan eşyaları sıfırlamaz.',
     'settings.demoWalletButton': 'Demo bakiyesi yükle',
     'settings.demoWalletLoaded': 'Demo bakiyesi yüklendi.',
+
+    'appLock.title': 'Uygulama Kilidi',
+    'appLock.header': 'Odakla acilan kilitler',
+    'appLock.headerBody':
+        'Android MVP kullanim erisimi, ust ekran ve konum kurallarini kullanir.',
+    'appLock.masterSwitch': 'Uygulama kilidi aktif',
+    'appLock.masterSwitchBody':
+        'Kapaliyken Catudy kilit ekrani ve konum kurallari calismaz.',
+    'appLock.permissions': 'Izinler',
+    'appLock.permissionsBody':
+        'Kullanim erisimi, ust ekran ve konum izinlerini ver.',
+    'appLock.usageAccess': 'Kullanim erisimi',
+    'appLock.overlayPermission': 'Ustte gosterme izni',
+    'appLock.locationPermission': 'Konum izni',
+    'appLock.backgroundLocationPermission': 'Arka plan konumu',
+    'appLock.allowed': 'Acik',
+    'appLock.open': 'Ac',
+    'appLock.androidOnly':
+        'Bu MVP Android icindir; iOS icin Apple entitlement sureci gerekir.',
+    'appLock.noInstalledApps': 'Uygulama listesi alinamadi.',
+    'appLock.lockedApps': 'Kilitli uygulamalar',
+    'appLock.addApp': 'Uygulama ekle',
+    'appLock.noLockedApps': 'Henuz kilitli uygulama yok.',
+    'appLock.searchApps': 'Uygulama ara',
+    'appLock.requiredMinutes': '{minutes} dk odak',
+    'appLock.unlockedToday': 'Bugun acik',
+    'appLock.startFocus': 'Odak baslat',
+    'appLock.limit': '{used}/{limit} ucretsiz limit',
+    'appLock.plusUnlimited': 'Catudy Plus ile limitsiz',
+    'appLock.plusLimit': 'Daha fazla uygulama icin Catudy Plus',
+    'appLock.limitReached': 'Ucretsiz limit doldu.',
+    'appLock.locations': 'Konum kilitleri',
+    'appLock.addLocation': 'Konum ekle',
+    'appLock.noLocations': 'Henuz konum kilidi yok.',
+    'appLock.locationLimit': '{used}/{limit} ucretsiz konum',
+    'appLock.plusLocationLimit': 'Daha fazla konum icin Catudy Plus',
+    'appLock.locationLimitReached': 'Ucretsiz konum limiti doldu.',
+    'appLock.strictLocation':
+        'Konumdayken odakla acmayi engelle; kural kaldirilinca acilir.',
+    'appLock.locationDetails': '{radius} m yaricap',
+    'appLock.locationName': 'Konum adi',
+    'appLock.defaultLocationName': 'Odak alani',
+    'appLock.radiusMeters': 'Yaricap: {radius} m',
+    'appLock.saveLocation': 'Konumu kaydet',
+    'appLock.iosRoadmapTitle': 'iOS yol haritasi',
+    'appLock.iosRoadmapBody':
+        'iOS tarafinda overlay yok; FamilyControls, ManagedSettings ve DeviceActivity onayi sonrasi Apple shield ekrani kullanilacak.',
 
     'lobby.title': 'Lobi',
     'lobby.chooseFlow':
@@ -822,6 +873,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'common.save': 'Save',
     'common.selected': 'Selected',
     'common.select': 'Select',
+    'common.refresh': 'Refresh',
     'common.yes': 'Yes',
     'common.gold': 'gold',
     'common.hoursShort': 'h',
@@ -831,11 +883,14 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'error.network': 'Could not connect. Check your internet and try again.',
     'error.auth': 'Check your sign-in details and try again.',
     'auth.genericError': 'Sign-in could not be completed. Try again shortly.',
+    'auth.deleteError':
+        'Account could not be deleted. Check your connection and try again.',
     'lobby.genericError':
         'Lobby action could not be completed. Try again shortly.',
     'app.exitTitle': 'Exit the app?',
     'app.exitBody': 'Catudy will close. Are you sure?',
     'terms.title': 'User agreement',
+    'terms.language': 'Agreement language',
     'terms.intro':
         'By using Catudy, you accept this privacy and user agreement.',
     'terms.fullText': '''Privacy Summary
@@ -1126,7 +1181,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'manual.info':
         'Manual records are clearly labeled and do not give rewards.',
     'manual.category': 'Category',
-    'manual.minutes': 'Minutes',
+    'manual.minutes': 'Completed minutes',
     'manual.note': 'Note',
     'manual.save': 'Save manual record',
 
@@ -1520,13 +1575,60 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'settings.openLogin': 'Open sign-in screen',
     'settings.deleteAccount': 'Delete account',
     'settings.deleteAccountBody':
-        'This deletes Catudy data on this device and signs you out. Permanent server-side account deletion requires backend support.',
+        'This cannot be undone. Your account, focus minutes, profile, pet progress, tasks, and synced Catudy data will be permanently deleted.',
     'settings.deleteAccountConfirm': 'Delete account',
     'settings.demoWallet': 'Demo Wallet',
     'settings.demoWalletBody':
         'Tops gold up to 5000 and points up to 2500 for shop testing. Purchased items are kept.',
     'settings.demoWalletButton': 'Load demo wallet',
     'settings.demoWalletLoaded': 'Demo wallet loaded.',
+
+    'appLock.title': 'App Lock',
+    'appLock.header': 'Focus unlocks',
+    'appLock.headerBody':
+        'The Android MVP uses usage access, overlay, and location rules.',
+    'appLock.masterSwitch': 'App lock enabled',
+    'appLock.masterSwitchBody':
+        'When off, Catudy lock screens and location rules are inactive.',
+    'appLock.permissions': 'Permissions',
+    'appLock.permissionsBody':
+        'Grant usage access, overlay, and location permissions.',
+    'appLock.usageAccess': 'Usage access',
+    'appLock.overlayPermission': 'Display over apps',
+    'appLock.locationPermission': 'Location',
+    'appLock.backgroundLocationPermission': 'Background location',
+    'appLock.allowed': 'Allowed',
+    'appLock.open': 'Open',
+    'appLock.androidOnly':
+        'This MVP is Android-only; iOS needs Apple entitlement approval.',
+    'appLock.noInstalledApps': 'Could not read installed apps.',
+    'appLock.lockedApps': 'Locked apps',
+    'appLock.addApp': 'Add app',
+    'appLock.noLockedApps': 'No locked apps yet.',
+    'appLock.searchApps': 'Search apps',
+    'appLock.requiredMinutes': '{minutes} min focus',
+    'appLock.unlockedToday': 'Unlocked today',
+    'appLock.startFocus': 'Start focus',
+    'appLock.limit': '{used}/{limit} free limit',
+    'appLock.plusUnlimited': 'Unlimited with Catudy Plus',
+    'appLock.plusLimit': 'Catudy Plus for more apps',
+    'appLock.limitReached': 'Free limit reached.',
+    'appLock.locations': 'Location locks',
+    'appLock.addLocation': 'Add location',
+    'appLock.noLocations': 'No location locks yet.',
+    'appLock.locationLimit': '{used}/{limit} free locations',
+    'appLock.plusLocationLimit': 'Catudy Plus for more locations',
+    'appLock.locationLimitReached': 'Free location limit reached.',
+    'appLock.strictLocation':
+        'Block focus unlocks while inside the location; removing the rule unlocks it.',
+    'appLock.locationDetails': '{radius} m radius',
+    'appLock.locationName': 'Location name',
+    'appLock.defaultLocationName': 'Focus area',
+    'appLock.radiusMeters': 'Radius: {radius} m',
+    'appLock.saveLocation': 'Save location',
+    'appLock.iosRoadmapTitle': 'iOS roadmap',
+    'appLock.iosRoadmapBody':
+        'iOS has no overlay; after FamilyControls, ManagedSettings, and DeviceActivity approval, Catudy will use Apple shield screens.',
 
     'lobby.title': 'Lobby',
     'lobby.chooseFlow': 'Choose whether to create a lobby or join one.',

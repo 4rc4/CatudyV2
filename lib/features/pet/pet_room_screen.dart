@@ -435,7 +435,9 @@ class _RoomScene extends StatelessWidget {
                   height: wallShelf.resolvedHeight,
                 ),
               ),
-              rug.positioned(child: const _PerspectiveRug()),
+              rug.positioned(
+                child: _PerspectiveRug(accent: roomEffectAccent),
+              ),
               catBed.positioned(
                 child: _PetBed(
                   item: bedItem,
@@ -448,6 +450,7 @@ class _RoomScene extends StatelessWidget {
                   item: studyItem,
                   width: studyDesk.resolvedWidth,
                   height: studyDesk.resolvedHeight,
+                  studying: studying,
                 ),
               ),
               Positioned(
@@ -1287,11 +1290,17 @@ class _RoomStripButton extends StatelessWidget {
 }
 
 class _PerspectiveRug extends StatelessWidget {
-  const _PerspectiveRug();
+  const _PerspectiveRug({this.accent});
+
+  final Color? accent;
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink();
+    return CustomPaint(
+      painter: _RugPainter(
+        accent: accent ?? const Color(0xFFD5C3A6),
+      ),
+    );
   }
 }
 
@@ -1348,7 +1357,10 @@ class _RoomWindow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink();
+    return CustomPaint(
+      size: Size(width, height),
+      painter: const _RoomWindowPainter(),
+    );
   }
 }
 
@@ -1605,15 +1617,25 @@ class _StudyDesk extends StatelessWidget {
     required this.item,
     required this.width,
     required this.height,
+    required this.studying,
   });
 
   final ShopItem? item;
   final double width;
   final double height;
+  final bool studying;
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink();
+    if (item == null) return const SizedBox.shrink();
+    return CustomPaint(
+      size: Size(width, height),
+      painter: _StudyDeskPainter(
+        accent: item!.accent,
+        upgraded: item!.id == 'moonlit_study_nook',
+        studying: studying,
+      ),
+    );
   }
 }
 
@@ -1825,7 +1847,14 @@ class _PetBed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink();
+    if (item == null) return const SizedBox.shrink();
+    return CustomPaint(
+      size: Size(width, height),
+      painter: _PetCushionPainter(
+        accent: item!.accent,
+        upgraded: item!.id == 'warm_den_bed',
+      ),
+    );
   }
 }
 
@@ -1904,7 +1933,104 @@ class _RoomLamp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink();
+    if (item == null) return const SizedBox.shrink();
+    return CustomPaint(
+      size: Size(width, height),
+      painter: _LanternPainter(
+        accent: item!.accent,
+        upgraded: item!.id == 'glow_lantern',
+      ),
+    );
+  }
+}
+
+class _LanternPainter extends CustomPainter {
+  const _LanternPainter({required this.accent, required this.upgraded});
+
+  final Color accent;
+  final bool upgraded;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final wood = const Color(0xFF8C4F2B);
+    final linePaint = Paint()
+      ..color = const Color(0xFF3C2A22).withValues(alpha: 0.22)
+      ..strokeWidth = 1.4
+      ..style = PaintingStyle.stroke;
+
+    // Draw small shelf shadow
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.15,
+        size.height * 0.65,
+        size.width * 0.70,
+        size.height * 0.15,
+      ),
+      Paint()..color = Colors.black.withValues(alpha: 0.12),
+    );
+
+    // Draw small wooden shelf
+    final shelf = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        size.width * 0.10,
+        size.height * 0.55,
+        size.width * 0.80,
+        size.height * 0.12,
+      ),
+      Radius.circular(size.width * 0.02),
+    );
+    canvas.drawRRect(shelf, Paint()..color = wood);
+    canvas.drawRRect(shelf, linePaint);
+
+    // Draw glow
+    final glowPaint = Paint()
+      ..color = accent.withValues(alpha: 0.24)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 15);
+    canvas.drawCircle(
+      Offset(size.width * 0.50, size.height * 0.35),
+      size.width * 0.25,
+      glowPaint,
+    );
+
+    // Draw lamp base
+    final basePaint = Paint()..color = const Color(0xFF3A3A3A);
+    canvas.drawRect(
+      Rect.fromLTWH(
+        size.width * 0.40,
+        size.height * 0.50,
+        size.width * 0.20,
+        size.height * 0.06,
+      ),
+      basePaint,
+    );
+
+    // Draw lamp glass / light bulb
+    final glassPaint = Paint()..color = const Color(0xFFFFF356);
+    canvas.drawOval(
+      Rect.fromLTWH(
+        size.width * 0.42,
+        size.height * 0.28,
+        size.width * 0.16,
+        size.height * 0.22,
+      ),
+      glassPaint,
+    );
+
+    // Draw lamp cap / cover
+    final capPaint = Paint()..color = accent;
+    final cap = Path()
+      ..moveTo(size.width * 0.38, size.height * 0.28)
+      ..lineTo(size.width * 0.62, size.height * 0.28)
+      ..lineTo(size.width * 0.55, size.height * 0.20)
+      ..lineTo(size.width * 0.45, size.height * 0.20)
+      ..close();
+    canvas.drawPath(cap, capPaint);
+    canvas.drawPath(cap, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _LanternPainter oldDelegate) {
+    return oldDelegate.accent != accent || oldDelegate.upgraded != upgraded;
   }
 }
 
@@ -2037,7 +2163,14 @@ class _TinyShelf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox.shrink();
+    if (item == null) return const SizedBox.shrink();
+    return CustomPaint(
+      size: Size(width, height),
+      painter: _BookshelfPainter(
+        accent: item!.accent,
+        upgraded: item!.id == 'tiny_library_shelf',
+      ),
+    );
   }
 }
 
