@@ -21,6 +21,21 @@ class MainActivity : FlutterActivity() {
         ).setMethodCallHandler { call, result ->
             when (call.method) {
                 "listInstalledApps" -> result.success(listInstalledApps())
+                "getLastKnownLocation" -> {
+                    if (hasLocationPermission()) {
+                        val location = lastKnownLocation()
+                        if (location != null) {
+                            result.success(mapOf(
+                                "latitude" to location.latitude,
+                                "longitude" to location.longitude
+                            ))
+                        } else {
+                            result.success(null)
+                        }
+                    } else {
+                        result.success(null)
+                    }
+                }
                 "getPermissionStatus" -> result.success(permissionStatus())
                 "openUsageAccessSettings" -> {
                     openSettings(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
@@ -81,13 +96,51 @@ class MainActivity : FlutterActivity() {
                 if (appPackage == packageName) {
                     return@mapNotNull null
                 }
+                val appName = info.loadLabel(packageManager).toString()
+                val iconBase64 = try {
+                    val drawable = info.loadIcon(packageManager)
+                    val bitmap = drawableToBitmap(drawable)
+                    val scaled = android.graphics.Bitmap.createScaledBitmap(bitmap, 96, 96, true)
+                    val stream = java.io.ByteArrayOutputStream()
+                    scaled.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+                    android.util.Base64.encodeToString(stream.toByteArray(), android.util.Base64.NO_WRAP)
+                } catch (e: Exception) {
+                    ""
+                }
                 mapOf(
                     "packageName" to appPackage,
-                    "appName" to info.loadLabel(packageManager).toString()
+                    "appName" to appName,
+                    "appIcon" to iconBase64
                 )
             }
             .distinctBy { it["packageName"] }
             .sortedBy { it["appName"]?.lowercase() }
+    }
+
+    private fun drawableToBitmap(drawable: android.graphics.drawable.Drawable): android.graphics.Bitmap {
+        if (drawable is android.graphics.drawable.BitmapDrawable) {
+            if (drawable.bitmap != null) {
+                return drawable.bitmap
+            }
+        }
+        val width = if (drawable.intrinsicWidth <= 0) 96 else drawable.intrinsicWidth
+        val height = if (drawable.intrinsicHeight <= 0) 96 else drawable.intrinsicHeight
+        val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return bitmap
+    }
+
+    private fun lastKnownLocation(): android.location.Location? {
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager
+        return runCatching {
+            locationManager.getProviders(true)
+                .mapNotNull { provider ->
+                    runCatching { locationManager.getLastKnownLocation(provider) }.getOrNull()
+                }
+                .maxByOrNull { it.time }
+        }.getOrNull()
     }
 
     private fun permissionStatus(): Map<String, Boolean> {
@@ -130,6 +183,11 @@ class MainActivity : FlutterActivity() {
             return true
         }
         return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun hasLocationPermission(): Boolean {
+        return hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) ||
+            hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
     }
 
     private fun openSettings(intent: Intent) {
