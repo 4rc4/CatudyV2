@@ -3609,6 +3609,9 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   String _friendlyError(Object error, String fallbackKey) {
+    if (error is CatudyAuthLocalizedException) {
+      return t(error.copyKey);
+    }
     final text = '$error'.toLowerCase();
     if (text.contains('network') ||
         text.contains('socket') ||

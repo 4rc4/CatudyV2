@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- External storage: used for downloaded APK on Android <= 9 -->
+    <external-path
+        name="external_files"
+        path="." />
+    <!-- App-specific external files dir (Android 10+) -->
+    <external-files-path
+        name="external_app_files"
+        path="." />
+    <!-- Internal cache fallback -->
+    <cache-path
+        name="cache"
+        path="." />
+</paths>

@@ -12,6 +12,8 @@ import 'app/online/catudy_leaderboard_service.dart';
 import 'app/online/catudy_lobby_service.dart';
 import 'app/online/catudy_premium_service.dart';
 import 'app/online/catudy_social_service.dart';
+import 'app/update/catudy_update_service.dart';
+import 'app/update/catudy_update_dialog.dart';
 
 const _supabaseUrl = bool.hasEnvironment('CATUDY_SUPABASE_URL')
     ? String.fromEnvironment('CATUDY_SUPABASE_URL')
@@ -43,7 +45,22 @@ Future<void> main() async {
   catudyDemoStore.configureNotificationSync(_scheduleLocalizedNotifications);
   await _initializeOnlineLobby();
   await _scheduleLocalizedNotifications();
-  runApp(ProviderScope(child: CatudyApp(initialLocation: _initialLocation())));
+  runApp(ProviderScope(child: CatudyApp(
+    initialLocation: _initialLocation(),
+    onAppReady: _checkForUpdate,
+  )));
+}
+
+/// Called after the first frame is rendered so the navigator is available.
+Future<void> _checkForUpdate(BuildContext context) async {
+  try {
+    final info = await CatudyUpdateService.instance.checkForUpdate();
+    if (info == null) return;
+    if (!context.mounted) return;
+    await showCatudyUpdateDialog(context, info);
+  } catch (e) {
+    debugPrint('Update check error: $e');
+  }
 }
 
 String _initialLocation() {

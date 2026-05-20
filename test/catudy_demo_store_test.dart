@@ -681,7 +681,9 @@ void main() {
   );
 
   test('account deletion failure keeps local state', () async {
-    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+    final store = CatudyDemoStore(
+      storage: _MemoryStorage({'languageCode': 'tr'}),
+    );
     final auth = _FakeAuthService(
       const CatudyAuthSession(
         userId: 'delete-user',
@@ -704,7 +706,35 @@ void main() {
     expect(store.isAuthenticated, isTrue);
     expect(store.displayName, 'Still Here');
     expect(store.profileAvatarId, 'star');
-    expect(store.authError, isNotNull);
+    expect(store.authError, 'Hesap silinemedi. Biraz sonra tekrar dene.');
+  });
+
+  test('account deletion setup failure shows server message', () async {
+    final store = CatudyDemoStore(
+      storage: _MemoryStorage({'languageCode': 'tr'}),
+    );
+    final auth = _FakeAuthService(
+      const CatudyAuthSession(
+        userId: 'delete-user',
+        email: 'delete@example.com',
+        displayName: 'Delete Cat',
+        provider: 'email',
+        anonymous: false,
+      ),
+      deleteError: const CatudyAuthLocalizedException('auth.deleteSetupError'),
+    );
+
+    await store.load();
+    store.attachAuthService(auth);
+
+    final deleted = await store.deleteAccount();
+
+    expect(deleted, isFalse);
+    expect(store.isAuthenticated, isTrue);
+    expect(
+      store.authError,
+      'Hesap silme şu anda sunucuda hazır değil. Lütfen daha sonra tekrar dene.',
+    );
   });
 
   test('shop item names follow selected language', () async {

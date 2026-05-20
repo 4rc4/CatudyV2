@@ -39,8 +39,10 @@ class CatudyCopy {
         'Bağlantı kurulamadı. İnternetini kontrol edip tekrar dene.',
     'error.auth': 'Giriş bilgilerini kontrol edip tekrar dene.',
     'auth.genericError': 'Giriş işlemi tamamlanamadı. Biraz sonra tekrar dene.',
-    'auth.deleteError':
-        'Hesap silinemedi. Bağlantını kontrol edip tekrar dene.',
+    'auth.deleteError': 'Hesap silinemedi. Biraz sonra tekrar dene.',
+    'auth.deleteSetupError':
+        'Hesap silme şu anda sunucuda hazır değil. Lütfen daha sonra tekrar dene.',
+    'auth.sessionExpired': 'Oturumun yenilenmeli. Tekrar giriş yapıp dene.',
     'lobby.genericError': 'Lobi işlemi tamamlanamadı. Biraz sonra tekrar dene.',
     'app.exitTitle': 'Uygulamadan çıkılsın mı?',
     'app.exitBody': 'Catudy kapatılacak. Emin misin?',
@@ -914,8 +916,11 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'error.network': 'Could not connect. Check your internet and try again.',
     'error.auth': 'Check your sign-in details and try again.',
     'auth.genericError': 'Sign-in could not be completed. Try again shortly.',
-    'auth.deleteError':
-        'Account could not be deleted. Check your connection and try again.',
+    'auth.deleteError': 'Account could not be deleted. Try again shortly.',
+    'auth.deleteSetupError':
+        'Account deletion is not ready on the server yet. Try again later.',
+    'auth.sessionExpired':
+        'Your session needs to be refreshed. Sign in again and try again.',
     'lobby.genericError':
         'Lobby action could not be completed. Try again shortly.',
     'app.exitTitle': 'Exit the app?',

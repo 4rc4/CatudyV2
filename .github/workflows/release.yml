@@ -1,0 +1,66 @@
+name: Build & Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on tags like v1.0.4, v2.0.0, etc.
+
+jobs:
+  build:
+    name: Build APK & Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Build APK
+        run: |
+          flutter build apk --release \
+            --build-name="${{ steps.version.outputs.VERSION }}" \
+            --dart-define=APP_VERSION="${{ steps.version.outputs.VERSION }}" \
+            --dart-define=CATUDY_SUPABASE_URL="${{ secrets.CATUDY_SUPABASE_URL }}" \
+            --dart-define=CATUDY_SUPABASE_ANON_KEY="${{ secrets.CATUDY_SUPABASE_ANON_KEY }}"
+
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/catudy-${{ github.ref_name }}.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Catudy ${{ github.ref_name }}"
+          body: |
+            ## Catudy ${{ github.ref_name }}
+
+            Bu sürümü yüklemek için:
+            - Aşağıdaki `catudy-${{ github.ref_name }}.apk` dosyasını indir
+            - Android cihazında çalıştır
+            
+            Veya uygulamayı zaten yüklüysen, açtığında otomatik güncelleme bildirimi alırsın.
+          files: build/app/outputs/flutter-apk/catudy-${{ github.ref_name }}.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

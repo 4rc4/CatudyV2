@@ -8,9 +8,10 @@ import 'theme/catudy_theme.dart';
 import '../features/onboarding/pet_intro_tour.dart';
 
 class CatudyApp extends StatefulWidget {
-  const CatudyApp({this.initialLocation = '/', super.key});
+  const CatudyApp({this.initialLocation = '/', this.onAppReady, super.key});
 
   final String initialLocation;
+  final Future<void> Function(BuildContext context)? onAppReady;
 
   @override
   State<CatudyApp> createState() => _CatudyAppState();
@@ -38,6 +39,15 @@ class _CatudyAppState extends State<CatudyApp> with WidgetsBindingObserver {
       }
       _continueStartup();
     });
+    // Trigger update check after first frame
+    if (widget.onAppReady != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _rootNavigatorKey.currentContext;
+        if (ctx != null) {
+          widget.onAppReady!(ctx);
+        }
+      });
+    }
   }
 
   void _continueStartup() {
