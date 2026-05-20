@@ -31,6 +31,10 @@ class CatudyTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       brightness: brightness,
+      splashFactory: InkSparkle.splashFactory,
+      splashColor: CatudyColors.violet.withValues(alpha: dark ? 0.20 : 0.16),
+      highlightColor: CatudyColors.violet.withValues(alpha: dark ? 0.16 : 0.10),
+      hoverColor: CatudyColors.violet.withValues(alpha: dark ? 0.10 : 0.07),
       fontFamily: _bodyFontFamily,
       scaffoldBackgroundColor: dark
           ? CatudyColors.darkPaper
@@ -85,55 +89,111 @@ class CatudyTheme {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: CatudyColors.violet,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(0, 48),
-          animationDuration: const Duration(milliseconds: 160),
-          overlayColor: Colors.white.withValues(alpha: 0.14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          textStyle: _buttonTextStyle,
-        ),
+        style:
+            FilledButton.styleFrom(
+              backgroundColor: CatudyColors.violet,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(0, 48),
+              animationDuration: _buttonAnimationDuration,
+              enableFeedback: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              textStyle: _buttonTextStyle,
+            ).copyWith(
+              overlayColor: _buttonOverlay(
+                Colors.white,
+                pressedAlpha: 0.24,
+                hoveredAlpha: 0.12,
+                focusedAlpha: 0.16,
+              ),
+            ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: dark ? CatudyColors.darkInk : CatudyColors.blue,
-          minimumSize: const Size(0, 48),
-          animationDuration: const Duration(milliseconds: 160),
-          overlayColor: CatudyColors.violet.withValues(alpha: 0.10),
-          side: BorderSide(color: CatudyColors.violet.withValues(alpha: 0.24)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          textStyle: _buttonTextStyle,
-        ),
+        style:
+            OutlinedButton.styleFrom(
+              foregroundColor: dark ? CatudyColors.darkInk : CatudyColors.blue,
+              minimumSize: const Size(0, 48),
+              animationDuration: _buttonAnimationDuration,
+              enableFeedback: true,
+              side: BorderSide(
+                color: CatudyColors.violet.withValues(alpha: 0.24),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              textStyle: _buttonTextStyle,
+            ).copyWith(
+              overlayColor: _buttonOverlay(
+                CatudyColors.violet,
+                pressedAlpha: dark ? 0.22 : 0.16,
+                hoveredAlpha: dark ? 0.12 : 0.08,
+                focusedAlpha: dark ? 0.16 : 0.10,
+              ),
+            ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          animationDuration: const Duration(milliseconds: 160),
-          overlayColor: CatudyColors.violet.withValues(alpha: 0.10),
-          textStyle: _buttonTextStyle,
-        ),
+        style:
+            TextButton.styleFrom(
+              animationDuration: _buttonAnimationDuration,
+              enableFeedback: true,
+              textStyle: _buttonTextStyle,
+            ).copyWith(
+              overlayColor: _buttonOverlay(
+                CatudyColors.violet,
+                pressedAlpha: dark ? 0.22 : 0.16,
+                hoveredAlpha: dark ? 0.12 : 0.08,
+                focusedAlpha: dark ? 0.16 : 0.10,
+              ),
+            ),
       ),
       iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(
-          backgroundColor:
-              (dark ? CatudyColors.darkSurface : CatudyColors.surface)
-                  .withValues(alpha: dark ? 0.88 : 0.96),
-          foregroundColor: dark ? CatudyColors.darkMuted : CatudyColors.muted,
-          minimumSize: const Size(44, 44),
-          animationDuration: const Duration(milliseconds: 160),
-          overlayColor: CatudyColors.violet.withValues(alpha: 0.12),
-        ),
+        style:
+            IconButton.styleFrom(
+              backgroundColor:
+                  (dark ? CatudyColors.darkSurface : CatudyColors.surface)
+                      .withValues(alpha: dark ? 0.88 : 0.96),
+              foregroundColor: dark
+                  ? CatudyColors.darkMuted
+                  : CatudyColors.muted,
+              minimumSize: const Size(44, 44),
+              animationDuration: _buttonAnimationDuration,
+              enableFeedback: true,
+            ).copyWith(
+              overlayColor: _buttonOverlay(
+                CatudyColors.violet,
+                pressedAlpha: dark ? 0.26 : 0.18,
+                hoveredAlpha: dark ? 0.14 : 0.09,
+                focusedAlpha: dark ? 0.18 : 0.12,
+              ),
+            ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          animationDuration: const Duration(milliseconds: 160),
-          overlayColor: CatudyColors.violet.withValues(alpha: 0.10),
-          textStyle: _buttonTextStyle,
-        ),
+        style:
+            ElevatedButton.styleFrom(
+              animationDuration: _buttonAnimationDuration,
+              enableFeedback: true,
+              textStyle: _buttonTextStyle,
+            ).copyWith(
+              overlayColor: _buttonOverlay(
+                CatudyColors.violet,
+                pressedAlpha: dark ? 0.22 : 0.16,
+                hoveredAlpha: dark ? 0.12 : 0.08,
+                focusedAlpha: dark ? 0.16 : 0.10,
+              ),
+              elevation: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.disabled)) {
+                  return 0;
+                }
+                if (states.contains(WidgetState.pressed)) {
+                  return 1;
+                }
+                if (states.contains(WidgetState.hovered)) {
+                  return 4;
+                }
+                return 2;
+              }),
+            ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor:
@@ -202,6 +262,30 @@ class CatudyTheme {
     fontWeight: FontWeight.w500,
     fontVariations: _buttonFontVariations,
   );
+  static const _buttonAnimationDuration = Duration(milliseconds: 120);
+
+  static WidgetStateProperty<Color?> _buttonOverlay(
+    Color color, {
+    required double pressedAlpha,
+    required double hoveredAlpha,
+    required double focusedAlpha,
+  }) {
+    return WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.disabled)) {
+        return null;
+      }
+      if (states.contains(WidgetState.pressed)) {
+        return color.withValues(alpha: pressedAlpha);
+      }
+      if (states.contains(WidgetState.hovered)) {
+        return color.withValues(alpha: hoveredAlpha);
+      }
+      if (states.contains(WidgetState.focused)) {
+        return color.withValues(alpha: focusedAlpha);
+      }
+      return null;
+    });
+  }
 
   static TextStyle? _headingStyle(TextStyle? base, Color color) =>
       base?.copyWith(

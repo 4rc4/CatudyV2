@@ -6,7 +6,6 @@ import 'router.dart';
 import 'theme/catudy_colors.dart';
 import 'theme/catudy_theme.dart';
 import '../features/onboarding/pet_intro_tour.dart';
-import '../shared/widgets/catudy_tap_feedback_layer.dart';
 
 class CatudyApp extends StatefulWidget {
   const CatudyApp({this.initialLocation = '/', super.key});
@@ -136,8 +135,7 @@ class _CatudyAppState extends State<CatudyApp> with WidgetsBindingObserver {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        builder: (context, child) =>
-            CatudyTapFeedbackLayer(child: child ?? const SizedBox.shrink()),
+        builder: (context, child) => child ?? const SizedBox.shrink(),
         routerConfig: _router,
       ),
     );
