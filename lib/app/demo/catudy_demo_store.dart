@@ -2557,6 +2557,7 @@ class CatudyDemoStore extends ChangeNotifier {
       lobbyStarted = true;
     }
     _commit();
+    _syncAppLockRulesToPlatform();
     _scheduleActiveFocusCompletion();
     _syncNotifications();
   }
@@ -2570,6 +2571,7 @@ class CatudyDemoStore extends ChangeNotifier {
     _restoredCompletedSession = false;
     _focusCompletionTimer?.cancel();
     _commit();
+    _syncAppLockRulesToPlatform();
     _syncNotifications();
   }
 
@@ -2581,6 +2583,7 @@ class CatudyDemoStore extends ChangeNotifier {
     _restoredCompletedSession = false;
     _focusCompletionTimer?.cancel();
     _commit();
+    _syncAppLockRulesToPlatform();
     _syncNotifications();
     return record;
   }
@@ -2629,6 +2632,7 @@ class CatudyDemoStore extends ChangeNotifier {
         appName: appName,
         requiredFocusMinutes: requiredFocusMinutes,
         enabled: true,
+        appIconBase64: app.appIconBase64,
       );
       _commitAppLockRules();
       return true;
@@ -2643,6 +2647,7 @@ class CatudyDemoStore extends ChangeNotifier {
         requiredFocusMinutes:
             requiredFocusMinutes ?? lockSettings.defaultRequiredFocusMinutes,
         enabled: true,
+        appIconBase64: app.appIconBase64,
       ),
     );
     lockSettings = lockSettings.copyWith(enabled: true);
@@ -3865,10 +3870,12 @@ class CatudyDemoStore extends ChangeNotifier {
           final todayStart = DateTime(now.year, now.month, now.day);
           final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
           final completedToday = history
-              .where((item) =>
-                  !item.manual &&
-                  item.createdAt.isAfter(todayStart) &&
-                  item.createdAt.isBefore(todayEnd))
+              .where(
+                (item) =>
+                    !item.manual &&
+                    item.createdAt.isAfter(todayStart) &&
+                    item.createdAt.isBefore(todayEnd),
+              )
               .fold<int>(0, (sum, item) => sum + item.minutes);
 
           await HomeWidget.saveWidgetData<String>('displayName', displayName);
@@ -3877,19 +3884,40 @@ class CatudyDemoStore extends ChangeNotifier {
           await HomeWidget.saveWidgetData<int>('petHunger', petHunger);
           await HomeWidget.saveWidgetData<int>('petEnergy', petEnergy);
           await HomeWidget.saveWidgetData<int>('streakDays', streakDays);
-          await HomeWidget.saveWidgetData<int>('dailyGoalMinutes', dailyGoalMinutes);
-          await HomeWidget.saveWidgetData<int>('dailyGoalCompletedMinutes', completedToday);
+          await HomeWidget.saveWidgetData<int>(
+            'dailyGoalMinutes',
+            dailyGoalMinutes,
+          );
+          await HomeWidget.saveWidgetData<int>(
+            'dailyGoalCompletedMinutes',
+            completedToday,
+          );
           await HomeWidget.saveWidgetData<String>('widgetPetId', widgetPetId);
-          await HomeWidget.saveWidgetData<String>('widgetShortcutCategoryId', widgetShortcutCategoryId);
+          await HomeWidget.saveWidgetData<String>(
+            'widgetShortcutCategoryId',
+            widgetShortcutCategoryId,
+          );
 
           final session = activeSession;
           if (session != null) {
-            await HomeWidget.saveWidgetData<String>('activeSessionCategory', session.categoryId);
+            await HomeWidget.saveWidgetData<String>(
+              'activeSessionCategory',
+              session.categoryId,
+            );
             final elapsed = now.difference(session.startedAt).inMinutes;
-            final remaining = (session.durationMinutes - elapsed).clamp(0, session.durationMinutes);
-            await HomeWidget.saveWidgetData<int>('activeSessionMinutesLeft', remaining);
+            final remaining = (session.durationMinutes - elapsed).clamp(
+              0,
+              session.durationMinutes,
+            );
+            await HomeWidget.saveWidgetData<int>(
+              'activeSessionMinutesLeft',
+              remaining,
+            );
           } else {
-            await HomeWidget.saveWidgetData<String>('activeSessionCategory', '');
+            await HomeWidget.saveWidgetData<String>(
+              'activeSessionCategory',
+              '',
+            );
             await HomeWidget.saveWidgetData<int>('activeSessionMinutesLeft', 0);
           }
 
@@ -4746,7 +4774,11 @@ class CatudyDemoStore extends ChangeNotifier {
     selectedWidgetThemeId = _readString(json, 'selectedWidgetThemeId', '');
     selectedDialoguePackId = _readString(json, 'selectedDialoguePackId', '');
     widgetPetId = _readString(json, 'widgetPetId', 'active');
-    widgetShortcutCategoryId = _readString(json, 'widgetShortcutCategoryId', 'study');
+    widgetShortcutCategoryId = _readString(
+      json,
+      'widgetShortcutCategoryId',
+      'study',
+    );
     lastHappinessAlertAt = _readNullableDate(json, 'lastHappinessAlertAt');
     lastHungerAlertAt = _readNullableDate(json, 'lastHungerAlertAt');
     lastEnergyFullAlertAt = _readNullableDate(json, 'lastEnergyFullAlertAt');
@@ -4867,6 +4899,7 @@ class CatudyDemoStore extends ChangeNotifier {
             lockedApps: lockedApps,
             lockLocations: lockLocations,
             settings: lockSettings,
+            activeSession: activeSession?.toJson(),
           )
           .catchError((Object _) {}),
     );

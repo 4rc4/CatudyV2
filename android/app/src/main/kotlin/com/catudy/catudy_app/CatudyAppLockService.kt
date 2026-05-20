@@ -14,6 +14,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
@@ -26,9 +27,11 @@ import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import kotlin.math.atan2
+import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -74,7 +77,10 @@ class CatudyAppLockService : Service() {
             return
         }
         val foregroundPackage = currentForegroundPackage()
-        if (foregroundPackage == null || foregroundPackage == packageName) {
+        if (foregroundPackage == null) {
+            return
+        }
+        if (foregroundPackage == packageName) {
             hideOverlay()
             return
         }
@@ -100,7 +106,7 @@ class CatudyAppLockService : Service() {
         val usageStatsManager =
             getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val end = System.currentTimeMillis()
-        val events = usageStatsManager.queryEvents(end - 10000, end)
+        val events = usageStatsManager.queryEvents(end - FOREGROUND_LOOKBACK_MS, end)
         val event = UsageEvents.Event()
         var latestPackage: String? = null
         while (events.hasNextEvent()) {
@@ -119,27 +125,45 @@ class CatudyAppLockService : Service() {
         if (!Settings.canDrawOverlays(this)) {
             return
         }
-        if (overlayView != null && overlayPackageName == rule.packageName) {
+        val activeProgressVisible = rules.activeUnlock?.packageName == rule.packageName
+        if (overlayView != null && overlayPackageName == rule.packageName && !activeProgressVisible) {
             return
         }
         hideOverlay()
         val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(56, 56, 56, 56)
-            setBackgroundColor(Color.rgb(250, 247, 255))
+        val root = FrameLayout(this).apply {
+            setBackgroundColor(Color.rgb(21, 17, 42))
         }
-        root.addView(lockTitle(if (isTurkish()) "Bu uygulama kilitli" else "This app is locked"))
-        root.addView(lockBody(rule, strictLocationActive))
-        root.addView(lockButton(
-            if (isTurkish()) "Catudy'de odak başlat" else "Start focus in Catudy"
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(24), dp(24), dp(24), dp(22))
+            background = rounded(Color.rgb(255, 250, 247), 28)
+        }
+        root.addView(
+            card,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.CENTER
+                leftMargin = dp(22)
+                rightMargin = dp(22)
+            }
+        )
+        card.addView(lockBadge())
+        card.addView(lockTitle(if (isTurkish()) "Bu uygulama kilitli" else "This app is locked"))
+        card.addView(lockAppName(rule.appName))
+        card.addView(lockBody(rule, strictLocationActive))
+        card.addView(lockProgress(rule, strictLocationActive))
+        card.addView(lockButton(
+            if (isTurkish()) "Catudy'de odak ba\u015Flat" else "Start focus in Catudy"
         ) {
             hideOverlay()
             launchCatudy("catudy:///focus/start?unlockApp=${Uri.encode(rule.packageName)}")
         })
-        root.addView(lockButton(
-            if (isTurkish()) "Kilit ayarlarına git" else "Open lock settings"
+        card.addView(lockButton(
+            if (isTurkish()) "Kilit ayarlar\u0131" else "Lock settings"
         ) {
             hideOverlay()
             launchCatudy("catudy:///app-lock")
@@ -167,49 +191,199 @@ class CatudyAppLockService : Service() {
         }
     }
 
+    private fun lockBadge(): TextView {
+        return TextView(this).apply {
+            text = "CATUDY"
+            setTextColor(Color.rgb(45, 143, 136))
+            textSize = 13f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setPadding(dp(12), dp(6), dp(12), dp(6))
+            background = rounded(
+                Color.rgb(234, 223, 255),
+                999,
+                Color.rgb(216, 200, 255),
+                1
+            )
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                bottomMargin = dp(12)
+            }
+        }
+    }
+
     private fun lockTitle(text: String): TextView {
         return TextView(this).apply {
             this.text = text
-            setTextColor(Color.rgb(43, 39, 59))
-            textSize = 28f
+            setTextColor(Color.rgb(20, 57, 133))
+            textSize = 30f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
+            includeFontPadding = false
+        }
+    }
+
+    private fun lockAppName(text: String): TextView {
+        return TextView(this).apply {
+            this.text = text
+            setTextColor(Color.rgb(117, 97, 200))
+            textSize = 18f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setPadding(0, dp(10), 0, 0)
         }
     }
 
     private fun lockBody(rule: LockedAppRule, strictLocationActive: Boolean): TextView {
         val body = if (strictLocationActive) {
             if (isTurkish()) {
-                "${rule.appName} konum kilidi nedeniyle kapalı. Açmak için Catudy'den konum kuralını kaldır."
+                "${rule.appName} se\u00E7ili konumdayken kapal\u0131 kal\u0131r. Konum kural\u0131n\u0131 Catudy'den kapatabilirsin."
             } else {
-                "${rule.appName} is blocked by a location rule. Remove that location rule in Catudy to unlock."
+                "${rule.appName} stays closed inside the selected location. Turn off that location rule in Catudy to open it."
             }
         } else {
             if (isTurkish()) {
-                "${rule.requiredFocusMinutes} dk odak tamamlayınca bugün açılacak."
+                "Uygulamay\u0131 a\u00E7mak i\u00E7in Catudy'de odak hedefini tamamla."
             } else {
-                "Complete ${rule.requiredFocusMinutes} min focus to unlock it for today."
+                "Complete the focus target in Catudy to open this app."
             }
         }
         return TextView(this).apply {
             text = body
-            setTextColor(Color.rgb(86, 80, 110))
-            textSize = 17f
+            setTextColor(Color.rgb(102, 91, 134))
+            textSize = 16f
             gravity = Gravity.CENTER
-            setPadding(0, 18, 0, 28)
+            setPadding(0, dp(14), 0, dp(18))
+            setLineSpacing(0f, 1.0f)
         }
+    }
+
+    private fun lockProgress(rule: LockedAppRule, strictLocationActive: Boolean): LinearLayout {
+        val progress = progressFor(rule, strictLocationActive)
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(12), dp(14), dp(12))
+            background = rounded(
+                Color.rgb(234, 223, 255),
+                20,
+                Color.rgb(216, 200, 255),
+                1
+            )
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                bottomMargin = dp(16)
+            }
+            addView(LinearLayout(this@CatudyAppLockService).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(TextView(this@CatudyAppLockService).apply {
+                    text = if (strictLocationActive) {
+                        if (isTurkish()) "Konum kural\u0131" else "Location rule"
+                    } else {
+                        if (isTurkish()) "Kalan odak" else "Remaining focus"
+                    }
+                    setTextColor(Color.rgb(20, 57, 133))
+                    textSize = 14f
+                    typeface = Typeface.DEFAULT_BOLD
+                    layoutParams = LinearLayout.LayoutParams(
+                        0,
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        1f
+                    )
+                })
+                addView(TextView(this@CatudyAppLockService).apply {
+                    text = progress.label
+                    setTextColor(Color.rgb(117, 97, 200))
+                    textSize = 14f
+                    typeface = Typeface.DEFAULT_BOLD
+                })
+            })
+            addView(progressTrack(progress.value))
+        }
+    }
+
+    private fun progressTrack(value: Double): FrameLayout {
+        val track = FrameLayout(this).apply {
+            background = rounded(Color.rgb(255, 250, 247), 999)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dp(12)
+            ).apply {
+                topMargin = dp(10)
+            }
+        }
+        val fill = View(this).apply {
+            background = rounded(Color.rgb(91, 200, 188), 999)
+        }
+        track.addView(
+            fill,
+            FrameLayout.LayoutParams(0, FrameLayout.LayoutParams.MATCH_PARENT)
+        )
+        track.post {
+            fill.layoutParams = FrameLayout.LayoutParams(
+                (track.width * value.coerceIn(0.0, 1.0)).toInt(),
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+        }
+        return track
+    }
+
+    private fun progressFor(
+        rule: LockedAppRule,
+        strictLocationActive: Boolean
+    ): LockProgress {
+        if (strictLocationActive) {
+            return LockProgress(
+                label = if (isTurkish()) "Aktif" else "Active",
+                value = 0.0
+            )
+        }
+        val active = rules.activeUnlock
+        val requiredMinutes = rule.requiredFocusMinutes.coerceAtLeast(1)
+        if (active != null && active.packageName == rule.packageName) {
+            val totalMillis = active.durationMinutes.coerceAtLeast(1) * 60_000L
+            val elapsedMillis = (System.currentTimeMillis() - active.startedAtMillis)
+                .coerceIn(0L, totalMillis)
+            val remainingMillis = (totalMillis - elapsedMillis).coerceAtLeast(0L)
+            val remainingMinutes = ceil(remainingMillis / 60000.0)
+                .toInt()
+                .coerceAtLeast(0)
+            return LockProgress(
+                label = if (isTurkish()) "$remainingMinutes dk" else "$remainingMinutes min",
+                value = elapsedMillis.toDouble() / totalMillis.toDouble()
+            )
+        }
+        return LockProgress(
+            label = if (isTurkish()) "$requiredMinutes dk" else "$requiredMinutes min",
+            value = 0.0
+        )
     }
 
     private fun lockButton(text: String, onClick: () -> Unit): Button {
         return Button(this).apply {
+            val primary = !text.contains("settings", ignoreCase = true) &&
+                !text.contains("ayar", ignoreCase = true)
             this.text = text
             isAllCaps = false
+            typeface = Typeface.DEFAULT_BOLD
+            textSize = 16f
+            setTextColor(if (primary) Color.WHITE else Color.rgb(117, 97, 200))
+            background = rounded(
+                if (primary) Color.rgb(117, 97, 200) else Color.rgb(255, 250, 247),
+                18,
+                if (primary) Color.rgb(117, 97, 200) else Color.rgb(216, 200, 255),
+                1
+            )
             setOnClickListener { onClick() }
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+                dp(52)
             )
-            params.setMargins(0, 8, 0, 8)
+            params.setMargins(0, if (primary) 0 else dp(8), 0, 0)
             layoutParams = params
         }
     }
@@ -357,8 +531,33 @@ class CatudyAppLockService : Service() {
         return earthRadiusMeters * c
     }
 
+    private fun rounded(
+        color: Int,
+        radiusDp: Int,
+        strokeColor: Int? = null,
+        strokeWidthDp: Int = 0
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            setColor(color)
+            cornerRadius = dp(radiusDp).toFloat()
+            if (strokeColor != null && strokeWidthDp > 0) {
+                setStroke(dp(strokeWidthDp), strokeColor)
+            }
+        }
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
+    }
+
+    private data class LockProgress(
+        val label: String,
+        val value: Double,
+    )
+
     companion object {
         private const val CHANNEL_ID = "catudy_app_lock"
         private const val NOTIFICATION_ID = 9051
+        private const val FOREGROUND_LOOKBACK_MS = 120_000L
     }
 }

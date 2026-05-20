@@ -8,6 +8,7 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/premium/catudy_premium_models.dart';
 import '../../app/theme/catudy_colors.dart';
+import '../../features/onboarding/pet_intro_tour.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/catudy_visual_system.dart';
@@ -137,6 +138,12 @@ class _HomeHeader extends StatelessWidget {
                 ? Icons.workspace_premium_rounded
                 : Icons.workspace_premium_outlined,
           ),
+        ),
+        const SizedBox(width: 6),
+        IconButton(
+          onPressed: () => showPetIntroTour(context),
+          tooltip: store.t('pet.showTour'),
+          icon: const Icon(Icons.info_rounded),
         ),
         const SizedBox(width: 6),
         IconButton(

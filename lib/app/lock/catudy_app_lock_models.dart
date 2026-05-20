@@ -1,17 +1,25 @@
 import 'dart:math';
 
 class CatudyInstalledApp {
-  const CatudyInstalledApp({required this.packageName, required this.appName});
+  const CatudyInstalledApp({
+    required this.packageName,
+    required this.appName,
+    this.appIconBase64,
+  });
 
   factory CatudyInstalledApp.fromMap(Map<Object?, Object?> map) {
     return CatudyInstalledApp(
       packageName: _readString(map, 'packageName', ''),
       appName: _readString(map, 'appName', ''),
+      appIconBase64:
+          _readNullableString(map, 'appIconBase64') ??
+          _readNullableString(map, 'appIcon'),
     );
   }
 
   final String packageName;
   final String appName;
+  final String? appIconBase64;
 }
 
 class LockedApp {
@@ -20,6 +28,7 @@ class LockedApp {
     required this.appName,
     required this.requiredFocusMinutes,
     required this.enabled,
+    this.appIconBase64,
     this.unlockedUntil,
   });
 
@@ -33,6 +42,9 @@ class LockedApp {
         LockSettings.defaultFocusMinutes,
       ).clamp(1, 240).toInt(),
       enabled: _readBool(json, 'enabled', true),
+      appIconBase64:
+          _readNullableString(json, 'appIconBase64') ??
+          _readNullableString(json, 'appIcon'),
       unlockedUntil: _readNullableDate(json, 'unlockedUntil'),
     );
   }
@@ -41,6 +53,7 @@ class LockedApp {
   final String appName;
   final int requiredFocusMinutes;
   final bool enabled;
+  final String? appIconBase64;
   final DateTime? unlockedUntil;
 
   bool isUnlockedAt(DateTime at) {
@@ -52,6 +65,7 @@ class LockedApp {
     String? appName,
     int? requiredFocusMinutes,
     bool? enabled,
+    String? appIconBase64,
     DateTime? unlockedUntil,
     bool clearUnlockedUntil = false,
   }) {
@@ -62,6 +76,7 @@ class LockedApp {
           requiredFocusMinutes?.clamp(1, 240).toInt() ??
           this.requiredFocusMinutes,
       enabled: enabled ?? this.enabled,
+      appIconBase64: appIconBase64 ?? this.appIconBase64,
       unlockedUntil: clearUnlockedUntil
           ? null
           : unlockedUntil ?? this.unlockedUntil,
@@ -73,6 +88,7 @@ class LockedApp {
     'appName': appName,
     'requiredFocusMinutes': requiredFocusMinutes,
     'enabled': enabled,
+    if (appIconBase64?.isNotEmpty == true) 'appIconBase64': appIconBase64,
     'unlockedUntil': unlockedUntil?.toIso8601String(),
   };
 }
@@ -252,6 +268,11 @@ double _radians(double degrees) => degrees * pi / 180;
 String _readString(Map<Object?, Object?> json, String key, String fallback) {
   final value = json[key];
   return value is String && value.isNotEmpty ? value : fallback;
+}
+
+String? _readNullableString(Map<Object?, Object?> json, String key) {
+  final value = json[key];
+  return value is String && value.isNotEmpty ? value : null;
 }
 
 int _readInt(Map<Object?, Object?> json, String key, int fallback) {

@@ -322,6 +322,9 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path.startsWith('/settings') || path.startsWith('/public-profile')) {
       return '/profile';
     }
+    if (path.startsWith('/app-lock') || path.startsWith('/widget-settings')) {
+      return '/settings';
+    }
     if (path.startsWith('/manual-entry')) {
       return '/calendar';
     }
@@ -379,6 +382,8 @@ class _CatudyShellState extends State<CatudyShell> {
     }
     if (path.startsWith('/profile') ||
         path.startsWith('/settings') ||
+        path.startsWith('/app-lock') ||
+        path.startsWith('/widget-settings') ||
         path.startsWith('/public-profile')) {
       return 4;
     }

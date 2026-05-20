@@ -33,6 +33,20 @@ class AppLockPermissionStatus {
   final bool backgroundLocation;
 }
 
+class CatudyDeviceLocation {
+  const CatudyDeviceLocation({required this.latitude, required this.longitude});
+
+  factory CatudyDeviceLocation.fromMap(Map<Object?, Object?> map) {
+    return CatudyDeviceLocation(
+      latitude: _readDouble(map, 'latitude', 0),
+      longitude: _readDouble(map, 'longitude', 0),
+    );
+  }
+
+  final double latitude;
+  final double longitude;
+}
+
 class CatudyAppLockService {
   CatudyAppLockService._();
 
@@ -92,6 +106,22 @@ class CatudyAppLockService {
     await _invokeVoid('openLocationSettings');
   }
 
+  Future<CatudyDeviceLocation?> getLastKnownLocation() async {
+    if (!isAndroid) {
+      return null;
+    }
+    try {
+      final result = await _channel.invokeMapMethod<Object?, Object?>(
+        'getLastKnownLocation',
+      );
+      return result == null ? null : CatudyDeviceLocation.fromMap(result);
+    } on PlatformException catch (_) {
+      return null;
+    } on MissingPluginException catch (_) {
+      return null;
+    }
+  }
+
   Future<void> startLockService() async {
     await _invokeVoid('startLockService');
   }
@@ -104,6 +134,7 @@ class CatudyAppLockService {
     required List<LockedApp> lockedApps,
     required List<LockLocation> lockLocations,
     required LockSettings settings,
+    Map<String, dynamic>? activeSession,
   }) async {
     if (!isAndroid) {
       return;
@@ -112,6 +143,7 @@ class CatudyAppLockService {
       'settings': settings.toJson(),
       'lockedApps': lockedApps.map((item) => item.toJson()).toList(),
       'lockLocations': lockLocations.map((item) => item.toJson()).toList(),
+      'activeSession': activeSession,
       'syncedAt': DateTime.now().toIso8601String(),
     });
   }
@@ -128,4 +160,15 @@ class CatudyAppLockService {
       return;
     }
   }
+}
+
+double _readDouble(Map<Object?, Object?> json, String key, double fallback) {
+  final value = json[key];
+  if (value is double) {
+    return value;
+  }
+  if (value is num) {
+    return value.toDouble();
+  }
+  return fallback;
 }

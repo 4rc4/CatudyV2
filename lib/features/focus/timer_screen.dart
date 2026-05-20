@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
-import '../../shared/widgets/floating_mascot.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -84,8 +83,6 @@ class _TimerScreenState extends State<TimerScreen> {
               accentColor: CatudyColors.violet,
               child: Column(
                 children: [
-                  const FloatingMascot(width: 86, height: 86),
-                  const SizedBox(height: 10),
                   Text(
                     store.categoryName(
                       session?.categoryId ?? store.selectedCategoryId,
@@ -176,13 +173,12 @@ class _TimerScreenState extends State<TimerScreen> {
             else
               SizedBox(
                 width: double.infinity,
-                child: FilledButton.icon(
+                child: _EndFocusButton(
                   onPressed: () {
                     store.completeFocus();
                     context.go('/focus/result');
                   },
-                  icon: const Icon(Icons.check_rounded),
-                  label: Text(store.t('focus.endFocus')),
+                  label: store.t('focus.endFocus'),
                 ),
               ),
           ],
@@ -195,6 +191,96 @@ class _TimerScreenState extends State<TimerScreen> {
     final minutes = seconds ~/ 60;
     final rest = seconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${rest.toString().padLeft(2, '0')}';
+  }
+}
+
+class _EndFocusButton extends StatefulWidget {
+  const _EndFocusButton({required this.onPressed, required this.label});
+
+  final VoidCallback onPressed;
+  final String label;
+
+  @override
+  State<_EndFocusButton> createState() => _EndFocusButtonState();
+}
+
+class _EndFocusButtonState extends State<_EndFocusButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: widget.label,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTap: widget.onPressed,
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 110),
+          curve: Curves.easeOut,
+          scale: _pressed ? 0.985 : 1,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            height: 58,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              gradient: const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [CatudyColors.coral, CatudyColors.violet],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: CatudyColors.coral.withValues(
+                    alpha: _pressed ? 0.14 : 0.26,
+                  ),
+                  blurRadius: _pressed ? 8 : 20,
+                  offset: Offset(0, _pressed ? 4 : 10),
+                ),
+              ],
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.38),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.96),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: CatudyColors.coral,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    widget.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 17,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

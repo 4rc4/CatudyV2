@@ -13,6 +13,9 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    @Volatile
+    private var installedAppsCache: List<Map<String, String>>? = null
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(
@@ -20,7 +23,7 @@ class MainActivity : FlutterActivity() {
             "catudy/app_lock"
         ).setMethodCallHandler { call, result ->
             when (call.method) {
-                "listInstalledApps" -> result.success(listInstalledApps())
+                "listInstalledApps" -> loadInstalledApps(result)
                 "getLastKnownLocation" -> {
                     if (hasLocationPermission()) {
                         val location = lastKnownLocation()
@@ -76,6 +79,19 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun loadInstalledApps(result: MethodChannel.Result) {
+        installedAppsCache?.let {
+            result.success(it)
+            return
+        }
+        Thread {
+            val apps = runCatching { listInstalledApps() }
+                .getOrElse { emptyList<Map<String, String>>() }
+            installedAppsCache = apps
+            runOnUiThread { result.success(apps) }
+        }.start()
+    }
+
     private fun listInstalledApps(): List<Map<String, String>> {
         val launcherIntent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_LAUNCHER)
@@ -100,7 +116,12 @@ class MainActivity : FlutterActivity() {
                 val iconBase64 = try {
                     val drawable = info.loadIcon(packageManager)
                     val bitmap = drawableToBitmap(drawable)
-                    val scaled = android.graphics.Bitmap.createScaledBitmap(bitmap, 96, 96, true)
+                    val scaled = android.graphics.Bitmap.createScaledBitmap(
+                        bitmap,
+                        APP_ICON_SIZE_PX,
+                        APP_ICON_SIZE_PX,
+                        true
+                    )
                     val stream = java.io.ByteArrayOutputStream()
                     scaled.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
                     android.util.Base64.encodeToString(stream.toByteArray(), android.util.Base64.NO_WRAP)
@@ -110,7 +131,7 @@ class MainActivity : FlutterActivity() {
                 mapOf(
                     "packageName" to appPackage,
                     "appName" to appName,
-                    "appIcon" to iconBase64
+                    "appIconBase64" to iconBase64
                 )
             }
             .distinctBy { it["packageName"] }
@@ -202,5 +223,9 @@ class MainActivity : FlutterActivity() {
         } else {
             startService(intent)
         }
+    }
+
+    companion object {
+        private const val APP_ICON_SIZE_PX = 64
     }
 }

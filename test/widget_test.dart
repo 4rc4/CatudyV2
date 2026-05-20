@@ -73,7 +73,7 @@ void main() {
     expect(find.text('Başlamaya hazır'), findsOneWidget);
     expect(find.text('Kategori Seç'), findsOneWidget);
     expect(find.text('Süre Seç'), findsOneWidget);
-    expect(find.text('Daha fazla ayar'), findsOneWidget);
+    expect(find.byIcon(Icons.edit_rounded), findsOneWidget);
   });
 
   testWidgets('renders Stats range controls', (tester) async {

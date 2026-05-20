@@ -89,6 +89,8 @@ class CatudyTheme {
           backgroundColor: CatudyColors.violet,
           foregroundColor: Colors.white,
           minimumSize: const Size(0, 48),
+          animationDuration: const Duration(milliseconds: 160),
+          overlayColor: Colors.white.withValues(alpha: 0.14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
@@ -99,6 +101,8 @@ class CatudyTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: dark ? CatudyColors.darkInk : CatudyColors.blue,
           minimumSize: const Size(0, 48),
+          animationDuration: const Duration(milliseconds: 160),
+          overlayColor: CatudyColors.violet.withValues(alpha: 0.10),
           side: BorderSide(color: CatudyColors.violet.withValues(alpha: 0.24)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
@@ -107,7 +111,11 @@ class CatudyTheme {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(textStyle: _buttonTextStyle),
+        style: TextButton.styleFrom(
+          animationDuration: const Duration(milliseconds: 160),
+          overlayColor: CatudyColors.violet.withValues(alpha: 0.10),
+          textStyle: _buttonTextStyle,
+        ),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
@@ -116,10 +124,16 @@ class CatudyTheme {
                   .withValues(alpha: dark ? 0.88 : 0.96),
           foregroundColor: dark ? CatudyColors.darkMuted : CatudyColors.muted,
           minimumSize: const Size(44, 44),
+          animationDuration: const Duration(milliseconds: 160),
+          overlayColor: CatudyColors.violet.withValues(alpha: 0.12),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(textStyle: _buttonTextStyle),
+        style: ElevatedButton.styleFrom(
+          animationDuration: const Duration(milliseconds: 160),
+          overlayColor: CatudyColors.violet.withValues(alpha: 0.10),
+          textStyle: _buttonTextStyle,
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor:

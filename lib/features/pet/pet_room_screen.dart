@@ -94,15 +94,6 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
         if (visited == null) {
           _schedulePetNameDialog(context, store);
         }
-        final equippedItem = store.equippedPetItemForProfile(visited);
-        final premiumPetStyle = visited == null
-            ? store.cosmeticById(store.selectedPetStyleId)
-            : null;
-        final equipped =
-            premiumPetStyle?.name ??
-            (equippedItem == null
-                ? store.t('pet.noCosmetic')
-                : store.itemName(equippedItem));
         final premiumDialogueActive =
             visited == null &&
             store.selectedDialoguePackId == 'storybook_dialogues' &&
@@ -130,7 +121,6 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             petName: visited == null
                 ? store.petDisplayName
                 : store.t('pet.roomName', {'pet': visited.petName}),
-            equipped: equipped,
             dialogue: dialogue,
             showGreeting: _showGreeting,
             mood: store.petMood,
@@ -271,7 +261,6 @@ class _PetNameDialogState extends State<_PetNameDialog> {
 class _RoomScene extends StatelessWidget {
   const _RoomScene({
     required this.petName,
-    required this.equipped,
     required this.dialogue,
     required this.showGreeting,
     required this.mood,
@@ -297,7 +286,6 @@ class _RoomScene extends StatelessWidget {
   });
 
   final String petName;
-  final String equipped;
   final String dialogue;
   final bool showGreeting;
   final int mood;
@@ -435,9 +423,7 @@ class _RoomScene extends StatelessWidget {
                   height: wallShelf.resolvedHeight,
                 ),
               ),
-              rug.positioned(
-                child: _PerspectiveRug(accent: roomEffectAccent),
-              ),
+              rug.positioned(child: _PerspectiveRug(accent: roomEffectAccent)),
               catBed.positioned(
                 child: _PetBed(
                   item: bedItem,
@@ -504,12 +490,7 @@ class _RoomScene extends StatelessWidget {
                 bottom: 18,
                 child: Column(
                   children: [
-                    _CarePanel(
-                      mood: mood,
-                      hunger: hunger,
-                      energy: energy,
-                      equipped: equipped,
-                    ),
+                    _CarePanel(mood: mood, hunger: hunger, energy: energy),
                     const SizedBox(height: 12),
                     if (visiting)
                       SizedBox(
@@ -1038,13 +1019,11 @@ class _CarePanel extends StatelessWidget {
     required this.mood,
     required this.hunger,
     required this.energy,
-    required this.equipped,
   });
 
   final int mood;
   final int hunger;
   final int energy;
-  final String equipped;
 
   @override
   Widget build(BuildContext context) {
@@ -1066,29 +1045,6 @@ class _CarePanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.workspace_premium_rounded,
-                color: CatudyColors.tealDark,
-                size: 16,
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  equipped,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: CatudyColors.mutedFor(context),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 9),
           Row(
             children: [
               Expanded(
@@ -1297,9 +1253,7 @@ class _PerspectiveRug extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _RugPainter(
-        accent: accent ?? const Color(0xFFD5C3A6),
-      ),
+      painter: _RugPainter(accent: accent ?? const Color(0xFFD5C3A6)),
     );
   }
 }

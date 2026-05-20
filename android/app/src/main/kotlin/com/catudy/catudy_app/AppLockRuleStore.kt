@@ -23,6 +23,7 @@ object AppLockRuleStore {
         return runCatching {
             val json = JSONObject(raw)
             val settings = json.optJSONObject("settings")
+            val activeSession = json.optJSONObject("activeSession")
             val apps = json.optJSONArray("lockedApps") ?: JSONArray()
             val locations = json.optJSONArray("lockLocations") ?: JSONArray()
             AppLockRules(
@@ -59,6 +60,21 @@ object AppLockRuleStore {
                         radiusMeters = location.optDouble("radiusMeters", 150.0),
                         active = location.optBoolean("active", true)
                     )
+                },
+                activeUnlock = activeSession?.let { session ->
+                    val packageName = session.optString("unlockPackageName")
+                    val startedAtMillis = parseInstantMillis(
+                        session.optString("startedAt", "")
+                    )
+                    if (packageName.isBlank() || startedAtMillis == null) {
+                        null
+                    } else {
+                        ActiveUnlockRule(
+                            packageName = packageName,
+                            durationMinutes = session.optInt("durationMinutes", 25),
+                            startedAtMillis = startedAtMillis
+                        )
+                    }
                 }
             )
         }.getOrDefault(AppLockRules())
@@ -97,6 +113,7 @@ data class AppLockRules(
     val strictLocationLocksEnabled: Boolean = true,
     val lockedApps: List<LockedAppRule> = emptyList(),
     val lockLocations: List<LockLocationRule> = emptyList(),
+    val activeUnlock: ActiveUnlockRule? = null,
 )
 
 data class LockedAppRule(
@@ -114,4 +131,10 @@ data class LockLocationRule(
     val longitude: Double,
     val radiusMeters: Double,
     val active: Boolean,
+)
+
+data class ActiveUnlockRule(
+    val packageName: String,
+    val durationMinutes: Int,
+    val startedAtMillis: Long,
 )
