@@ -20,6 +20,7 @@ import '../features/premium/season_pass_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/profile/public_profile_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/settings/widget_settings_screen.dart';
 import '../features/shell/catudy_shell.dart';
 import '../features/shop/inventory_screen.dart';
 import '../features/shop/shop_screen.dart';
@@ -191,6 +192,11 @@ class CatudyRouter {
             path: '/settings',
             pageBuilder: (context, state) =>
                 _animatedPage(state, const SettingsScreen()),
+          ),
+          GoRoute(
+            path: '/widget-settings',
+            pageBuilder: (context, state) =>
+                _animatedPage(state, const WidgetSettingsScreen()),
           ),
           GoRoute(
             path: '/app-lock',

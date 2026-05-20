@@ -17,6 +17,7 @@ import '../online/catudy_social_service.dart';
 import '../premium/catudy_premium_models.dart';
 import '../storage/catudy_local_storage.dart';
 import '../theme/catudy_colors.dart';
+import 'package:home_widget/home_widget.dart';
 
 final catudyDemoStore = CatudyDemoStore();
 
@@ -1029,6 +1030,8 @@ class CatudyDemoStore extends ChangeNotifier {
   String selectedProfileThemeId = '';
   String selectedWidgetThemeId = '';
   String selectedDialoguePackId = '';
+  String widgetPetId = 'active';
+  String widgetShortcutCategoryId = 'study';
   DateTime? lastHappinessAlertAt;
   DateTime? lastHungerAlertAt;
   DateTime? lastEnergyFullAlertAt;
@@ -3849,8 +3852,65 @@ class CatudyDemoStore extends ChangeNotifier {
     }
     notifyListeners();
     unawaited(_save());
+    _syncWidgetData();
     _scheduleLeaderboardSync();
     _scheduleBackupSync();
+  }
+
+  void _syncWidgetData() {
+    unawaited(
+      Future(() async {
+        try {
+          final now = DateTime.now();
+          final todayStart = DateTime(now.year, now.month, now.day);
+          final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+          final completedToday = history
+              .where((item) =>
+                  !item.manual &&
+                  item.createdAt.isAfter(todayStart) &&
+                  item.createdAt.isBefore(todayEnd))
+              .fold<int>(0, (sum, item) => sum + item.minutes);
+
+          await HomeWidget.saveWidgetData<String>('displayName', displayName);
+          await HomeWidget.saveWidgetData<String>('petName', petName);
+          await HomeWidget.saveWidgetData<int>('petMood', petMood);
+          await HomeWidget.saveWidgetData<int>('petHunger', petHunger);
+          await HomeWidget.saveWidgetData<int>('petEnergy', petEnergy);
+          await HomeWidget.saveWidgetData<int>('streakDays', streakDays);
+          await HomeWidget.saveWidgetData<int>('dailyGoalMinutes', dailyGoalMinutes);
+          await HomeWidget.saveWidgetData<int>('dailyGoalCompletedMinutes', completedToday);
+          await HomeWidget.saveWidgetData<String>('widgetPetId', widgetPetId);
+          await HomeWidget.saveWidgetData<String>('widgetShortcutCategoryId', widgetShortcutCategoryId);
+
+          final session = activeSession;
+          if (session != null) {
+            await HomeWidget.saveWidgetData<String>('activeSessionCategory', session.categoryId);
+            final elapsed = now.difference(session.startedAt).inMinutes;
+            final remaining = (session.durationMinutes - elapsed).clamp(0, session.durationMinutes);
+            await HomeWidget.saveWidgetData<int>('activeSessionMinutesLeft', remaining);
+          } else {
+            await HomeWidget.saveWidgetData<String>('activeSessionCategory', '');
+            await HomeWidget.saveWidgetData<int>('activeSessionMinutesLeft', 0);
+          }
+
+          await HomeWidget.updateWidget(
+            name: 'CatudyWidgetProvider',
+            androidName: 'CatudyWidgetProvider',
+          );
+        } catch (e) {
+          // Silent catch
+        }
+      }),
+    );
+  }
+
+  void updateWidgetSettings({
+    required String petId,
+    required String categoryId,
+  }) {
+    widgetPetId = petId;
+    widgetShortcutCategoryId = categoryId;
+    _commit();
   }
 
   void _syncNotifications() {
@@ -4469,6 +4529,8 @@ class CatudyDemoStore extends ChangeNotifier {
     selectedProfileThemeId = '';
     selectedWidgetThemeId = '';
     selectedDialoguePackId = '';
+    widgetPetId = 'active';
+    widgetShortcutCategoryId = 'study';
     lastHappinessAlertAt = null;
     lastHungerAlertAt = null;
     lastEnergyFullAlertAt = null;
@@ -4683,6 +4745,8 @@ class CatudyDemoStore extends ChangeNotifier {
     selectedProfileThemeId = _readString(json, 'selectedProfileThemeId', '');
     selectedWidgetThemeId = _readString(json, 'selectedWidgetThemeId', '');
     selectedDialoguePackId = _readString(json, 'selectedDialoguePackId', '');
+    widgetPetId = _readString(json, 'widgetPetId', 'active');
+    widgetShortcutCategoryId = _readString(json, 'widgetShortcutCategoryId', 'study');
     lastHappinessAlertAt = _readNullableDate(json, 'lastHappinessAlertAt');
     lastHungerAlertAt = _readNullableDate(json, 'lastHungerAlertAt');
     lastEnergyFullAlertAt = _readNullableDate(json, 'lastEnergyFullAlertAt');
@@ -4885,6 +4949,8 @@ class CatudyDemoStore extends ChangeNotifier {
     'selectedProfileThemeId': selectedProfileThemeId,
     'selectedWidgetThemeId': selectedWidgetThemeId,
     'selectedDialoguePackId': selectedDialoguePackId,
+    'widgetPetId': widgetPetId,
+    'widgetShortcutCategoryId': widgetShortcutCategoryId,
     'lastHappinessAlertAt': lastHappinessAlertAt?.toIso8601String(),
     'lastHungerAlertAt': lastHungerAlertAt?.toIso8601String(),
     'lastEnergyFullAlertAt': lastEnergyFullAlertAt?.toIso8601String(),

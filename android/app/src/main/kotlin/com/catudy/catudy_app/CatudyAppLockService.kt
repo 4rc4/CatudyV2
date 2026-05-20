@@ -133,13 +133,13 @@ class CatudyAppLockService : Service() {
         root.addView(lockTitle(if (isTurkish()) "Bu uygulama kilitli" else "This app is locked"))
         root.addView(lockBody(rule, strictLocationActive))
         root.addView(lockButton(
-            if (isTurkish()) "Catudy'de odak baslat" else "Start focus in Catudy"
+            if (isTurkish()) "Catudy'de odak başlat" else "Start focus in Catudy"
         ) {
             hideOverlay()
             launchCatudy("catudy:///focus/start?unlockApp=${Uri.encode(rule.packageName)}")
         })
         root.addView(lockButton(
-            if (isTurkish()) "Kilit ayarlarina git" else "Open lock settings"
+            if (isTurkish()) "Kilit ayarlarına git" else "Open lock settings"
         ) {
             hideOverlay()
             launchCatudy("catudy:///app-lock")
@@ -180,13 +180,13 @@ class CatudyAppLockService : Service() {
     private fun lockBody(rule: LockedAppRule, strictLocationActive: Boolean): TextView {
         val body = if (strictLocationActive) {
             if (isTurkish()) {
-                "${rule.appName} konum kilidi nedeniyle kapali. Acmak icin Catudy'den konum kuralini kaldir."
+                "${rule.appName} konum kilidi nedeniyle kapalı. Açmak için Catudy'den konum kuralını kaldır."
             } else {
                 "${rule.appName} is blocked by a location rule. Remove that location rule in Catudy to unlock."
             }
         } else {
             if (isTurkish()) {
-                "${rule.requiredFocusMinutes} dk odak tamamlayinca bugun acilacak."
+                "${rule.requiredFocusMinutes} dk odak tamamlayınca bugün açılacak."
             } else {
                 "Complete ${rule.requiredFocusMinutes} min focus to unlock it for today."
             }

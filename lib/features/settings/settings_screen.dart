@@ -283,6 +283,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 14),
           CatudyPanel(
+            accentColor: CatudyColors.teal,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.widgets_rounded,
+                  color: CatudyColors.teal,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        store.t('settings.widgetSettingsTitle'),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        store.t('settings.widgetSettingsBody'),
+                        style: TextStyle(color: CatudyColors.mutedFor(context)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                FilledButton.tonalIcon(
+                  onPressed: () => context.push('/widget-settings'),
+                  icon: const Icon(Icons.tune_rounded),
+                  label: Text(store.t('appLock.open')),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          CatudyPanel(
             color: store.offlineMode
                 ? CatudyColors.lavenderSoft
                 : CatudyColors.surface,
