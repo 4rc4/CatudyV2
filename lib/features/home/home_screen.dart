@@ -12,6 +12,7 @@ import '../../features/onboarding/pet_intro_tour.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/catudy_pressable.dart';
+import '../../shared/widgets/catudy_test_ad_banner.dart';
 import '../../shared/widgets/catudy_visual_system.dart';
 import '../../shared/widgets/floating_mascot.dart';
 import '../../shared/widgets/store_builder.dart';
@@ -40,6 +41,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               _DailyGoalPanel(store: store),
+              CatudyTestAdBanner(show: !store.hasPremiumAccess),
               const SizedBox(height: 14),
               _PetCompanionCard(store: store),
               const SizedBox(height: 14),

@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_test_ad_banner.dart';
 import '../../shared/widgets/floating_mascot.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
@@ -175,6 +176,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
             ),
             const SizedBox(height: 18),
             _ResultPrimaryActions(store: store),
+            CatudyTestAdBanner(show: !store.hasPremiumAccess),
           ],
         );
       },

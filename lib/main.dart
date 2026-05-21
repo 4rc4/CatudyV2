@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'app/ads/catudy_ads.dart';
 import 'app/catudy_app.dart';
 import 'app/demo/catudy_demo_store.dart';
 import 'app/notifications/catudy_notification_service.dart';
@@ -24,6 +27,7 @@ const _supabaseAnonKey = bool.hasEnvironment('CATUDY_SUPABASE_ANON_KEY')
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  unawaited(initializeCatudyAds());
   await catudyDemoStore.load();
   await CatudyNotificationService.instance.initialize();
   catudyDemoStore.configureSocialNotifications(
@@ -45,10 +49,14 @@ Future<void> main() async {
   catudyDemoStore.configureNotificationSync(_scheduleLocalizedNotifications);
   await _initializeOnlineLobby();
   await _scheduleLocalizedNotifications();
-  runApp(ProviderScope(child: CatudyApp(
-    initialLocation: _initialLocation(),
-    onAppReady: _checkForUpdate,
-  )));
+  runApp(
+    ProviderScope(
+      child: CatudyApp(
+        initialLocation: _initialLocation(),
+        onAppReady: _checkForUpdate,
+      ),
+    ),
+  );
 }
 
 /// Called after the first frame is rendered so the navigator is available.

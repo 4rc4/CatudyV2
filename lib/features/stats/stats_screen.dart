@@ -8,6 +8,7 @@ import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/catudy_section_header.dart';
+import '../../shared/widgets/catudy_test_ad_banner.dart';
 import '../../shared/widgets/catudy_visual_system.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
@@ -157,6 +158,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 ),
               ),
             ),
+            CatudyTestAdBanner(show: !store.hasPremiumAccess),
             const SizedBox(height: 14),
             CatudyPanel(
               accentColor: CatudyColors.teal,
