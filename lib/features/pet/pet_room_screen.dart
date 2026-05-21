@@ -5,11 +5,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../features/onboarding/pet_intro_tour.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
-import '../../shared/widgets/floating_mascot.dart';
 import '../../shared/widgets/store_builder.dart';
 
 class PetRoomScreen extends StatefulWidget {
@@ -326,12 +326,6 @@ class _RoomScene extends StatelessWidget {
           final horizontalInset = (roomWidth * 0.06)
               .clamp(18.0, 28.0)
               .toDouble();
-          final window = _RoomSlotGeometry(
-            left: (roomWidth - (roomWidth * 0.40).clamp(150.0, 188.0)) / 2,
-            top: (roomHeight * 0.145).clamp(104.0, 140.0).toDouble(),
-            width: (roomWidth * 0.40).clamp(150.0, 188.0).toDouble(),
-            aspectRatio: 330 / 440,
-          );
           final bookcase = _RoomSlotGeometry(
             left: roomWidth * 0.055,
             top: (roomHeight * 0.235).clamp(158.0, 196.0).toDouble(),
@@ -355,12 +349,6 @@ class _RoomScene extends StatelessWidget {
             bottom: controlsReserve + 86,
             width: (roomWidth * 0.43).clamp(166.0, 212.0).toDouble(),
             aspectRatio: 360 / 300,
-          );
-          final rug = _RoomSlotGeometry(
-            left: (roomWidth * 0.10).clamp(30.0, 46.0).toDouble(),
-            right: (roomWidth * 0.10).clamp(30.0, 46.0).toDouble(),
-            bottom: controlsReserve + 38,
-            height: (roomHeight * 0.18).clamp(122.0, 154.0).toDouble(),
           );
           final petSize = (roomWidth * (studying ? 0.31 : 0.34))
               .clamp(126.0, 158.0)
@@ -403,12 +391,6 @@ class _RoomScene extends StatelessWidget {
                     ),
                   ),
                 ),
-              window.positioned(
-                child: _RoomWindow(
-                  width: window.resolvedWidth,
-                  height: window.resolvedHeight,
-                ),
-              ),
               bookcase.positioned(
                 child: _TinyShelf(
                   item: shelfItem,
@@ -423,7 +405,6 @@ class _RoomScene extends StatelessWidget {
                   height: wallShelf.resolvedHeight,
                 ),
               ),
-              rug.positioned(child: _PerspectiveRug(accent: roomEffectAccent)),
               catBed.positioned(
                 child: _PetBed(
                   item: bedItem,
@@ -525,7 +506,6 @@ class _RoomSlotGeometry {
     this.top,
     this.bottom,
     this.width,
-    this.height,
     this.aspectRatio,
   }) : assert(width != null || (left != null && right != null));
 
@@ -534,15 +514,11 @@ class _RoomSlotGeometry {
   final double? top;
   final double? bottom;
   final double? width;
-  final double? height;
   final double? aspectRatio;
 
   double get resolvedWidth => width!;
 
   double get resolvedHeight {
-    if (height != null) {
-      return height!;
-    }
     return resolvedWidth / aspectRatio!;
   }
 
@@ -553,7 +529,7 @@ class _RoomSlotGeometry {
       top: top,
       bottom: bottom,
       width: width,
-      height: height ?? (width != null ? resolvedHeight : null),
+      height: width != null ? resolvedHeight : null,
       child: child,
     );
   }
@@ -1245,64 +1221,6 @@ class _RoomStripButton extends StatelessWidget {
   }
 }
 
-class _PerspectiveRug extends StatelessWidget {
-  const _PerspectiveRug({this.accent});
-
-  final Color? accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _RugPainter(accent: accent ?? const Color(0xFFD5C3A6)),
-    );
-  }
-}
-
-class _RugPainter extends CustomPainter {
-  const _RugPainter({required this.accent});
-
-  final Color accent;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final shadowRect = Rect.fromLTWH(
-      size.width * 0.10,
-      size.height * 0.26,
-      size.width * 0.80,
-      size.height * 0.58,
-    );
-    canvas.drawOval(
-      shadowRect.translate(0, size.height * 0.07),
-      Paint()..color = Colors.black.withValues(alpha: 0.11),
-    );
-    canvas.drawOval(shadowRect, Paint()..color = accent);
-    canvas.drawOval(
-      shadowRect.deflate(size.width * 0.07),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..color = Colors.white.withValues(alpha: 0.34),
-    );
-    canvas.drawOval(
-      Rect.fromLTWH(
-        size.width * 0.30,
-        size.height * 0.40,
-        size.width * 0.38,
-        size.height * 0.22,
-      ),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
-        ..color = Colors.white.withValues(alpha: 0.22),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _RugPainter oldDelegate) {
-    return oldDelegate.accent != accent;
-  }
-}
-
 class _RoomWindow extends StatelessWidget {
   const _RoomWindow({required this.width, required this.height});
 
@@ -1465,8 +1383,6 @@ class _RoomPet extends StatelessWidget {
   Widget build(BuildContext context) {
     final shadowWidth = mascotSize * (studying ? 0.64 : 0.70);
     final shadowHeight = mascotSize * 0.14;
-    final noteScale = (mascotSize / 190).clamp(0.78, 1.05).toDouble();
-
     return SizedBox(
       width: boxWidth,
       height: boxHeight,
@@ -1486,17 +1402,13 @@ class _RoomPet extends StatelessWidget {
           ),
           Positioned(
             bottom: shadowHeight * 0.12,
-            child: FloatingMascot(width: mascotSize, height: mascotSize),
-          ),
-          if (studying)
-            Positioned(
-              right: mascotSize * 0.16,
-              bottom: mascotSize * 0.15,
-              child: Transform.scale(
-                scale: noteScale,
-                child: const _StudyMotion(),
-              ),
+            child: Image.asset(
+              CatudyAssets.mascot,
+              width: mascotSize,
+              height: mascotSize,
+              fit: BoxFit.contain,
             ),
+          ),
         ],
       ),
     );

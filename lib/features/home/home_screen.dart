@@ -11,6 +11,7 @@ import '../../app/theme/catudy_colors.dart';
 import '../../features/onboarding/pet_intro_tour.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_pressable.dart';
 import '../../shared/widgets/catudy_visual_system.dart';
 import '../../shared/widgets/floating_mascot.dart';
 import '../../shared/widgets/store_builder.dart';
@@ -109,14 +110,6 @@ class _HomeHeader extends StatelessWidget {
                   color: CatudyColors.blueFor(context),
                   fontWeight: FontWeight.w900,
                   height: 1.02,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                store.petDisplayName,
-                style: TextStyle(
-                  color: CatudyColors.mutedFor(context),
-                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -336,8 +329,7 @@ class _PetCompanionCard extends StatelessWidget {
               Expanded(
                 child: _PetStatusChip(
                   icon: Icons.sentiment_satisfied_rounded,
-                  label:
-                      '${store.t('home.happiness')}: ${store.petMood > 70 ? store.t('home.good') : store.t('home.normal')}',
+                  label: _moodLabel(store),
                   infoTitle: store.t('home.happiness'),
                   infoMessage: store.languageCode == 'en'
                       ? 'Mochi gets happier with focus sessions and favorite items. High happiness makes the room feel more lively.'
@@ -348,8 +340,7 @@ class _PetCompanionCard extends StatelessWidget {
               Expanded(
                 child: _PetStatusChip(
                   icon: Icons.local_cafe_rounded,
-                  label:
-                      '${store.t('home.hunger')}: ${store.petHunger < 35 ? store.t('home.full') : store.t('home.hungry')}',
+                  label: _hungerLabel(store),
                   infoTitle: store.t('home.hunger'),
                   infoMessage: store.languageCode == 'en'
                       ? 'Hunger rises over time. Regular focus and care keep your pet balanced.'
@@ -361,6 +352,20 @@ class _PetCompanionCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _moodLabel(CatudyDemoStore store) {
+    if (store.petMood >= 72) {
+      return store.t('home.happy');
+    }
+    if (store.petMood <= 38) {
+      return store.t('home.sad');
+    }
+    return store.t('home.normal');
+  }
+
+  String _hungerLabel(CatudyDemoStore store) {
+    return store.petHunger < 35 ? store.t('home.full') : store.t('home.hungry');
   }
 }
 
@@ -423,35 +428,44 @@ class _HomeShortcutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 58,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: color.withValues(alpha: 0.32)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: CatudyColors.mutedFor(context),
-                fontWeight: FontWeight.w900,
-                fontSize: 11,
+    return CatudyPressable(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          height: 58,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.34)),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.22),
+                blurRadius: 14,
+                offset: const Offset(0, 7),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 22),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -473,40 +487,42 @@ class _LobbyQuickButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        height: 46,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.34)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.25),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 19),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
+    return CatudyPressable(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          height: 46,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.34)),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.25),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 19),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

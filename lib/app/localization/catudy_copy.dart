@@ -30,7 +30,7 @@ class CatudyCopy {
     'common.select': 'Seç',
     'common.refresh': 'Yenile',
     'common.yes': 'Evet',
-    'common.gold': 'altın',
+    'common.gold': 'coin',
     'common.hoursShort': 's',
     'common.points': 'puan',
     'common.delete': 'Sil',
@@ -41,7 +41,7 @@ class CatudyCopy {
     'auth.genericError': 'Giriş işlemi tamamlanamadı. Biraz sonra tekrar dene.',
     'auth.deleteError': 'Hesap silinemedi. Biraz sonra tekrar dene.',
     'auth.deleteSetupError':
-        'Hesap silme şu anda sunucuda hazır değil. Lütfen daha sonra tekrar dene.',
+        'Sunucuda hesap silme fonksiyonu eksik. Supabase SQL kurulumunu çalıştırıp tekrar dene.',
     'auth.sessionExpired': 'Oturumun yenilenmeli. Tekrar giriş yapıp dene.',
     'lobby.genericError': 'Lobi işlemi tamamlanamadı. Biraz sonra tekrar dene.',
     'app.exitTitle': 'Uygulamadan çıkılsın mı?',
@@ -127,6 +127,8 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'home.hunger': 'Açlık',
     'home.good': 'İyi',
     'home.normal': 'Normal',
+    'home.happy': 'Mutlu',
+    'home.sad': 'Üzgün',
     'home.full': 'Tok',
     'home.hungry': 'Aç',
     'home.focusSuggestion': '{category} için {minutes} dakika çalışabilirsin.',
@@ -348,7 +350,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'stats.all': 'Tümü',
     'stats.total': 'toplam',
     'stats.manualNote':
-        'Manuel kayıtlar raporda görünür, ancak altın ve leaderboard kredisi vermez.',
+        'Manuel kayıtlar raporda görünür, ancak coin ve leaderboard kredisi vermez.',
     'stats.insights': 'İçgörüler',
     'stats.averageSession': 'Ortalama seans',
     'stats.bestHour': 'En verimli saat',
@@ -407,7 +409,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'focus.petUnlockedBody': '{pet} envantere eklendi.',
     'focus.resultSummary': 'Seans özeti',
     'focus.resultPointsEarned': 'Kazanılan puan',
-    'focus.resultGoldEarned': 'Kazanılan altın',
+    'focus.resultGoldEarned': 'Kazanılan coin',
     'focus.resultPetEffect': 'Pet etkisi',
     'focus.resultPetEffectValue': '+8 mutluluk',
     'focus.resultStreak': 'Seri durumu',
@@ -671,17 +673,17 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'season.open': 'Aç',
 
     'crates.title': 'Kutular',
-    'crates.wallet': '{gold} altın · {shards} shard',
+    'crates.wallet': '{points} puan · {coin} coin · {shards} shard',
     'crates.collection': 'Koleksiyon',
     'crates.owned': '{count} adet',
-    'crates.price': '{gold} altın',
+    'crates.price': '{points} puan',
     'crates.plusOnly': 'Plus',
     'crates.buy': 'Al',
     'crates.open': 'Aç',
     'crates.opening': 'Kutu açılıyor',
     'crates.rolling': 'Ne çıkacak?',
     'crates.economyNote':
-        'Kutular yalnızca kozmetik verir. Altın gerçek odak dakikasından kazanılır; Plus altın kazancını artırır ama leaderboard’u etkilemez.',
+        'Kutular puanla alınır ve yalnızca kozmetik verir. Coin mağaza alışverişinde kalır; leaderboard’u gerçek odak dakikaları belirler.',
 
     'coach.starterHeadline': 'Güvenli başlangıç',
     'coach.starterReason':
@@ -734,7 +736,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'settings.deleteAccountConfirm': 'Hesabı sil',
     'settings.demoWallet': 'Demo Bakiyesi',
     'settings.demoWalletBody':
-        'Mağaza denemeleri için altını 5000, puanı 2500 seviyesine tamamlar. Satın alınan eşyaları sıfırlamaz.',
+        'Mağaza denemeleri için coin’i 5000, puanı 2500 seviyesine tamamlar. Satın alınan eşyaları sıfırlamaz.',
     'settings.demoWalletButton': 'Demo bakiyesi yükle',
     'settings.demoWalletLoaded': 'Demo bakiyesi yüklendi.',
 
@@ -803,6 +805,11 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'widget.tabPet': 'Dostum',
     'widget.tabProgress': 'Hedef',
     'widget.tabShortcut': 'Kısayol',
+    'widget.kind.pet': 'Pet',
+    'widget.kind.goal': 'Hedef',
+    'widget.kind.shortcut': 'Odak',
+    'widget.kind.streak': 'Seri',
+    'widget.kind.wallet': 'Cüzdan',
     'widget.configurations': 'Widget Özellikleri',
     'widget.petMood': 'Mod',
     'widget.petHunger': 'Açlık',
@@ -859,7 +866,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
         'Bugünün odak süresini, serini, hatırlatmalarını ve petinin kısa durumunu buradan takip edersin.',
     'tour.focusTitle': 'Odak burada başlar',
     'tour.focusBody':
-        'Odak başlat düğmesine basınca kategori ve süre seçimine geçersin. Gerçek seanslar puan, altın ve pet gelişimi kazandırır.',
+        'Odak başlat düğmesine basınca kategori ve süre seçimine geçersin. Gerçek seanslar puan, coin ve pet gelişimi kazandırır.',
     'tour.calendarTitle': 'Takvim',
     'tour.calendarBody':
         'Takvim ekranında geçmiş günlere manuel kayıt ekleyebilir, bugün ve gelecek günler için kendi metninle hatırlatma oluşturabilirsin.',
@@ -908,7 +915,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'common.select': 'Select',
     'common.refresh': 'Refresh',
     'common.yes': 'Yes',
-    'common.gold': 'gold',
+    'common.gold': 'coin',
     'common.hoursShort': 'h',
     'common.points': 'points',
     'common.delete': 'Delete',
@@ -918,7 +925,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'auth.genericError': 'Sign-in could not be completed. Try again shortly.',
     'auth.deleteError': 'Account could not be deleted. Try again shortly.',
     'auth.deleteSetupError':
-        'Account deletion is not ready on the server yet. Try again later.',
+        'The server account deletion function is missing. Run the Supabase SQL setup and try again.',
     'auth.sessionExpired':
         'Your session needs to be refreshed. Sign in again and try again.',
     'lobby.genericError':
@@ -1005,6 +1012,8 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'home.hunger': 'Hunger',
     'home.good': 'Good',
     'home.normal': 'Normal',
+    'home.happy': 'Happy',
+    'home.sad': 'Sad',
     'home.full': 'Full',
     'home.hungry': 'Hungry',
     'home.focusSuggestion': 'You can study {category} for {minutes} minutes.',
@@ -1233,7 +1242,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'stats.all': 'All',
     'stats.total': 'total',
     'stats.manualNote':
-        'Manual records appear in reports, but do not give gold or leaderboard credit.',
+        'Manual records appear in reports, but do not give coin or leaderboard credit.',
     'stats.insights': 'Insights',
     'stats.averageSession': 'Average session',
     'stats.bestHour': 'Best hour',
@@ -1292,7 +1301,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'focus.petUnlockedBody': '{pet} was added to inventory.',
     'focus.resultSummary': 'Session summary',
     'focus.resultPointsEarned': 'Points earned',
-    'focus.resultGoldEarned': 'Gold earned',
+    'focus.resultGoldEarned': 'Coin earned',
     'focus.resultPetEffect': 'Pet effect',
     'focus.resultPetEffectValue': '+8 happiness',
     'focus.resultStreak': 'Streak status',
@@ -1554,17 +1563,17 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'season.open': 'Open',
 
     'crates.title': 'Crates',
-    'crates.wallet': '{gold} gold · {shards} shards',
+    'crates.wallet': '{points} points · {coin} coin · {shards} shards',
     'crates.collection': 'Collection',
     'crates.owned': '{count} owned',
-    'crates.price': '{gold} gold',
+    'crates.price': '{points} points',
     'crates.plusOnly': 'Plus',
     'crates.buy': 'Buy',
     'crates.open': 'Open',
     'crates.opening': 'Opening crate',
     'crates.rolling': 'What will drop?',
     'crates.economyNote':
-        'Crates are cosmetic only. Gold comes from real focus minutes; Plus increases gold gain but never changes leaderboard rank.',
+        'Crates are bought with points and only drop cosmetics. Coin stays for shop purchases; leaderboard rank still comes from real focus minutes.',
 
     'coach.starterHeadline': 'Safe starting point',
     'coach.starterReason':
@@ -1616,7 +1625,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'settings.deleteAccountConfirm': 'Delete account',
     'settings.demoWallet': 'Demo Wallet',
     'settings.demoWalletBody':
-        'Tops gold up to 5000 and points up to 2500 for shop testing. Purchased items are kept.',
+        'Tops coin up to 5000 and points up to 2500 for shop testing. Purchased items are kept.',
     'settings.demoWalletButton': 'Load demo wallet',
     'settings.demoWalletLoaded': 'Demo wallet loaded.',
 
@@ -1685,6 +1694,11 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'widget.tabPet': 'Pet',
     'widget.tabProgress': 'Goal',
     'widget.tabShortcut': 'Shortcut',
+    'widget.kind.pet': 'Pet',
+    'widget.kind.goal': 'Goal',
+    'widget.kind.shortcut': 'Focus',
+    'widget.kind.streak': 'Streak',
+    'widget.kind.wallet': 'Wallet',
     'widget.configurations': 'Widget Options',
     'widget.petMood': 'Mood',
     'widget.petHunger': 'Hunger',
@@ -1741,7 +1755,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
         "Track today's focus time, streak, reminders, and a short pet status here.",
     'tour.focusTitle': 'Focus starts here',
     'tour.focusBody':
-        'Tap the start focus button to choose a category and duration. Real sessions earn points, gold, and pet progress.',
+        'Tap the start focus button to choose a category and duration. Real sessions earn points, coin, and pet progress.',
     'tour.calendarTitle': 'Calendar',
     'tour.calendarBody':
         'Add manual records to past days, and create reminders with your own text for today or future days.',

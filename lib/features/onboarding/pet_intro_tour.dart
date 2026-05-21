@@ -259,7 +259,7 @@ class _PetIntroTourOverlayState extends State<_PetIntroTourOverlay> {
       route: '/',
       title: 'Odak burada başlar',
       message:
-          'Ortadaki saat düğmesine basınca kategori ve süre seçimine geçersin. Gerçek seanslar puan, altın ve pet gelişimi kazandırır.',
+          'Ortadaki saat düğmesine basınca kategori ve süre seçimine geçersin. Gerçek seanslar puan, coin ve pet gelişimi kazandırır.',
       alignment: Alignment.center,
       arrowAlignment: Alignment.center,
       icon: Icons.schedule_rounded,

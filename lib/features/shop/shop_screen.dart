@@ -320,10 +320,10 @@ class _ShopWalletSummary extends StatelessWidget {
         children: [
           Expanded(
             child: _ShopMetric(
-              icon: Icons.monetization_on_rounded,
+              icon: Icons.savings_rounded,
               value: '${store.gold}',
               label: store.t('common.gold'),
-              color: CatudyColors.yellow,
+              color: CatudyColors.violet,
             ),
           ),
           const SizedBox(width: 10),
@@ -493,7 +493,7 @@ class _CrateCard extends StatelessWidget {
       title: crate.name,
       body: crate.description,
       chips: [
-        _MetaChip(label: '${crate.price} ${store.t('common.gold')}'),
+        _MetaChip(label: '${crate.price} ${store.t('common.points')}'),
         if (owned > 0) _MetaChip(label: 'x$owned'),
       ],
       action: FilledButton(

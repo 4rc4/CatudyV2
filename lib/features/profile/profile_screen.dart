@@ -58,9 +58,8 @@ class ProfileScreen extends StatelessWidget {
               store: store,
               level: level,
               onEdit: () => _editProfile(context, store),
+              onCopyCode: () => _copyUserId(context, store),
             ),
-            const SizedBox(height: 14),
-            _UserCodeCard(store: store),
             const SizedBox(height: 14),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -186,61 +185,18 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class _UserCodeCard extends StatelessWidget {
-  const _UserCodeCard({required this.store});
-
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    return CatudyPanel(
-      accentColor: CatudyColors.violet,
-      child: Row(
-        children: [
-          const Icon(Icons.badge_rounded, color: CatudyColors.violet),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  store.t('profile.myId'),
-                  style: TextStyle(
-                    color: CatudyColors.mutedFor(context),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SelectableText(
-                  store.publicUserCode,
-                  style: TextStyle(
-                    color: CatudyColors.blueFor(context),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton.filledTonal(
-            onPressed: () => ProfileScreen._copyUserId(context, store),
-            tooltip: store.t('profile.copyId'),
-            icon: const Icon(Icons.copy_rounded),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ProfileHeroCard extends StatelessWidget {
   const _ProfileHeroCard({
     required this.store,
     required this.level,
     required this.onEdit,
+    required this.onCopyCode,
   });
 
   final CatudyDemoStore store;
   final int level;
   final VoidCallback onEdit;
+  final VoidCallback onCopyCode;
 
   @override
   Widget build(BuildContext context) {
@@ -254,15 +210,50 @@ class _ProfileHeroCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Text(
-                  store.displayName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: CatudyColors.blueFor(context),
-                    fontWeight: FontWeight.w900,
-                    height: 1.05,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      store.displayName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: CatudyColors.blueFor(context),
+                            fontWeight: FontWeight.w900,
+                            height: 1.05,
+                          ),
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            store.publicUserCode,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: CatudyColors.mutedFor(context),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        SizedBox.square(
+                          dimension: 30,
+                          child: IconButton.filledTonal(
+                            onPressed: onCopyCode,
+                            tooltip: store.t('profile.copyId'),
+                            padding: EdgeInsets.zero,
+                            iconSize: 15,
+                            icon: const Icon(Icons.copy_rounded),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 10),
@@ -339,17 +330,20 @@ class _ProfileStatTile extends StatelessWidget {
         border: Border.all(color: CatudyColors.violet.withValues(alpha: 0.18)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, color: color, size: 16),
               const SizedBox(width: 4),
-              Expanded(
+              Flexible(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     color: CatudyColors.mutedFor(context),
                     fontWeight: FontWeight.w900,
@@ -362,10 +356,11 @@ class _ProfileStatTile extends StatelessWidget {
           const SizedBox(height: 7),
           FittedBox(
             fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
+            alignment: Alignment.center,
             child: Text(
               value,
               maxLines: 1,
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: CatudyColors.blueFor(context),
                 fontWeight: FontWeight.w900,

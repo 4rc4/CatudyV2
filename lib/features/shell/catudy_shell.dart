@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
+import '../../shared/widgets/catudy_pressable.dart';
 import '../../shared/widgets/store_builder.dart';
 
 class CatudyShell extends StatefulWidget {
@@ -22,6 +23,7 @@ class CatudyShell extends StatefulWidget {
 class _CatudyShellState extends State<CatudyShell> {
   bool _exitDialogOpen = false;
   bool _celebrationDrainScheduled = false;
+  int _lastPrimaryIndex = 0;
   Timer? _celebrationTimer;
   CatudyCelebration? _celebration;
 
@@ -75,6 +77,9 @@ class _CatudyShellState extends State<CatudyShell> {
   Widget build(BuildContext context) {
     final selectedIndex = _selectedIndex(widget.location);
     _rememberLocation(selectedIndex, widget.location);
+    if (!_isSettingsAuxiliaryPath(_pathOnly(widget.location))) {
+      _lastPrimaryIndex = selectedIndex;
+    }
     final dark = CatudyColors.isDark(context);
 
     return PopScope<Object?>(
@@ -242,6 +247,9 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path == '/auth' || path.startsWith('/focus/')) {
       return;
     }
+    if (_isSettingsAuxiliaryPath(path)) {
+      return;
+    }
     // Full-screen auxiliary routes are often opened from more than one tab.
     // They should be remembered only while they are really the active tab
     // context; after the user backs out, the root route below overwrites them.
@@ -319,7 +327,10 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path.startsWith('/plus')) {
       return '/profile';
     }
-    if (path.startsWith('/settings') || path.startsWith('/public-profile')) {
+    if (path.startsWith('/settings')) {
+      return _lastPathByIndex[_lastPrimaryIndex] ?? _paths[_lastPrimaryIndex];
+    }
+    if (path.startsWith('/public-profile')) {
       return '/profile';
     }
     if (path.startsWith('/app-lock') || path.startsWith('/widget-settings')) {
@@ -361,6 +372,11 @@ class _CatudyShellState extends State<CatudyShell> {
       'profile' => 4,
       _ => null,
     };
+    if (path.startsWith('/settings') ||
+        path.startsWith('/app-lock') ||
+        path.startsWith('/widget-settings')) {
+      return fromIndex ?? _lastPrimaryIndex;
+    }
     if (fromIndex != null &&
         (path.startsWith('/community') ||
             path.startsWith('/plus') ||
@@ -391,6 +407,12 @@ class _CatudyShellState extends State<CatudyShell> {
       return 4;
     }
     return 0;
+  }
+
+  bool _isSettingsAuxiliaryPath(String path) {
+    return path.startsWith('/settings') ||
+        path.startsWith('/app-lock') ||
+        path.startsWith('/widget-settings');
   }
 }
 
@@ -492,30 +514,34 @@ class _CatudyNavButton extends StatelessWidget {
         button: true,
         selected: selected,
         label: store.t(item.labelKey),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(22),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-            decoration: BoxDecoration(
-              color: selected
-                  ? CatudyColors.teal.withValues(alpha: 0.18)
-                  : Colors.transparent,
-              border: selected
-                  ? Border.all(color: CatudyColors.teal.withValues(alpha: 0.30))
-                  : null,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Center(
-              child: isPet
-                  ? _PetNavIcon(selected: selected)
-                  : Icon(
-                      selected ? item.activeIcon : item.icon,
-                      color: color,
-                      size: selected ? 34 : 31,
-                    ),
+        child: CatudyPressable(
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(22),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+              decoration: BoxDecoration(
+                color: selected
+                    ? CatudyColors.teal.withValues(alpha: 0.18)
+                    : Colors.transparent,
+                border: selected
+                    ? Border.all(
+                        color: CatudyColors.teal.withValues(alpha: 0.30),
+                      )
+                    : null,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Center(
+                child: isPet
+                    ? _PetNavIcon(selected: selected)
+                    : Icon(
+                        selected ? item.activeIcon : item.icon,
+                        color: color,
+                        size: selected ? 34 : 31,
+                      ),
+              ),
             ),
           ),
         ),

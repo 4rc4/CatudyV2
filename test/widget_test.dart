@@ -1,6 +1,6 @@
 import 'package:catudy_app/app/catudy_app.dart';
+import 'package:catudy_app/app/catudy_assets.dart';
 import 'package:catudy_app/app/demo/catudy_demo_store.dart';
-import 'package:catudy_app/shared/widgets/floating_mascot.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -115,7 +115,15 @@ void main() {
     await _pumpCatudy(tester, initialLocation: '/pet-room');
     expect(find.text('Pet Odası'), findsOneWidget);
     expect(find.text('Mochi Odası'), findsOneWidget);
-    expect(find.byType(FloatingMascot), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName == CatudyAssets.mascot,
+      ),
+      findsWidgets,
+    );
     expect(find.text('Mağaza'), findsOneWidget);
     expect(find.text('Envanter'), findsOneWidget);
 

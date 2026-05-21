@@ -733,7 +733,7 @@ void main() {
     expect(store.isAuthenticated, isTrue);
     expect(
       store.authError,
-      'Hesap silme şu anda sunucuda hazır değil. Lütfen daha sonra tekrar dene.',
+      'Sunucuda hesap silme fonksiyonu eksik. Supabase SQL kurulumunu çalıştırıp tekrar dene.',
     );
   });
 
@@ -1022,6 +1022,22 @@ void main() {
       expect(store.pityStates['cat_crate']?.opensSinceEpic, 2);
     },
   );
+
+  test('crate purchases spend points instead of coin', () async {
+    final store = CatudyDemoStore(storage: _MemoryStorage(null));
+
+    await store.load();
+    store.gold = 500;
+    store.focusPoints = 60;
+
+    expect(store.buyCrate('cat_crate'), isTrue);
+    expect(store.gold, 500);
+    expect(store.focusPoints, 0);
+    expect(store.crateInventory['cat_crate'], 1);
+
+    expect(store.buyCrate('style_crate'), isFalse);
+    expect(store.crateInventory['style_crate'], isNull);
+  });
 
   test('season rewards respect free and premium tracks', () async {
     final store = CatudyDemoStore(storage: _MemoryStorage(null));

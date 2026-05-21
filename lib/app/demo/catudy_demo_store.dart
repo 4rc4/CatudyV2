@@ -774,7 +774,7 @@ class CatudyDemoStore extends ChangeNotifier {
       description: 'Pet accessories and cat-only styles.',
       type: LootCrateType.cat,
       poolId: 'cat_core',
-      price: 180,
+      price: 60,
       seasonal: false,
       premiumOnly: false,
     ),
@@ -784,7 +784,7 @@ class CatudyDemoStore extends ChangeNotifier {
       description: 'Decor, room effects, and study ambience.',
       type: LootCrateType.room,
       poolId: 'room_core',
-      price: 220,
+      price: 80,
       seasonal: false,
       premiumOnly: false,
     ),
@@ -794,7 +794,7 @@ class CatudyDemoStore extends ChangeNotifier {
       description: 'Frames, themes, badges, and dialogue packs.',
       type: LootCrateType.style,
       poolId: 'style_core',
-      price: 200,
+      price: 70,
       seasonal: false,
       premiumOnly: false,
     ),
@@ -2986,10 +2986,10 @@ class CatudyDemoStore extends ChangeNotifier {
     if (crate == null ||
         crate.price <= 0 ||
         (crate.premiumOnly && !hasPremiumAccess) ||
-        gold < crate.price) {
+        focusPoints < crate.price) {
       return false;
     }
-    gold -= crate.price;
+    focusPoints -= crate.price;
     crateInventory[id] = (crateInventory[id] ?? 0) + 1;
     _commit();
     return true;
@@ -3882,6 +3882,9 @@ class CatudyDemoStore extends ChangeNotifier {
               .fold<int>(0, (sum, item) => sum + item.minutes);
 
           await HomeWidget.saveWidgetData<String>('displayName', displayName);
+          await HomeWidget.saveWidgetData<int>('gold', gold);
+          await HomeWidget.saveWidgetData<int>('focusPoints', focusPoints);
+          await HomeWidget.saveWidgetData<int>('shards', shardWallet.shards);
           await HomeWidget.saveWidgetData<String>('petName', petName);
           await HomeWidget.saveWidgetData<int>('petMood', petMood);
           await HomeWidget.saveWidgetData<int>('petHunger', petHunger);
@@ -3924,10 +3927,18 @@ class CatudyDemoStore extends ChangeNotifier {
             await HomeWidget.saveWidgetData<int>('activeSessionMinutesLeft', 0);
           }
 
-          await HomeWidget.updateWidget(
-            name: 'CatudyWidgetProvider',
-            androidName: 'CatudyWidgetProvider',
-          );
+          for (final providerName in [
+            'CatudyPetWidgetProvider',
+            'CatudyProgressWidgetProvider',
+            'CatudyShortcutWidgetProvider',
+            'CatudyStreakWidgetProvider',
+            'CatudyWalletWidgetProvider',
+          ]) {
+            await HomeWidget.updateWidget(
+              name: providerName,
+              androidName: providerName,
+            );
+          }
         } catch (e) {
           // Silent catch
         }

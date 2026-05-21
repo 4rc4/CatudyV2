@@ -107,6 +107,10 @@ class CatudyTheme {
                 hoveredAlpha: 0.12,
                 focusedAlpha: 0.16,
               ),
+              elevation: _buttonElevation(defaultElevation: 2),
+              shadowColor: WidgetStatePropertyAll(
+                CatudyColors.violet.withValues(alpha: dark ? 0.24 : 0.18),
+              ),
             ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -130,6 +134,15 @@ class CatudyTheme {
                 hoveredAlpha: dark ? 0.12 : 0.08,
                 focusedAlpha: dark ? 0.16 : 0.10,
               ),
+              side: WidgetStateProperty.resolveWith((states) {
+                final pressed = states.contains(WidgetState.pressed);
+                return BorderSide(
+                  color: CatudyColors.violet.withValues(
+                    alpha: pressed ? 0.46 : 0.24,
+                  ),
+                  width: pressed ? 1.5 : 1,
+                );
+              }),
             ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -284,6 +297,23 @@ class CatudyTheme {
         return color.withValues(alpha: focusedAlpha);
       }
       return null;
+    });
+  }
+
+  static WidgetStateProperty<double?> _buttonElevation({
+    required double defaultElevation,
+  }) {
+    return WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.disabled)) {
+        return 0;
+      }
+      if (states.contains(WidgetState.pressed)) {
+        return 0;
+      }
+      if (states.contains(WidgetState.hovered)) {
+        return defaultElevation + 1;
+      }
+      return defaultElevation;
     });
   }
 

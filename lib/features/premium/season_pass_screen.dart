@@ -406,7 +406,7 @@ String _seasonRewardTitle(CatudyDemoStore store, SeasonReward reward) {
 }
 
 IconData _rewardIcon(SeasonRewardKind kind) => switch (kind) {
-  SeasonRewardKind.gold => Icons.monetization_on_rounded,
+  SeasonRewardKind.gold => Icons.savings_rounded,
   SeasonRewardKind.crate => Icons.inventory_2_rounded,
   SeasonRewardKind.cosmetic => Icons.auto_awesome_rounded,
 };

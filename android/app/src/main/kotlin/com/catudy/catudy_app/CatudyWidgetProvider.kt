@@ -144,3 +144,70 @@ class CatudyShortcutWidgetProvider : HomeWidgetProvider() {
         }
     }
 }
+
+class CatudyStreakWidgetProvider : HomeWidgetProvider() {
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
+        widgetData: SharedPreferences
+    ) {
+        for (appWidgetId in appWidgetIds) {
+            val views = RemoteViews(context.packageName, R.layout.layout_catudy_streak_widget).apply {
+                val streakDays = widgetData.getInt("streakDays", 0)
+                val completed = widgetData.getInt("dailyGoalCompletedMinutes", 0)
+                val goal = widgetData.getInt("dailyGoalMinutes", 45)
+                val percent = if (goal > 0) ((completed * 100) / goal).coerceAtMost(100) else 0
+
+                setTextViewText(R.id.widget_streak_days, streakDays.toString())
+                setTextViewText(R.id.widget_streak_goal, "$completed/$goal dk")
+                setProgressBar(R.id.widget_streak_progress, 100, percent, false)
+
+                val intent = Intent(context, MainActivity::class.java).apply {
+                    action = Intent.ACTION_VIEW
+                    data = Uri.parse("catudy:///stats")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                val pendingIntent = PendingIntent.getActivity(
+                    context, 103, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                setOnClickPendingIntent(R.id.widget_streak_root, pendingIntent)
+            }
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+}
+
+class CatudyWalletWidgetProvider : HomeWidgetProvider() {
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
+        widgetData: SharedPreferences
+    ) {
+        for (appWidgetId in appWidgetIds) {
+            val views = RemoteViews(context.packageName, R.layout.layout_catudy_wallet_widget).apply {
+                val coins = widgetData.getInt("gold", 0)
+                val points = widgetData.getInt("focusPoints", 0)
+                val shards = widgetData.getInt("shards", 0)
+
+                setTextViewText(R.id.widget_wallet_coin, "$coins coin")
+                setTextViewText(R.id.widget_wallet_points, "$points puan")
+                setTextViewText(R.id.widget_wallet_shards, "$shards shard")
+
+                val intent = Intent(context, MainActivity::class.java).apply {
+                    action = Intent.ACTION_VIEW
+                    data = Uri.parse("catudy:///shop")
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                val pendingIntent = PendingIntent.getActivity(
+                    context, 104, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                setOnClickPendingIntent(R.id.widget_wallet_root, pendingIntent)
+            }
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+}

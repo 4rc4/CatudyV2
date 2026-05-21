@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/catudy_colors.dart';
+import 'catudy_pressable.dart';
 
 class CatudyFilterTab<T> {
   const CatudyFilterTab({
@@ -59,53 +60,61 @@ class _CatudyFilterChip<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final foreground = selected ? Colors.white : CatudyColors.mutedFor(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected
-              ? CatudyColors.violet
-              : CatudyColors.surfaceFor(context),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
+    return CatudyPressable(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
             color: selected
                 ? CatudyColors.violet
-                : CatudyColors.violet.withValues(alpha: 0.14),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(tab.icon, color: foreground, size: 17),
-            const SizedBox(width: 6),
-            Text(
-              tab.label,
-              style: TextStyle(color: foreground, fontWeight: FontWeight.w900),
+                : CatudyColors.surfaceFor(context),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: selected
+                  ? CatudyColors.violet
+                  : CatudyColors.violet.withValues(alpha: 0.14),
             ),
-            if (tab.count != null) ...[
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(tab.icon, color: foreground, size: 17),
               const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? Colors.white.withValues(alpha: 0.18)
-                      : CatudyColors.violet.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  '${tab.count}',
-                  style: TextStyle(
-                    color: foreground,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                  ),
+              Text(
+                tab.label,
+                style: TextStyle(
+                  color: foreground,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
+              if (tab.count != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? Colors.white.withValues(alpha: 0.18)
+                        : CatudyColors.violet.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${tab.count}',
+                    style: TextStyle(
+                      color: foreground,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

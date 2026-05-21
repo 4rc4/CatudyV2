@@ -31,7 +31,8 @@ class CratesScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     store.t('crates.wallet', {
-                      'gold': store.gold,
+                      'points': store.focusPoints,
+                      'coin': store.gold,
                       'shards': store.shardWallet.shards,
                     }),
                     style: TextStyle(
@@ -96,6 +97,7 @@ class _CrateTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final count = store.crateInventory[crate.id] ?? 0;
     final locked = crate.premiumOnly && !store.hasPremiumAccess;
+    final canBuy = !locked && store.focusPoints >= crate.price;
     return CatudyPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,7 +139,7 @@ class _CrateTile extends StatelessWidget {
               Chip(label: Text(store.t('crates.owned', {'count': count}))),
               if (crate.price > 0)
                 Chip(
-                  label: Text(store.t('crates.price', {'gold': crate.price})),
+                  label: Text(store.t('crates.price', {'points': crate.price})),
                 ),
               if (locked) Chip(label: Text(store.t('crates.plusOnly'))),
             ],
@@ -147,7 +149,7 @@ class _CrateTile extends StatelessWidget {
             builder: (context, constraints) {
               final buyButton = crate.price > 0
                   ? OutlinedButton.icon(
-                      onPressed: locked ? null : () => store.buyCrate(crate.id),
+                      onPressed: canBuy ? () => store.buyCrate(crate.id) : null,
                       icon: const Icon(Icons.add_shopping_cart_rounded),
                       label: Text(store.t('crates.buy')),
                     )
