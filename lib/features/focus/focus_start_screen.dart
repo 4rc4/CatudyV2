@@ -100,17 +100,13 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       for (final category in store.categories)
-                        ChoiceChip(
-                          label: Text(category.name),
+                        _CategoryChoiceChip(
+                          category: category,
                           selected: store.selectedCategoryId == category.id,
-                          avatar: Icon(
-                            _iconFor(category.id),
-                            color: store.selectedCategoryId == category.id
-                                ? category.color
-                                : CatudyColors.mutedFor(context),
-                            size: 18,
-                          ),
-                          onSelected: (_) => store.selectCategory(category.id),
+                          canDelete: store.categories.length > 1,
+                          onSelected: () => store.selectCategory(category.id),
+                          onDelete: () =>
+                              _confirmDeleteCategory(context, store, category),
                         ),
                       ChoiceChip(
                         label: const Icon(Icons.add_rounded, size: 20),
@@ -323,6 +319,41 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
     );
   }
 
+  Future<void> _confirmDeleteCategory(
+    BuildContext context,
+    CatudyDemoStore store,
+    FocusCategory category,
+  ) async {
+    final confirmed =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete category?'),
+            content: Text(
+              'Delete "${category.name}"? Existing focus records will move to another category.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(store.t('common.cancel')),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: CatudyColors.coral,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(store.t('common.delete')),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (confirmed) {
+      store.deleteCategory(category.id);
+    }
+  }
+
   void _showCustomDurationDialog(BuildContext context, CatudyDemoStore store) {
     final controller = TextEditingController(
       text: store.durations.contains(store.selectedDurationMinutes)
@@ -399,6 +430,41 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
     }
     store.startFocus();
     context.go('/focus/timer');
+  }
+}
+
+class _CategoryChoiceChip extends StatelessWidget {
+  const _CategoryChoiceChip({
+    required this.category,
+    required this.selected,
+    required this.canDelete,
+    required this.onSelected,
+    required this.onDelete,
+  });
+
+  final FocusCategory category;
+  final bool selected;
+  final bool canDelete;
+  final VoidCallback onSelected;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return InputChip(
+      label: Text(category.name),
+      selected: selected,
+      avatar: Icon(
+        _iconFor(category.id),
+        color: selected ? category.color : CatudyColors.mutedFor(context),
+        size: 18,
+      ),
+      onSelected: (_) => onSelected(),
+      onDeleted: canDelete ? onDelete : null,
+      deleteIcon: const Icon(Icons.close_rounded, size: 18),
+      deleteIconColor: selected
+          ? category.color
+          : CatudyColors.mutedFor(context),
+    );
   }
 
   IconData _iconFor(String id) {

@@ -796,6 +796,30 @@ void main() {
     ]);
   });
 
+  test('deleting a category reassigns records and selection', () async {
+    final storage = _MemoryStorage(null);
+    final store = CatudyDemoStore(storage: storage);
+    await store.load();
+
+    store.addCategory('Physics', CatudyColors.coral);
+    final deletedId = store.selectedCategoryId;
+    store.addManualEntry(
+      categoryId: deletedId,
+      minutes: 30,
+      note: 'Lab notes',
+      date: DateTime.now(),
+    );
+
+    expect(store.deleteCategory(deletedId), isTrue);
+    expect(store.categories.any((item) => item.id == deletedId), isFalse);
+    expect(store.selectedCategoryId, isNot(deletedId));
+    expect(store.history.single.categoryId, store.selectedCategoryId);
+    expect(
+      storage.state?['history'].single['categoryId'],
+      store.selectedCategoryId,
+    );
+  });
+
   test('persisted default category names localize on restore', () async {
     final storage = _MemoryStorage({
       'categories': [

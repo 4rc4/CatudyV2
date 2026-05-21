@@ -114,6 +114,24 @@ class FocusRecord {
   final int gold;
   final String? todoId;
 
+  FocusRecord copyWith({
+    String? categoryId,
+    DateTime? updatedAt,
+    String? note,
+  }) {
+    return FocusRecord(
+      id: id,
+      categoryId: categoryId ?? this.categoryId,
+      minutes: minutes,
+      createdAt: createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      manual: manual,
+      note: note ?? this.note,
+      gold: gold,
+      todoId: todoId,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'categoryId': categoryId,
@@ -2494,6 +2512,41 @@ class CatudyDemoStore extends ChangeNotifier {
     );
     selectedCategoryId = id;
     _commit();
+  }
+
+  bool deleteCategory(String id) {
+    if (categories.length <= 1) {
+      return false;
+    }
+    final index = categories.indexWhere((item) => item.id == id);
+    if (index == -1) {
+      return false;
+    }
+
+    final fallback = categories.firstWhere(
+      (item) => item.id != id,
+      orElse: () => categories.first,
+    );
+    final now = DateTime.now();
+    categories.removeAt(index);
+    if (selectedCategoryId == id) {
+      selectedCategoryId = fallback.id;
+    }
+    for (var historyIndex = 0; historyIndex < history.length; historyIndex++) {
+      final record = history[historyIndex];
+      if (record.categoryId != id) {
+        continue;
+      }
+      history[historyIndex] = record.copyWith(
+        categoryId: fallback.id,
+        updatedAt: now,
+      );
+    }
+    if (widgetShortcutCategoryId == id) {
+      widgetShortcutCategoryId = fallback.id;
+    }
+    _commit();
+    return true;
   }
 
   void selectDuration(int minutes) {

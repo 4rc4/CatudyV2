@@ -153,6 +153,7 @@ class _FocusHeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final category = store.selectedCategory;
     final minutes = store.selectedDurationMinutes;
+    final english = store.languageCode == 'en';
 
     return CatudyPanel(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
@@ -202,12 +203,16 @@ class _FocusHeroCard extends StatelessWidget {
                       height: 1.02,
                     ),
                     children: [
-                      const TextSpan(text: 'Study '),
+                      TextSpan(text: english ? 'Study ' : ''),
                       TextSpan(
                         text: category.name,
                         style: TextStyle(color: category.color),
                       ),
-                      TextSpan(text: ' for $minutes minutes.'),
+                      TextSpan(
+                        text: english
+                            ? ' for $minutes minutes.'
+                            : ' için $minutes dakika odaklan.',
+                      ),
                     ],
                   ),
                 ),

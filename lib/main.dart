@@ -62,7 +62,9 @@ Future<void> main() async {
 /// Called after the first frame is rendered so the navigator is available.
 Future<void> _checkForUpdate(BuildContext context) async {
   try {
-    final info = await CatudyUpdateService.instance.checkForUpdate();
+    final info = await CatudyUpdateService.instance.checkForUpdate(
+      languageCode: catudyDemoStore.languageCode,
+    );
     if (info == null) return;
     if (!context.mounted) return;
     await showCatudyUpdateDialog(context, info);

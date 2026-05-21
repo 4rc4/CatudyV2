@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../localization/catudy_copy.dart';
 import '../theme/catudy_colors.dart';
 import 'catudy_update_service.dart';
 
-/// Shows the update dialog. Returns true if the user chose to update.
 Future<void> showCatudyUpdateDialog(
   BuildContext context,
   CatudyUpdateInfo info,
@@ -51,6 +51,18 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
     super.dispose();
   }
 
+  String _t(
+    BuildContext context,
+    String key, [
+    Map<String, Object?> values = const {},
+  ]) {
+    return CatudyCopy.text(
+      Localizations.localeOf(context).languageCode,
+      key,
+      values,
+    );
+  }
+
   Future<void> _startDownload() async {
     setState(() {
       _state = _UpdateState.downloading;
@@ -73,10 +85,10 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
   @override
   Widget build(BuildContext context) {
     final isDark = CatudyColors.isDark(context);
-    final bgColor =
-        isDark ? CatudyColors.darkSurface : CatudyColors.surface;
+    final bgColor = isDark ? CatudyColors.darkSurface : CatudyColors.surface;
     final inkColor = CatudyColors.inkFor(context);
     final mutedColor = CatudyColors.mutedFor(context);
+    final releaseNotes = widget.info.releaseNotes;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -96,18 +108,16 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Header gradient banner ──────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 28),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [CatudyColors.violet, CatudyColors.teal],
                 ),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 children: [
@@ -128,14 +138,14 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Güncelleme Mevcut',
-                    style: TextStyle(
+                  Text(
+                    _t(context, 'update.title'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -149,16 +159,14 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                 ],
               ),
             ),
-
-            // ── Content ────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.info.releaseNotes.isNotEmpty) ...[
+                  if (releaseNotes.isNotEmpty) ...[
                     Text(
-                      'Yenilikler',
+                      _t(context, 'update.whatsNew'),
                       style: TextStyle(
                         color: inkColor,
                         fontSize: 14,
@@ -178,7 +186,7 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                       ),
                       child: SingleChildScrollView(
                         child: Text(
-                          widget.info.releaseNotes,
+                          releaseNotes,
                           style: TextStyle(
                             color: mutedColor,
                             fontSize: 13,
@@ -190,8 +198,6 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                     ),
                     const SizedBox(height: 20),
                   ],
-
-                  // ── Progress indicator ──────────────────────────
                   if (_state == _UpdateState.downloading) ...[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
@@ -210,8 +216,12 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                     Center(
                       child: Text(
                         _progress > 0
-                            ? 'İndiriliyor… %${(_progress * 100).toStringAsFixed(0)}'
-                            : 'Bağlanıyor…',
+                            ? _t(context, 'update.downloading', {
+                                'progress': (_progress * 100).toStringAsFixed(
+                                  0,
+                                ),
+                              })
+                            : _t(context, 'update.connecting'),
                         style: TextStyle(
                           color: mutedColor,
                           fontSize: 13,
@@ -221,7 +231,6 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                     ),
                     const SizedBox(height: 20),
                   ],
-
                   if (_state == _UpdateState.error) ...[
                     Container(
                       width: double.infinity,
@@ -231,8 +240,8 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'İndirme başarısız oldu. İnternet bağlantını kontrol et.',
-                        style: TextStyle(
+                        _t(context, 'update.error'),
+                        style: const TextStyle(
                           color: CatudyColors.coral,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -242,7 +251,6 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                     ),
                     const SizedBox(height: 20),
                   ],
-
                   if (_state == _UpdateState.done) ...[
                     Container(
                       width: double.infinity,
@@ -254,15 +262,21 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.check_circle_rounded,
-                              color: CatudyColors.teal, size: 18),
+                          const Icon(
+                            Icons.check_circle_rounded,
+                            color: CatudyColors.teal,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
-                          Text(
-                            'İndirildi! Yükleme ekranı açılıyor…',
-                            style: TextStyle(
-                              color: CatudyColors.teal,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
+                          Expanded(
+                            child: Text(
+                              _t(context, 'update.downloaded'),
+                              style: const TextStyle(
+                                color: CatudyColors.teal,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         ],
@@ -270,8 +284,6 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                     ),
                     const SizedBox(height: 20),
                   ],
-
-                  // ── Buttons ─────────────────────────────────────
                   Row(
                     children: [
                       if (_state != _UpdateState.downloading &&
@@ -283,16 +295,17 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                               side: BorderSide(
                                 color: CatudyColors.lineFor(context),
                               ),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             onPressed: () => Navigator.of(context).pop(),
-                            child: const Text(
-                              'Sonra',
-                              style: TextStyle(fontWeight: FontWeight.w700),
+                            child: Text(
+                              _t(context, 'update.later'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ),
@@ -305,25 +318,23 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                           child: FilledButton(
                             style: FilledButton.styleFrom(
                               backgroundColor: CatudyColors.violet,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             onPressed: _state == _UpdateState.downloading
                                 ? null
-                                : (_state == _UpdateState.error
-                                    ? _startDownload
-                                    : _startDownload),
+                                : _startDownload,
                             child: Text(
                               _state == _UpdateState.error
-                                  ? 'Tekrar Dene'
-                                  : 'İndir ve Güncelle',
+                                  ? _t(context, 'update.retry')
+                                  : _t(context, 'update.downloadAndInstall'),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 14,
                               ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
@@ -332,16 +343,17 @@ class _CatudyUpdateDialogState extends State<_CatudyUpdateDialog>
                           child: FilledButton(
                             style: FilledButton.styleFrom(
                               backgroundColor: CatudyColors.teal,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             onPressed: () => Navigator.of(context).pop(),
-                            child: const Text(
-                              'Tamam',
-                              style: TextStyle(fontWeight: FontWeight.w800),
+                            child: Text(
+                              _t(context, 'common.done'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ),
