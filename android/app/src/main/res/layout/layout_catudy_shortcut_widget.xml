@@ -45,6 +45,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/widget_shortcut_subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Hızlı Odak başlat"

@@ -507,7 +507,7 @@ class LobbyRoomScreen extends StatelessWidget {
         return ScreenScaffold(
           title: store.t('lobby.roomTitle'),
           showBack: true,
-          fallbackBackPath: '/lobby',
+          fallbackBackPath: '/',
           children: [
             _LobbyStatusPanel(store: store),
             const SizedBox(height: 14),

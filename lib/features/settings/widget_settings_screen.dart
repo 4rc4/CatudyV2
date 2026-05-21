@@ -9,7 +9,7 @@ import '../../shared/widgets/floating_mascot.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
-enum _WidgetKind { pet, goal, shortcut, streak, wallet }
+enum _WidgetKind { pet, goal, shortcut, streak }
 
 class WidgetSettingsScreen extends StatefulWidget {
   const WidgetSettingsScreen({super.key});
@@ -27,7 +27,6 @@ class _WidgetSettingsScreenState extends State<WidgetSettingsScreen> {
       _WidgetKind.goal => 'CatudyProgressWidgetProvider',
       _WidgetKind.shortcut => 'CatudyShortcutWidgetProvider',
       _WidgetKind.streak => 'CatudyStreakWidgetProvider',
-      _WidgetKind.wallet => 'CatudyWalletWidgetProvider',
     };
 
     try {
@@ -102,6 +101,7 @@ class _WidgetSettingsScreenState extends State<WidgetSettingsScreen> {
             ),
             const SizedBox(height: 14),
             _WidgetOptionsPanel(
+              kind: _activeKind,
               store: store,
               currentPetId: currentPetId,
               currentCategoryId: currentCategoryId,
@@ -136,72 +136,134 @@ class _WidgetKindSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 92,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _WidgetKind.values.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final kind = _WidgetKind.values[index];
-          final active = kind == selected;
-          final color = _kindColor(kind);
-          return SizedBox(
-            width: 112,
-            child: CatudyPressable(
-              child: InkWell(
-                onTap: () => onSelected(kind),
-                borderRadius: BorderRadius.circular(18),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: active ? color : CatudyColors.surfaceFor(context),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: active
-                          ? Colors.white.withValues(alpha: 0.42)
-                          : color.withValues(alpha: 0.22),
+    final hintColor = CatudyColors.mutedFor(context);
+    return Column(
+      children: [
+        Row(
+          children: [
+            Icon(Icons.swipe_rounded, size: 18, color: hintColor),
+            const SizedBox(width: 6),
+            Text(
+              store.t('widget.swipeHint'),
+              style: TextStyle(color: hintColor, fontWeight: FontWeight.w800),
+            ),
+            const Spacer(),
+            Icon(Icons.chevron_right_rounded, color: hintColor),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 92,
+          child: Stack(
+            children: [
+              ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(right: 38),
+                itemCount: _WidgetKind.values.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (context, index) {
+                  final kind = _WidgetKind.values[index];
+                  final active = kind == selected;
+                  final color = _kindColor(kind);
+                  return SizedBox(
+                    width: 112,
+                    child: CatudyPressable(
+                      child: InkWell(
+                        onTap: () => onSelected(kind),
+                        borderRadius: BorderRadius.circular(18),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? color
+                                : CatudyColors.surfaceFor(context),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: active
+                                  ? Colors.white.withValues(alpha: 0.42)
+                                  : color.withValues(alpha: 0.22),
+                            ),
+                            boxShadow: [
+                              if (active)
+                                BoxShadow(
+                                  color: color.withValues(alpha: 0.22),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 8),
+                                ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _kindIcon(kind),
+                                color: active ? Colors.white : color,
+                                size: 25,
+                              ),
+                              const SizedBox(height: 7),
+                              Text(
+                                _kindLabel(store, kind),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: active
+                                      ? Colors.white
+                                      : CatudyColors.blueFor(context),
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    boxShadow: [
-                      if (active)
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.22),
-                          blurRadius: 16,
-                          offset: const Offset(0, 8),
-                        ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _kindIcon(kind),
-                        color: active ? Colors.white : color,
-                        size: 25,
+                  );
+                },
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: IgnorePointer(
+                  child: Container(
+                    width: 42,
+                    alignment: Alignment.centerRight,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          CatudyColors.paperFor(context).withValues(alpha: 0),
+                          CatudyColors.paperFor(context),
+                        ],
                       ),
-                      const SizedBox(height: 7),
-                      Text(
-                        _kindLabel(store, kind),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: active
-                              ? Colors.white
-                              : CatudyColors.blueFor(context),
-                          fontWeight: FontWeight.w900,
-                          fontSize: 12,
+                    ),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: CatudyColors.surfaceFor(context),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: CatudyColors.lineFor(context),
                         ),
                       ),
-                    ],
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 17,
+                        color: hintColor,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -236,11 +298,13 @@ class _WidgetPreviewStage extends StatelessWidget {
 
 class _WidgetOptionsPanel extends StatelessWidget {
   const _WidgetOptionsPanel({
+    required this.kind,
     required this.store,
     required this.currentPetId,
     required this.currentCategoryId,
   });
 
+  final _WidgetKind kind;
   final CatudyDemoStore store;
   final String currentPetId;
   final String currentCategoryId;
@@ -254,10 +318,10 @@ class _WidgetOptionsPanel extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.tune_rounded, color: CatudyColors.teal),
+              Icon(_kindIcon(kind), color: _kindColor(kind)),
               const SizedBox(width: 8),
               Text(
-                store.t('widget.configurations'),
+                _optionsTitle(store, kind),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: CatudyColors.blueFor(context),
                   fontWeight: FontWeight.w900,
@@ -266,68 +330,138 @@ class _WidgetOptionsPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          DropdownButtonFormField<String>(
-            initialValue: currentPetId,
-            decoration: InputDecoration(
-              labelText: store.t('widget.petLockLabel'),
-              border: const OutlineInputBorder(),
-              prefixIcon: const Icon(Icons.pets_rounded),
-            ),
-            items: [
-              DropdownMenuItem(
-                value: 'active',
-                child: Text(store.t('widget.petLockFollowActive')),
+          switch (kind) {
+            _WidgetKind.pet => DropdownButtonFormField<String>(
+              initialValue: currentPetId,
+              decoration: InputDecoration(
+                labelText: store.t('widget.petLockLabel'),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.pets_rounded),
               ),
-              for (final pet in store.unlockablePets)
-                DropdownMenuItem(value: pet.id, child: Text(pet.name)),
-            ],
-            onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-              store.updateWidgetSettings(
-                petId: value,
-                categoryId: currentCategoryId,
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: currentCategoryId,
-            decoration: InputDecoration(
-              labelText: store.t('widget.shortcutCategoryLabel'),
-              border: const OutlineInputBorder(),
-              prefixIcon: const Icon(Icons.bolt_rounded),
-            ),
-            items: [
-              for (final category in store.categories)
+              items: [
                 DropdownMenuItem(
-                  value: category.id,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: category.color,
-                          shape: BoxShape.circle,
+                  value: 'active',
+                  child: Text(store.t('widget.petLockFollowActive')),
+                ),
+                for (final pet in store.unlockablePets)
+                  DropdownMenuItem(value: pet.id, child: Text(pet.name)),
+              ],
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                store.updateWidgetSettings(
+                  petId: value,
+                  categoryId: currentCategoryId,
+                );
+              },
+            ),
+            _WidgetKind.shortcut => DropdownButtonFormField<String>(
+              initialValue: currentCategoryId,
+              decoration: InputDecoration(
+                labelText: store.t('widget.shortcutCategoryLabel'),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.bolt_rounded),
+              ),
+              items: [
+                for (final category in store.categories)
+                  DropdownMenuItem(
+                    value: category.id,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: category.color,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(category.name),
-                    ],
+                        const SizedBox(width: 8),
+                        Text(category.name),
+                      ],
+                    ),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                store.updateWidgetSettings(
+                  petId: currentPetId,
+                  categoryId: value,
+                );
+              },
+            ),
+            _WidgetKind.goal => _WidgetOptionSummary(
+              icon: Icons.track_changes_rounded,
+              title: store.t('widget.optionsGoalBody'),
+              value:
+                  '${store.todayMinutes}/${store.dailyGoalMinutes}${store.t('common.minutesShort')}',
+              color: CatudyColors.teal,
+            ),
+            _WidgetKind.streak => _WidgetOptionSummary(
+              icon: Icons.local_fire_department_rounded,
+              title: store.t('widget.optionsStreakBody'),
+              value:
+                  '${store.streakDays}${store.t('common.daysShort')} · ${store.todayMinutes}/${store.dailyGoalMinutes}${store.t('common.minutesShort')}',
+              color: CatudyColors.coral,
+            ),
+          },
+        ],
+      ),
+    );
+  }
+}
+
+class _WidgetOptionSummary extends StatelessWidget {
+  const _WidgetOptionSummary({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: CatudyColors.blueFor(context),
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-            ],
-            onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-              store.updateWidgetSettings(
-                petId: currentPetId,
-                categoryId: value,
-              );
-            },
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -364,7 +498,6 @@ class _WidgetMockup extends StatelessWidget {
         category: category,
       ),
       _WidgetKind.streak => _StreakWidgetPreview(store: store),
-      _WidgetKind.wallet => _WalletWidgetPreview(store: store),
     };
   }
 }
@@ -601,52 +734,6 @@ class _StreakWidgetPreview extends StatelessWidget {
   }
 }
 
-class _WalletWidgetPreview extends StatelessWidget {
-  const _WalletWidgetPreview({required this.store});
-
-  final CatudyDemoStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    return _WidgetCard(
-      width: 280,
-      child: Row(
-        children: [
-          const Icon(
-            Icons.savings_rounded,
-            color: CatudyColors.violet,
-            size: 36,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${store.gold} ${store.t('common.gold')}',
-                  style: TextStyle(
-                    color: CatudyColors.blueFor(context),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${store.focusPoints} ${store.t('common.points')}',
-                  style: TextStyle(
-                    color: CatudyColors.mutedFor(context),
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _WidgetCard extends StatelessWidget {
   const _WidgetCard({required this.child, required this.width, this.height});
 
@@ -757,7 +844,6 @@ String _kindLabel(CatudyDemoStore store, _WidgetKind kind) => switch (kind) {
   _WidgetKind.goal => store.t('widget.kind.goal'),
   _WidgetKind.shortcut => store.t('widget.kind.shortcut'),
   _WidgetKind.streak => store.t('widget.kind.streak'),
-  _WidgetKind.wallet => store.t('widget.kind.wallet'),
 };
 
 IconData _kindIcon(_WidgetKind kind) => switch (kind) {
@@ -765,7 +851,6 @@ IconData _kindIcon(_WidgetKind kind) => switch (kind) {
   _WidgetKind.goal => Icons.track_changes_rounded,
   _WidgetKind.shortcut => Icons.flash_on_rounded,
   _WidgetKind.streak => Icons.local_fire_department_rounded,
-  _WidgetKind.wallet => Icons.savings_rounded,
 };
 
 Color _kindColor(_WidgetKind kind) => switch (kind) {
@@ -773,5 +858,11 @@ Color _kindColor(_WidgetKind kind) => switch (kind) {
   _WidgetKind.goal => CatudyColors.teal,
   _WidgetKind.shortcut => CatudyColors.tealDark,
   _WidgetKind.streak => CatudyColors.coral,
-  _WidgetKind.wallet => CatudyColors.violetDark,
+};
+
+String _optionsTitle(CatudyDemoStore store, _WidgetKind kind) => switch (kind) {
+  _WidgetKind.pet => store.t('widget.optionsPetTitle'),
+  _WidgetKind.goal => store.t('widget.optionsGoalTitle'),
+  _WidgetKind.shortcut => store.t('widget.optionsShortcutTitle'),
+  _WidgetKind.streak => store.t('widget.optionsStreakTitle'),
 };

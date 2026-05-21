@@ -173,85 +173,8 @@ class _SessionResultScreenState extends State<SessionResultScreen>
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            _NextRewardPanel(store: store),
-            const SizedBox(height: 14),
-            CatudyPanel(
-              accentColor: CatudyColors.teal,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    store.t('achievements.title'),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: CatudyColors.mutedFor(context),
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  for (final achievement in store.achievements.take(3))
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          Icon(
-                            achievement.unlocked
-                                ? Icons.verified_rounded
-                                : achievement.icon,
-                            color: achievement.unlocked
-                                ? CatudyColors.teal
-                                : CatudyColors.violet,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              achievement.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '${achievement.progress.clamp(0, achievement.target)}/${achievement.target}',
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () => context.go('/focus/start'),
-                    icon: const Icon(Icons.replay_rounded),
-                    label: Text(store.t('focus.focusAgain')),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    onPressed: () => context.go('/pet-room'),
-                    icon: const Icon(Icons.pets_rounded),
-                    label: Text(store.t('profile.petRoom')),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => context.go('/stats'),
-              icon: const Icon(Icons.query_stats_rounded),
-              label: Text(store.t('focus.seeStats')),
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => context.go('/'),
-              icon: const Icon(Icons.home_rounded),
-              label: Text(store.t('focus.backHome')),
-            ),
+            const SizedBox(height: 18),
+            _ResultPrimaryActions(store: store),
           ],
         );
       },
@@ -418,83 +341,34 @@ class _ResultParticlePainter extends CustomPainter {
   }
 }
 
-class _NextRewardPanel extends StatelessWidget {
-  const _NextRewardPanel({required this.store});
+class _ResultPrimaryActions extends StatelessWidget {
+  const _ResultPrimaryActions({required this.store});
 
   final CatudyDemoStore store;
 
   @override
   Widget build(BuildContext context) {
-    final nextPets =
-        store.unlockablePets
-            .where((pet) => !store.unlockedPetIds.contains(pet.id))
-            .toList()
-          ..sort((a, b) => a.requiredPoints.compareTo(b.requiredPoints));
-    final nextPet = nextPets.isEmpty ? null : nextPets.first;
-    final currentPoints = store.focusPoints;
-    final progress = nextPet == null
-        ? 1.0
-        : (currentPoints / nextPet.requiredPoints).clamp(0.0, 1.0);
-    final remaining = nextPet == null
-        ? 0
-        : (nextPet.requiredPoints - currentPoints).clamp(0, 999999);
-
-    return CatudyPanel(
-      color: CatudyColors.cream,
-      accentColor: CatudyColors.coral,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            store.t('focus.nextRewardTitle'),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: CatudyColors.blueFor(context),
-              fontWeight: FontWeight.w900,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 58,
+          child: FilledButton.icon(
+            onPressed: () => context.go('/'),
+            icon: const Icon(Icons.home_rounded),
+            label: Text(store.t('focus.backHome')),
           ),
-          const SizedBox(height: 8),
-          Text(
-            nextPet == null
-                ? store.t('focus.allPetsUnlocked')
-                : store.t('focus.nextRewardBody', {
-                    'pet': nextPet.name,
-                    'points': remaining,
-                  }),
-            style: TextStyle(
-              color: CatudyColors.mutedFor(context),
-              fontWeight: FontWeight.w800,
-            ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 56,
+          child: FilledButton.tonalIcon(
+            onPressed: () => context.go('/focus/start'),
+            icon: const Icon(Icons.replay_rounded),
+            label: Text(store.t('focus.focusAgain')),
           ),
-          const SizedBox(height: 10),
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 10,
-            borderRadius: BorderRadius.circular(999),
-            backgroundColor: CatudyColors.surfaceFor(context),
-            color: CatudyColors.coral,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => context.push('/inventory'),
-                  icon: const Icon(Icons.inventory_2_rounded),
-                  label: Text(store.t('pet.inventory')),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => context.push('/shop'),
-                  icon: const Icon(Icons.storefront_rounded),
-                  label: Text(store.t('pet.shop')),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

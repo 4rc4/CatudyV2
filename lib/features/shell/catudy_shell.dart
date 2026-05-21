@@ -77,7 +77,7 @@ class _CatudyShellState extends State<CatudyShell> {
   Widget build(BuildContext context) {
     final selectedIndex = _selectedIndex(widget.location);
     _rememberLocation(selectedIndex, widget.location);
-    if (!_isSettingsAuxiliaryPath(_pathOnly(widget.location))) {
+    if (!_isAuxiliaryPath(_pathOnly(widget.location))) {
       _lastPrimaryIndex = selectedIndex;
     }
     final dark = CatudyColors.isDark(context);
@@ -247,13 +247,7 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path == '/auth' || path.startsWith('/focus/')) {
       return;
     }
-    if (_isSettingsAuxiliaryPath(path)) {
-      return;
-    }
-    // Full-screen auxiliary routes are often opened from more than one tab.
-    // They should be remembered only while they are really the active tab
-    // context; after the user backs out, the root route below overwrites them.
-    if (path == '/plus' && index == 0) {
+    if (_isAuxiliaryPath(path)) {
       return;
     }
     _lastPathByIndex[index] = location;
@@ -325,7 +319,7 @@ class _CatudyShellState extends State<CatudyShell> {
       return '/plus';
     }
     if (path.startsWith('/plus')) {
-      return '/profile';
+      return _lastPathByIndex[_lastPrimaryIndex] ?? _paths[_lastPrimaryIndex];
     }
     if (path.startsWith('/settings')) {
       return _lastPathByIndex[_lastPrimaryIndex] ?? _paths[_lastPrimaryIndex];
@@ -355,7 +349,7 @@ class _CatudyShellState extends State<CatudyShell> {
       return '/community?tab=lobbies';
     }
     if (path.startsWith('/lobby/room')) {
-      return '/community?tab=lobbies';
+      return '/';
     }
     return '/';
   }
@@ -375,6 +369,9 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path.startsWith('/settings') ||
         path.startsWith('/app-lock') ||
         path.startsWith('/widget-settings')) {
+      return fromIndex ?? _lastPrimaryIndex;
+    }
+    if (path.startsWith('/plus')) {
       return fromIndex ?? _lastPrimaryIndex;
     }
     if (fromIndex != null &&
@@ -403,16 +400,14 @@ class _CatudyShellState extends State<CatudyShell> {
         path.startsWith('/public-profile')) {
       return 4;
     }
-    if (path.startsWith('/plus')) {
-      return 4;
-    }
     return 0;
   }
 
-  bool _isSettingsAuxiliaryPath(String path) {
+  bool _isAuxiliaryPath(String path) {
     return path.startsWith('/settings') ||
         path.startsWith('/app-lock') ||
-        path.startsWith('/widget-settings');
+        path.startsWith('/widget-settings') ||
+        path.startsWith('/plus');
   }
 }
 

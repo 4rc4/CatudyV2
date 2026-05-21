@@ -3882,6 +3882,7 @@ class CatudyDemoStore extends ChangeNotifier {
               .fold<int>(0, (sum, item) => sum + item.minutes);
 
           await HomeWidget.saveWidgetData<String>('displayName', displayName);
+          await HomeWidget.saveWidgetData<String>('languageCode', languageCode);
           await HomeWidget.saveWidgetData<int>('gold', gold);
           await HomeWidget.saveWidgetData<int>('focusPoints', focusPoints);
           await HomeWidget.saveWidgetData<int>('shards', shardWallet.shards);
@@ -3902,6 +3903,10 @@ class CatudyDemoStore extends ChangeNotifier {
           await HomeWidget.saveWidgetData<String>(
             'widgetShortcutCategoryId',
             widgetShortcutCategoryId,
+          );
+          await HomeWidget.saveWidgetData<String>(
+            'widgetShortcutCategoryName',
+            categoryName(widgetShortcutCategoryId),
           );
 
           final session = activeSession;
@@ -3932,7 +3937,6 @@ class CatudyDemoStore extends ChangeNotifier {
             'CatudyProgressWidgetProvider',
             'CatudyShortcutWidgetProvider',
             'CatudyStreakWidgetProvider',
-            'CatudyWalletWidgetProvider',
           ]) {
             await HomeWidget.updateWidget(
               name: providerName,

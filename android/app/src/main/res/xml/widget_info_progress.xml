@@ -4,6 +4,7 @@
     android:minHeight="110dp"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/layout_catudy_progress_widget"
+    android:previewLayout="@layout/layout_catudy_progress_widget"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen">
 </appwidget-provider>

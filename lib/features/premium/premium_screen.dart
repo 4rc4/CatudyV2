@@ -11,6 +11,8 @@ import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
+enum _BillingPlan { monthly, yearly }
+
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
 
@@ -20,6 +22,7 @@ class PremiumScreen extends StatefulWidget {
 
 class _PremiumScreenState extends State<PremiumScreen> {
   final _buddyController = TextEditingController();
+  _BillingPlan _selectedPlan = _BillingPlan.monthly;
 
   @override
   void initState() {
@@ -41,7 +44,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
       builder: (context, store) => ScreenScaffold(
         title: store.t('premium.title'),
         showBack: true,
-        fallbackBackPath: '/profile',
+        fallbackBackPath: _premiumFallbackBackPath(context),
         children: [
           _PlusHero(store: store),
           const SizedBox(height: 14),
@@ -49,7 +52,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
           const SizedBox(height: 14),
           _PlusComparison(store: store),
           const SizedBox(height: 14),
-          _PlanSelector(store: store),
+          _PlanSelector(
+            store: store,
+            selectedPlan: _selectedPlan,
+            onPlanSelected: (plan) => setState(() => _selectedPlan = plan),
+          ),
           const SizedBox(height: 14),
           _QuickLinks(store: store),
           const SizedBox(height: 14),
@@ -72,6 +79,18 @@ class _PremiumScreenState extends State<PremiumScreen> {
       ),
     );
   }
+}
+
+String _premiumFallbackBackPath(BuildContext context) {
+  final from = GoRouterState.of(context).uri.queryParameters['from'];
+  return switch (from) {
+    'home' => '/',
+    'stats' => '/stats',
+    'calendar' => '/calendar',
+    'pet' => '/pet-room',
+    'profile' => '/profile',
+    _ => '/',
+  };
 }
 
 class _PlusHero extends StatelessWidget {
@@ -319,7 +338,7 @@ class _PlusComparison extends StatelessWidget {
       (
         Icons.card_giftcard_rounded,
         store.t('premium.compareSeason'),
-        '—',
+        '-',
         store.t('common.yes'),
       ),
       (
@@ -331,87 +350,138 @@ class _PlusComparison extends StatelessWidget {
       (
         Icons.workspace_premium_rounded,
         store.t('premium.compareBadges'),
-        '—',
+        '-',
         store.t('common.yes'),
       ),
     ];
     return CatudyPanel(
       padding: const EdgeInsets.all(14),
       accentColor: CatudyColors.violet,
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Expanded(child: SizedBox()),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    store.t('premium.freeColumn'),
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Table(
+          columnWidths: const {
+            0: FlexColumnWidth(1.42),
+            1: FlexColumnWidth(0.82),
+            2: FlexColumnWidth(0.86),
+          },
+          border: TableBorder.all(color: CatudyColors.lineFor(context)),
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            TableRow(
+              decoration: BoxDecoration(
+                color: CatudyColors.violet.withValues(alpha: 0.10),
               ),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    store.t('premium.plusColumn'),
-                    style: const TextStyle(
-                      color: CatudyColors.teal,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+              children: [
+                _ComparisonTextCell(
+                  text: store.t('premium.featureColumn'),
+                  isHeader: true,
+                  align: TextAlign.start,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          for (final row in rows)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              child: Row(
+                _ComparisonTextCell(
+                  text: store.t('premium.freeColumn'),
+                  isHeader: true,
+                ),
+                _ComparisonTextCell(
+                  text: store.t('premium.plusColumn'),
+                  isHeader: true,
+                  plus: true,
+                ),
+              ],
+            ),
+            for (final row in rows)
+              TableRow(
+                decoration: BoxDecoration(
+                  color: CatudyColors.surfaceFor(context),
+                ),
                 children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(row.$1, size: 18, color: CatudyColors.violet),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            row.$2,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(child: Center(child: Text(row.$3))),
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        row.$4,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: CatudyColors.teal,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
+                  _ComparisonFeatureCell(icon: row.$1, text: row.$2),
+                  _ComparisonTextCell(text: row.$3),
+                  _ComparisonTextCell(text: row.$4, plus: true),
                 ],
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ComparisonFeatureCell extends StatelessWidget {
+  const _ComparisonFeatureCell({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 17, color: CatudyColors.violet),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: CatudyColors.blueFor(context),
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+              ),
             ),
+          ),
         ],
       ),
     );
   }
 }
 
+class _ComparisonTextCell extends StatelessWidget {
+  const _ComparisonTextCell({
+    required this.text,
+    this.isHeader = false,
+    this.plus = false,
+    this.align = TextAlign.center,
+  });
+
+  final String text;
+  final bool isHeader;
+  final bool plus;
+  final TextAlign align;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = plus ? CatudyColors.teal : CatudyColors.blueFor(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      child: Text(
+        text,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        textAlign: align,
+        style: TextStyle(
+          color: color,
+          fontWeight: isHeader || plus ? FontWeight.w900 : FontWeight.w800,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+}
+
 class _PlanSelector extends StatelessWidget {
-  const _PlanSelector({required this.store});
+  const _PlanSelector({
+    required this.store,
+    required this.selectedPlan,
+    required this.onPlanSelected,
+  });
 
   final CatudyDemoStore store;
+  final _BillingPlan selectedPlan;
+  final ValueChanged<_BillingPlan> onPlanSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -425,7 +495,8 @@ class _PlanSelector extends StatelessWidget {
                 child: _PlanCard(
                   title: store.t('premium.monthly'),
                   price: store.t('premium.monthlyPrice'),
-                  selected: false,
+                  selected: selectedPlan == _BillingPlan.monthly,
+                  onTap: () => onPlanSelected(_BillingPlan.monthly),
                 ),
               ),
               const SizedBox(width: 10),
@@ -434,7 +505,8 @@ class _PlanSelector extends StatelessWidget {
                   title: store.t('premium.yearly'),
                   price: store.t('premium.yearlyPrice'),
                   badge: store.t('premium.bestValue'),
-                  selected: true,
+                  selected: selectedPlan == _BillingPlan.yearly,
+                  onTap: () => onPlanSelected(_BillingPlan.yearly),
                 ),
               ),
             ],
@@ -451,7 +523,7 @@ class _PlanSelector extends StatelessWidget {
               label: Text(
                 store.hasPremiumAccess
                     ? store.t('premium.clearDemo')
-                    : store.t('premium.trialCta'),
+                    : store.t('premium.activateDemo'),
               ),
             ),
           ),
@@ -475,12 +547,14 @@ class _PlanCard extends StatelessWidget {
     required this.title,
     required this.price,
     required this.selected,
+    required this.onTap,
     this.badge,
   });
 
   final String title;
   final String price;
   final bool selected;
+  final VoidCallback onTap;
   final String? badge;
 
   @override
@@ -488,51 +562,60 @@ class _PlanCard extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(13),
-          decoration: BoxDecoration(
-            color: selected
-                ? CatudyColors.violet.withValues(alpha: 0.14)
-                : CatudyColors.surfaceFor(context),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: selected
-                  ? CatudyColors.teal
-                  : CatudyColors.lineFor(context),
-              width: selected ? 1.8 : 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                selected
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_unchecked_rounded,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
                 color: selected
-                    ? CatudyColors.yellow
-                    : CatudyColors.mutedFor(context),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: CatudyColors.blueFor(context),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(
-                      price,
-                      style: TextStyle(color: CatudyColors.mutedFor(context)),
-                    ),
-                  ],
+                    ? CatudyColors.violet.withValues(alpha: 0.14)
+                    : CatudyColors.surfaceFor(context),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: selected
+                      ? CatudyColors.teal
+                      : CatudyColors.lineFor(context),
+                  width: selected ? 1.8 : 1,
                 ),
               ),
-            ],
+              child: Row(
+                children: [
+                  Icon(
+                    selected
+                        ? Icons.radio_button_checked_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    color: selected
+                        ? CatudyColors.yellow
+                        : CatudyColors.mutedFor(context),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            color: CatudyColors.blueFor(context),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          price,
+                          style: TextStyle(
+                            color: CatudyColors.mutedFor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
         if (badge != null)
@@ -635,12 +718,12 @@ class _QuickLinks extends StatelessWidget {
   Widget build(BuildContext context) {
     final buttons = [
       FilledButton.tonalIcon(
-        onPressed: () => context.push('/season?from=profile'),
+        onPressed: () => context.push('/season'),
         icon: const Icon(Icons.emoji_events_rounded),
         label: Text(store.t('premium.openSeason')),
       ),
       FilledButton.tonalIcon(
-        onPressed: () => context.push('/crates?from=profile'),
+        onPressed: () => context.push('/crates'),
         icon: const Icon(Icons.inventory_2_rounded),
         label: Text(store.t('premium.openCrates')),
       ),
