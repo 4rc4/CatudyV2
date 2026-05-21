@@ -120,7 +120,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'home.greeting': 'İyi günler!',
     'home.petButton': 'Pet',
     'home.focusTime': 'Odak Zamanı',
-    'home.heroStudyTitle': '{minutes} dakika çalış',
+    'home.heroStudyTitle': '{minutes} dakika odaklan',
     'home.createLobby': 'Lobi Kur',
     'home.joinLobby': 'Lobiye Katıl',
     'home.todaySummary': 'Bugünün Özeti',
@@ -140,7 +140,8 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'home.sad': 'Üzgün',
     'home.full': 'Tok',
     'home.hungry': 'Aç',
-    'home.focusSuggestion': '{category} için {minutes} dakika çalışabilirsin.',
+    'home.focusSuggestion':
+        '{category} için {minutes} dakika odaklanabilirsin.',
     'home.focusSuggestionReason':
         'Önceki {sessions} seansına göre bu ritim daha verimli görünüyor.',
     'home.focusSuggestionStarter':
@@ -1007,7 +1008,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'home.greeting': 'Have a good day!',
     'home.petButton': 'Pet',
     'home.focusTime': 'Focus Time',
-    'home.heroStudyTitle': 'Study for {minutes} minutes',
+    'home.heroStudyTitle': 'Focus for {minutes} minutes',
     'home.createLobby': 'Create Lobby',
     'home.joinLobby': 'Join Lobby',
     'home.todaySummary': "Today's Summary",
@@ -1027,7 +1028,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'home.sad': 'Sad',
     'home.full': 'Full',
     'home.hungry': 'Hungry',
-    'home.focusSuggestion': 'You can study {category} for {minutes} minutes.',
+    'home.focusSuggestion': 'You can focus {category} for {minutes} minutes.',
     'home.focusSuggestionReason':
         'Based on your last {sessions} sessions, this rhythm looks more efficient.',
     'home.focusSuggestionStarter':

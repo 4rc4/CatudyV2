@@ -4317,6 +4317,10 @@ class CatudyDemoStore extends ChangeNotifier {
       gold: goldReward,
       todoId: session.todoId,
     );
+    if (categories.any((item) => item.id == session.categoryId)) {
+      selectedCategoryId = session.categoryId;
+    }
+    selectedDurationMinutes = session.durationMinutes;
     history.insert(0, record);
     final todoId = session.todoId;
     if (todoId != null) {

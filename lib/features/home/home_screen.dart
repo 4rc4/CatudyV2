@@ -203,7 +203,7 @@ class _FocusHeroCard extends StatelessWidget {
                       height: 1.02,
                     ),
                     children: [
-                      TextSpan(text: english ? 'Study ' : ''),
+                      TextSpan(text: english ? 'Focus ' : ''),
                       TextSpan(
                         text: category.name,
                         style: TextStyle(color: category.color),

@@ -123,6 +123,27 @@ void main() {
     expect(store.history.first.minutes, 9);
   });
 
+  test('completed focus becomes the next home preset', () async {
+    final storage = _MemoryStorage(null);
+    final store = CatudyDemoStore(storage: storage);
+
+    await store.load();
+
+    store.selectCategory('work');
+    store.selectDuration(45);
+    store.startFocus();
+    store.selectCategory('study');
+    store.selectDuration(25);
+
+    final record = store.completeFocus();
+
+    expect(record.categoryId, 'work');
+    expect(store.selectedCategoryId, 'work');
+    expect(store.selectedDurationMinutes, 45);
+    expect(storage.state?['selectedCategoryId'], 'work');
+    expect(storage.state?['selectedDurationMinutes'], 45);
+  });
+
   test('room furniture equips by slot and boosts focus rewards', () async {
     final storage = _MemoryStorage(null);
     final store = CatudyDemoStore(storage: storage);
