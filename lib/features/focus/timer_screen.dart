@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_test_ad_banner.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -159,6 +160,10 @@ class _TimerScreenState extends State<TimerScreen> {
             const SizedBox(height: 14),
             if (session?.lobbyMode == true) ...[
               _BreakVotePanel(store: store),
+              const SizedBox(height: 14),
+            ],
+            if (session != null) ...[
+              CatudyTestAdBanner(show: !store.hasPremiumAccess),
               const SizedBox(height: 14),
             ],
             if (session == null)

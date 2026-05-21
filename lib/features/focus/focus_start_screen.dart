@@ -73,10 +73,11 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
                     accentColor: CatudyColors.violet,
                   ),
                   const SizedBox(height: 14),
-                  FilledButton.icon(
+                  _PrimaryStartFocusButton(
+                    label: store.t('focus.start'),
+                    minutes: store.selectedDurationMinutes,
+                    categoryColor: store.selectedCategory.color,
                     onPressed: () => _start(store),
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text(store.t('focus.start')),
                   ),
                 ],
               ),
@@ -114,7 +115,8 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
                       ChoiceChip(
                         label: const Icon(Icons.add_rounded, size: 20),
                         selected: false,
-                        onSelected: (_) => _showAddCategoryDialog(context, store),
+                        onSelected: (_) =>
+                            _showAddCategoryDialog(context, store),
                       ),
                     ],
                   ),
@@ -147,13 +149,18 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
                         ),
                       ChoiceChip(
                         label: Text(
-                          store.durations.contains(store.selectedDurationMinutes)
+                          store.durations.contains(
+                                store.selectedDurationMinutes,
+                              )
                               ? store.t('focus.customDuration')
                               : '${store.selectedDurationMinutes} ${store.t('common.minutesShort')}',
                         ),
-                        selected: !store.durations.contains(store.selectedDurationMinutes),
+                        selected: !store.durations.contains(
+                          store.selectedDurationMinutes,
+                        ),
                         avatar: const Icon(Icons.edit_rounded, size: 16),
-                        onSelected: (_) => _showCustomDurationDialog(context, store),
+                        onSelected: (_) =>
+                            _showCustomDurationDialog(context, store),
                       ),
                     ],
                   ),
@@ -202,15 +209,6 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
                       onChanged: store.selectTodoForFocus,
                     ),
                 ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () => _start(store),
-                icon: const Icon(Icons.timer_rounded),
-                label: Text(store.t('focus.startTimer')),
               ),
             ),
           ],
@@ -349,9 +347,7 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
                 controller: controller,
                 autofocus: true,
                 keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
                   labelText: store.t('focus.customMinutes'),
                   border: OutlineInputBorder(
@@ -412,5 +408,124 @@ class _FocusStartScreenState extends State<FocusStartScreen> {
       'math' => Icons.calculate_rounded,
       _ => Icons.school_rounded,
     };
+  }
+}
+
+class _PrimaryStartFocusButton extends StatefulWidget {
+  const _PrimaryStartFocusButton({
+    required this.label,
+    required this.minutes,
+    required this.categoryColor,
+    required this.onPressed,
+  });
+
+  final String label;
+  final int minutes;
+  final Color categoryColor;
+  final VoidCallback onPressed;
+
+  @override
+  State<_PrimaryStartFocusButton> createState() =>
+      _PrimaryStartFocusButtonState();
+}
+
+class _PrimaryStartFocusButtonState extends State<_PrimaryStartFocusButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: widget.label,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTap: widget.onPressed,
+        child: AnimatedScale(
+          duration: const Duration(milliseconds: 110),
+          curve: Curves.easeOut,
+          scale: _pressed ? 0.985 : 1,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            height: 74,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(26),
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [widget.categoryColor, CatudyColors.violet],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.categoryColor.withValues(
+                    alpha: _pressed ? 0.16 : 0.28,
+                  ),
+                  blurRadius: _pressed ? 10 : 22,
+                  offset: Offset(0, _pressed ? 5 : 12),
+                ),
+              ],
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.38),
+                width: 1.6,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: widget.categoryColor,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 19,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.minutes} min',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.86),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white.withValues(alpha: 0.92),
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

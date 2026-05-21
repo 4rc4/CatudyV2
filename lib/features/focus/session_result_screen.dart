@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/ads/catudy_ads.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
@@ -25,6 +26,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
     with TickerProviderStateMixin {
   bool _unlockDialogShown = false;
   String? _celebratedResultId;
+  String? _interstitialResultId;
   late final AnimationController _entryController;
   late final AnimationController _particleController;
 
@@ -82,6 +84,7 @@ class _SessionResultScreenState extends State<SessionResultScreen>
         }
         final result = store.lastResult;
         _triggerCompletionFeedback(result);
+        _showCompletionAdIfEligible(result, store);
         final goal = store.todayGoalProgress;
         return ScreenScaffold(
           title: store.t('focus.resultTitle'),
@@ -197,6 +200,24 @@ class _SessionResultScreenState extends State<SessionResultScreen>
       unawaited(HapticFeedback.mediumImpact().catchError((Object _) {}));
       unawaited(
         SystemSound.play(SystemSoundType.alert).catchError((Object _) {}),
+      );
+    });
+  }
+
+  void _showCompletionAdIfEligible(FocusRecord? result, CatudyDemoStore store) {
+    if (result == null ||
+        store.hasPremiumAccess ||
+        result.minutes < 1 ||
+        result.id == _interstitialResultId) {
+      return;
+    }
+    _interstitialResultId = result.id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(
+        showCatudyTestInterstitial(placementId: 'focus_result_${result.id}'),
       );
     });
   }

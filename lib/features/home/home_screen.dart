@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/notifications/catudy_notification_service.dart';
-import '../../app/premium/catudy_premium_models.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../features/onboarding/pet_intro_tour.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
@@ -26,26 +25,20 @@ class HomeScreen extends StatelessWidget {
 
     return StoreBuilder(
       builder: (context, store) {
-        final basicRecommendation = store.focusRecommendation;
-        final coachRecommendation = store.coachRecommendation;
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
           child: Column(
             children: [
               _HomeHeader(store: store),
               const SizedBox(height: 12),
-              _FocusHeroCard(
-                store: store,
-                basicRecommendation: basicRecommendation,
-                coachRecommendation: coachRecommendation,
-              ),
+              _FocusHeroCard(store: store),
               const SizedBox(height: 14),
               _DailyGoalPanel(store: store),
+              const SizedBox(height: 14),
+              _SecondaryHomePanel(store: store),
               CatudyTestAdBanner(show: !store.hasPremiumAccess),
               const SizedBox(height: 14),
               _PetCompanionCard(store: store),
-              const SizedBox(height: 14),
-              _SecondaryHomePanel(store: store),
               const SizedBox(height: 14),
               CatudyPanel(
                 accentColor: CatudyColors.teal,
@@ -152,22 +145,14 @@ class _HomeHeader extends StatelessWidget {
 }
 
 class _FocusHeroCard extends StatelessWidget {
-  const _FocusHeroCard({
-    required this.store,
-    required this.basicRecommendation,
-    required this.coachRecommendation,
-  });
+  const _FocusHeroCard({required this.store});
 
   final CatudyDemoStore store;
-  final FocusRecommendation basicRecommendation;
-  final CoachRecommendation coachRecommendation;
 
   @override
   Widget build(BuildContext context) {
-    final premiumActive = store.hasPremiumAccess;
-    final minutes = premiumActive
-        ? coachRecommendation.minutes
-        : basicRecommendation.minutes;
+    final category = store.selectedCategory;
+    final minutes = store.selectedDurationMinutes;
 
     return CatudyPanel(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
@@ -209,12 +194,21 @@ class _FocusHeroCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Text(
-                  store.t('home.heroStudyTitle', {'minutes': minutes}),
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: CatudyColors.blueFor(context),
-                    fontWeight: FontWeight.w900,
-                    height: 1.02,
+                child: RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: CatudyColors.blueFor(context),
+                      fontWeight: FontWeight.w900,
+                      height: 1.02,
+                    ),
+                    children: [
+                      const TextSpan(text: 'Study '),
+                      TextSpan(
+                        text: category.name,
+                        style: TextStyle(color: category.color),
+                      ),
+                      TextSpan(text: ' for $minutes minutes.'),
+                    ],
                   ),
                 ),
               ),
@@ -231,7 +225,6 @@ class _FocusHeroCard extends StatelessWidget {
                 context.go(focusRoute);
                 return;
               }
-              store.prepareRecommendedFocus();
               context.go('/focus/start');
             },
           ),
