@@ -76,6 +76,23 @@ void main() {
     expect(find.byIcon(Icons.edit_rounded), findsOneWidget);
   });
 
+  testWidgets('renders focus pause and break controls', (tester) async {
+    await _pumpCatudy(
+      tester,
+      initialLocation: '/focus/timer',
+      activeSession: ActiveFocusSession(
+        categoryId: 'study',
+        durationMinutes: 25,
+        startedAt: DateTime.now(),
+        lobbyMode: false,
+      ),
+    );
+
+    expect(find.text('Durdur'), findsOneWidget);
+    expect(find.text('Mola'), findsOneWidget);
+    expect(find.text('Odağı Bitir'), findsOneWidget);
+  });
+
   testWidgets('renders Stats range controls', (tester) async {
     await _pumpCatudy(tester, initialLocation: '/stats');
 
@@ -191,8 +208,15 @@ void main() {
 Future<void> _pumpCatudy(
   WidgetTester tester, {
   String initialLocation = '/',
+  ActiveFocusSession? activeSession,
 }) async {
   SharedPreferences.setMockInitialValues({});
+  catudyDemoStore.activeSession = activeSession;
+  catudyDemoStore.lastResult = null;
+  catudyDemoStore.onlineLobbyId = null;
+  catudyDemoStore.onlineLobbyUserId = null;
+  catudyDemoStore.onlineLobbyCode = null;
+  catudyDemoStore.onlineLobbyOwner = false;
   catudyDemoStore.updateSettings(
     name: 'Guest Cat',
     apiUrl: 'http://127.0.0.1:5099',

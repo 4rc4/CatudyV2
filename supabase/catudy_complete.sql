@@ -787,6 +787,12 @@ create table if not exists public.catudy_lobbies (
   status text not null default 'waiting'
     check (status in ('waiting', 'running', 'finished')),
   started_at timestamptz,
+  paused_at timestamptz,
+  paused_seconds integer not null default 0
+    check (paused_seconds >= 0),
+  pause_reason text
+    check (pause_reason in ('manual', 'break')),
+  break_vote_round integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -796,6 +802,10 @@ alter table public.catudy_lobbies
   add column if not exists duration_minutes integer not null default 25,
   add column if not exists status text not null default 'waiting',
   add column if not exists started_at timestamptz,
+  add column if not exists paused_at timestamptz,
+  add column if not exists paused_seconds integer not null default 0,
+  add column if not exists pause_reason text,
+  add column if not exists break_vote_round integer not null default 0,
   add column if not exists updated_at timestamptz not null default now();
 
 alter table public.catudy_lobbies
@@ -810,6 +820,18 @@ alter table public.catudy_lobbies
   add constraint catudy_lobbies_status_check
   check (status in ('waiting', 'running', 'finished'));
 
+alter table public.catudy_lobbies
+  drop constraint if exists catudy_lobbies_paused_seconds_check;
+alter table public.catudy_lobbies
+  add constraint catudy_lobbies_paused_seconds_check
+  check (paused_seconds >= 0);
+
+alter table public.catudy_lobbies
+  drop constraint if exists catudy_lobbies_pause_reason_check;
+alter table public.catudy_lobbies
+  add constraint catudy_lobbies_pause_reason_check
+  check (pause_reason in ('manual', 'break'));
+
 create index if not exists catudy_lobbies_code_idx
   on public.catudy_lobbies (code);
 
@@ -818,6 +840,9 @@ create table if not exists public.catudy_lobby_members (
   lobby_id uuid not null references public.catudy_lobbies(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   display_name text not null default 'Guest Cat',
+  pet_id text not null default 'mochi',
+  pet_name text not null default 'Mochi',
+  equipped_pet_item_id text,
   ready boolean not null default false,
   owner boolean not null default false,
   connected boolean not null default true,
@@ -830,6 +855,9 @@ create table if not exists public.catudy_lobby_members (
 
 alter table public.catudy_lobby_members
   add column if not exists display_name text not null default 'Guest Cat',
+  add column if not exists pet_id text not null default 'mochi',
+  add column if not exists pet_name text not null default 'Mochi',
+  add column if not exists equipped_pet_item_id text,
   add column if not exists ready boolean not null default false,
   add column if not exists owner boolean not null default false,
   add column if not exists connected boolean not null default true,
@@ -916,9 +944,131 @@ create policy "users can update their lobby member row"
     )
   );
 
+drop policy if exists "lobby owners can update member rows"
+  on public.catudy_lobby_members;
+create policy "lobby owners can update member rows"
+  on public.catudy_lobby_members
+  for update
+  to authenticated
+  using (
+    exists (
+      select 1
+      from public.catudy_lobbies l
+      where l.id = lobby_id
+        and l.owner_user_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.catudy_lobbies l
+      where l.id = lobby_id
+        and l.owner_user_id = auth.uid()
+    )
+  );
+
 grant select, insert, update on public.catudy_lobbies
   to authenticated;
 grant select, insert, update on public.catudy_lobby_members
+  to authenticated;
+
+create or replace function public.catudy_submit_lobby_break_vote(
+  target_lobby_id uuid,
+  approved boolean
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_user_id uuid := auth.uid();
+  target_lobby public.catudy_lobbies%rowtype;
+  member_count integer := 0;
+  yes_count integer := 0;
+  no_count integer := 0;
+  needed_count integer := 1;
+begin
+  if current_user_id is null then
+    return false;
+  end if;
+
+  select *
+  into target_lobby
+  from public.catudy_lobbies
+  where id = target_lobby_id
+    and status = 'running'
+  for update;
+
+  if not found or target_lobby.paused_at is not null then
+    return false;
+  end if;
+
+  update public.catudy_lobby_members
+  set
+    break_vote = approved,
+    break_vote_updated_at = now(),
+    updated_at = now()
+  where lobby_id = target_lobby_id
+    and user_id = current_user_id
+    and connected = true;
+
+  if not found then
+    return false;
+  end if;
+
+  select
+    count(*),
+    count(*) filter (where break_vote is true),
+    count(*) filter (where break_vote is false)
+  into member_count, yes_count, no_count
+  from public.catudy_lobby_members
+  where lobby_id = target_lobby_id
+    and connected = true;
+
+  needed_count := greatest(1, (member_count / 2) + 1);
+
+  if yes_count >= needed_count then
+    update public.catudy_lobbies
+    set
+      paused_at = now(),
+      pause_reason = 'break',
+      break_vote_round = break_vote_round + 1,
+      updated_at = now()
+    where id = target_lobby_id
+      and status = 'running'
+      and paused_at is null;
+
+    update public.catudy_lobby_members
+    set
+      break_vote = null,
+      break_vote_updated_at = now(),
+      updated_at = now()
+    where lobby_id = target_lobby_id;
+
+    return true;
+  end if;
+
+  if no_count >= needed_count then
+    update public.catudy_lobbies
+    set
+      break_vote_round = break_vote_round + 1,
+      updated_at = now()
+    where id = target_lobby_id;
+
+    update public.catudy_lobby_members
+    set
+      break_vote = null,
+      break_vote_updated_at = now(),
+      updated_at = now()
+    where lobby_id = target_lobby_id;
+  end if;
+
+  return false;
+end;
+$$;
+
+grant execute on function public.catudy_submit_lobby_break_vote(uuid, boolean)
   to authenticated;
 
 -- ---------------------------------------------------------------------------

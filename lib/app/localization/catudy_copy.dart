@@ -406,6 +406,13 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'focus.noActiveSession': 'Aktif seans yok. Yeni bir odak seansı başlat.',
     'focus.ritualBody': 'Mochi sessizce yanında; yalnızca bu seansa odaklan.',
     'focus.endFocus': 'Odağı Bitir',
+    'focus.paused': 'Seans duraklatıldı. Hazır olduğunda devam et.',
+    'focus.breakActive': 'Mola aktif. Süre mola bitene kadar ilerlemez.',
+    'focus.pauseFocus': 'Durdur',
+    'focus.resumeFocus': 'Devam et',
+    'focus.startBreak': 'Mola',
+    'focus.requestBreak': 'Mola iste',
+    'focus.breakRequested': 'Mola istendi',
     'focus.backHome': 'Ana menü',
     'focus.restoreInfo': 'Seans zaman damgasından geri yüklenir.',
     'focus.resultTitle': 'Seans Sonucu',
@@ -851,6 +858,9 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'lobby.demoMode':
         'Online ayar bulunamadığı için demo lobi açıldı. Gerçek lobi için Supabase URL ve anon key gerekiyor.',
     'lobby.onlyOwnerCanStart': 'Sadece lobi kurucusu seansı başlatabilir.',
+    'lobby.onlyOwnerCanEnd': 'Lobi odağını sadece kurucu bitirebilir.',
+    'lobby.onlyOwnerCanPause':
+        'Lobi odağını sadece kurucu durdurup devam ettirebilir.',
     'lobby.waitForSecondMember': 'Başlatmak için lobide en az iki kişi olmalı.',
     'lobby.waitForReady': 'Başlatmak için herkes hazır olmalı.',
     'lobby.owner': 'kurucu',
@@ -860,7 +870,10 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'lobby.ready': 'Hazır',
     'lobby.start': 'Senkron başlat',
     'lobby.breakVote': 'Mola oylaması',
-    'lobby.breakVoteStatus': 'Evet: {yes}/{total} · Hayır: {no}/{total}',
+    'lobby.breakVoteStatus':
+        'Evet: {yes}/{needed} · Hayır: {no} · Oy: {cast}/{total}',
+    'lobby.breakActive':
+        'Mola kabul edildi. Kurucu devam ettirene kadar timer durur.',
     'lobby.breakQuestion': 'Molaya çıkılsın mı? Oylar lobiyle eşitlenir.',
 
     'tour.barrier': 'Catudy tanıtım turu',
@@ -1300,6 +1313,13 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'focus.noActiveSession': 'No active session. Start a new focus session.',
     'focus.ritualBody': 'Mochi is beside you; only this session matters now.',
     'focus.endFocus': 'End Focus',
+    'focus.paused': 'Session paused. Continue when you are ready.',
+    'focus.breakActive': 'Break is active. The timer waits until it ends.',
+    'focus.pauseFocus': 'Pause',
+    'focus.resumeFocus': 'Resume',
+    'focus.startBreak': 'Break',
+    'focus.requestBreak': 'Ask for break',
+    'focus.breakRequested': 'Break requested',
     'focus.backHome': 'Home',
     'focus.restoreInfo': 'Session restores from its timestamp.',
     'focus.resultTitle': 'Session Result',
@@ -1745,6 +1765,9 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'lobby.demoMode':
         'No online config was found, so a demo lobby opened. Real lobbies need Supabase URL and anon key.',
     'lobby.onlyOwnerCanStart': 'Only the lobby owner can start the session.',
+    'lobby.onlyOwnerCanEnd': 'Only the lobby owner can end the focus.',
+    'lobby.onlyOwnerCanPause':
+        'Only the lobby owner can pause or resume the focus.',
     'lobby.waitForSecondMember':
         'At least two people must be in the lobby to start.',
     'lobby.waitForReady': 'Everyone must be ready to start.',
@@ -1755,7 +1778,10 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'lobby.ready': 'Ready',
     'lobby.start': 'Start sync',
     'lobby.breakVote': 'Break vote',
-    'lobby.breakVoteStatus': 'Yes: {yes}/{total} · No: {no}/{total}',
+    'lobby.breakVoteStatus':
+        'Yes: {yes}/{needed} · No: {no} · Votes: {cast}/{total}',
+    'lobby.breakActive':
+        'Break approved. The timer stays paused until the owner resumes.',
     'lobby.breakQuestion': 'Take a break? Votes sync with the lobby.',
 
     'tour.barrier': 'Catudy intro tour',

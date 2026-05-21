@@ -123,6 +123,54 @@ void main() {
     expect(store.history.first.minutes, 9);
   });
 
+  test(
+    'paused focus freezes remaining time and excludes pause from reward',
+    () async {
+      final storage = _MemoryStorage(null);
+      final store = CatudyDemoStore(storage: storage);
+
+      await store.load();
+
+      final now = DateTime.now();
+      store.activeSession = ActiveFocusSession(
+        categoryId: 'study',
+        durationMinutes: 25,
+        startedAt: now.subtract(const Duration(minutes: 10)),
+        pausedAt: now.subtract(const Duration(minutes: 5)),
+        lobbyMode: false,
+      );
+
+      expect(store.remainingSeconds(now), 20 * 60);
+
+      final record = store.completeFocus();
+
+      expect(record.minutes, 5);
+      expect(store.focusPoints, 5);
+    },
+  );
+
+  test('online lobby members cannot end host controlled focus', () async {
+    final storage = _MemoryStorage(null);
+    final store = CatudyDemoStore(storage: storage);
+
+    await store.load();
+
+    store.onlineLobbyId = 'lobby-1';
+    store.onlineLobbyUserId = 'member-1';
+    store.onlineLobbyOwner = false;
+    store.activeSession = ActiveFocusSession(
+      categoryId: 'study',
+      durationMinutes: 25,
+      startedAt: DateTime.now().subtract(const Duration(minutes: 5)),
+      lobbyMode: true,
+    );
+
+    expect(store.canEndActiveFocus, isFalse);
+    expect(await store.endActiveFocus(), isFalse);
+    expect(store.activeSession, isNotNull);
+    expect(store.history, isEmpty);
+  });
+
   test('completed focus becomes the next home preset', () async {
     final storage = _MemoryStorage(null);
     final store = CatudyDemoStore(storage: storage);

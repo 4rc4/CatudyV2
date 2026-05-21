@@ -214,6 +214,9 @@ class ActiveFocusSession {
     required this.durationMinutes,
     required this.startedAt,
     required this.lobbyMode,
+    this.pausedAt,
+    this.pausedSeconds = 0,
+    this.pauseReason,
     this.todoId,
     this.unlockPackageName,
   });
@@ -224,6 +227,9 @@ class ActiveFocusSession {
       durationMinutes: _readInt(json, 'durationMinutes', 25),
       startedAt: _readDate(json, 'startedAt', DateTime.now()),
       lobbyMode: _readBool(json, 'lobbyMode', false),
+      pausedAt: _readNullableDate(json, 'pausedAt'),
+      pausedSeconds: _readInt(json, 'pausedSeconds', 0),
+      pauseReason: _readNullableString(json, 'pauseReason'),
       todoId: _readNullableString(json, 'todoId'),
       unlockPackageName: _readNullableString(json, 'unlockPackageName'),
     );
@@ -233,17 +239,44 @@ class ActiveFocusSession {
   final int durationMinutes;
   final DateTime startedAt;
   final bool lobbyMode;
+  final DateTime? pausedAt;
+  final int pausedSeconds;
+  final String? pauseReason;
   final String? todoId;
   final String? unlockPackageName;
 
+  bool get isPaused => pausedAt != null;
+  bool get isBreak => pauseReason == 'break';
+
   DateTime get plannedEndAt =>
-      startedAt.add(Duration(minutes: durationMinutes));
+      startedAt.add(Duration(seconds: durationMinutes * 60 + pausedSeconds));
+
+  int elapsedSecondsAt(DateTime now) {
+    final activePauseSeconds = pausedAt == null
+        ? 0
+        : max(0, now.difference(pausedAt!).inSeconds);
+    final elapsed =
+        now.difference(startedAt).inSeconds -
+        pausedSeconds -
+        activePauseSeconds;
+    return elapsed.clamp(0, durationMinutes * 60).toInt();
+  }
+
+  int remainingSecondsAt(DateTime now) {
+    final plannedSeconds = durationMinutes * 60;
+    return (plannedSeconds - elapsedSecondsAt(now))
+        .clamp(0, plannedSeconds)
+        .toInt();
+  }
 
   Map<String, dynamic> toJson() => {
     'categoryId': categoryId,
     'durationMinutes': durationMinutes,
     'startedAt': startedAt.toIso8601String(),
     'lobbyMode': lobbyMode,
+    'pausedAt': pausedAt?.toIso8601String(),
+    'pausedSeconds': pausedSeconds,
+    'pauseReason': pauseReason,
     'todoId': todoId,
     'unlockPackageName': unlockPackageName,
   };
@@ -419,6 +452,9 @@ class LobbyMember {
   const LobbyMember({
     required this.userId,
     required this.name,
+    required this.petId,
+    required this.petName,
+    required this.equippedPetItemId,
     required this.ready,
     required this.owner,
     required this.connected,
@@ -427,6 +463,9 @@ class LobbyMember {
 
   final String userId;
   final String name;
+  final String petId;
+  final String petName;
+  final String? equippedPetItemId;
   final bool ready;
   final bool owner;
   final bool connected;
@@ -1177,6 +1216,33 @@ class CatudyDemoStore extends ChangeNotifier {
 
   String? get lobbyJoinCode => onlineLobbyCode;
 
+  bool get currentUserCanControlLobbyFocus =>
+      activeSession?.lobbyMode != true || onlineLobbyOwner || !hasOnlineLobby;
+
+  bool get canEndActiveFocus =>
+      activeSession != null && currentUserCanControlLobbyFocus;
+
+  String? get endFocusBlockReason {
+    if (activeSession?.lobbyMode == true && !currentUserCanControlLobbyFocus) {
+      return t('lobby.onlyOwnerCanEnd');
+    }
+    return null;
+  }
+
+  bool get activeFocusPaused => activeSession?.isPaused ?? false;
+
+  bool get activeFocusBreakActive => activeSession?.isBreak ?? false;
+
+  bool get canPauseActiveFocus =>
+      activeSession != null && currentUserCanControlLobbyFocus;
+
+  String? get pauseFocusBlockReason {
+    if (activeSession?.lobbyMode == true && !currentUserCanControlLobbyFocus) {
+      return t('lobby.onlyOwnerCanPause');
+    }
+    return null;
+  }
+
   int get connectedLobbyMemberCount =>
       lobbyMembers.where((member) => member.connected).length;
 
@@ -1213,7 +1279,20 @@ class CatudyDemoStore extends ChangeNotifier {
   int get breakVoteRejectCount =>
       lobbyMembers.where((member) => member.breakVote == false).length;
 
-  int get breakVoteTotalCount => breakVoteApproveCount + breakVoteRejectCount;
+  int get breakVoteCastCount => breakVoteApproveCount + breakVoteRejectCount;
+
+  int get breakVoteTotalCount {
+    final total = connectedLobbyMemberCount;
+    return total == 0 ? lobbyMembers.length : total;
+  }
+
+  int get breakVoteThreshold {
+    final total = breakVoteTotalCount;
+    return total <= 0 ? 1 : (total ~/ 2) + 1;
+  }
+
+  bool get breakVoteApproved =>
+      breakVoteApproveCount >= breakVoteThreshold && breakVoteThreshold > 0;
 
   bool? get currentUserBreakVote {
     final userId = onlineLobbyUserId ?? 'local';
@@ -1833,6 +1912,9 @@ class CatudyDemoStore extends ChangeNotifier {
       LobbyMember(
         userId: onlineLobbyUserId ?? 'local',
         name: displayName,
+        petId: selectedPetId,
+        petName: petDisplayName,
+        equippedPetItemId: equippedPetItemId,
         ready: currentUserReady,
         owner: true,
         connected: true,
@@ -2081,9 +2163,7 @@ class CatudyDemoStore extends ChangeNotifier {
     if (session == null) {
       return 0;
     }
-    final planned = session.durationMinutes * 60;
-    final elapsed = now.difference(session.startedAt).inSeconds;
-    return (planned - elapsed).clamp(0, planned);
+    return session.remainingSecondsAt(now);
   }
 
   int minutesForDay(DateTime day) {
@@ -2629,16 +2709,210 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   FocusRecord completeFocus() {
+    final wasLobbySession = activeSession?.lobbyMode == true;
+    final lobbyId = onlineLobbyId;
+    final userId = onlineLobbyUserId;
+    final service = _lobbyService;
+    final shouldFinishOnlineLobby =
+        wasLobbySession &&
+        onlineLobbyOwner &&
+        lobbyId != null &&
+        userId != null;
     if (activeSession == null && lastResult != null) {
       return lastResult!;
     }
     final record = _completeCurrentSession(completedAt: DateTime.now());
     _restoredCompletedSession = false;
     _focusCompletionTimer?.cancel();
+    if (shouldFinishOnlineLobby && service != null) {
+      unawaited(
+        service.finishLobby(lobbyId: lobbyId, ownerUserId: userId).catchError((
+          Object error,
+        ) {
+          _setLobbyError(error);
+          return null;
+        }),
+      );
+    }
+    if (wasLobbySession) {
+      _closeOnlineLobbyLocally();
+    }
     _commit();
     _syncAppLockRulesToPlatform();
     _syncNotifications();
     return record;
+  }
+
+  Future<bool> endActiveFocus() async {
+    if (activeSession == null) {
+      return false;
+    }
+    final blockReason = endFocusBlockReason;
+    if (blockReason != null) {
+      lobbyError = blockReason;
+      _commit();
+      return false;
+    }
+    final session = activeSession;
+    final lobbyId = onlineLobbyId;
+    final userId = onlineLobbyUserId;
+    final service = _lobbyService;
+    if (session?.lobbyMode == true &&
+        service != null &&
+        lobbyId != null &&
+        userId != null &&
+        onlineLobbyOwner) {
+      lobbyBusy = true;
+      lobbyError = null;
+      _commit();
+      try {
+        await service.finishLobby(lobbyId: lobbyId, ownerUserId: userId);
+      } catch (error) {
+        _setLobbyError(error);
+        return false;
+      } finally {
+        lobbyBusy = false;
+      }
+    }
+    completeFocus();
+    return true;
+  }
+
+  Future<bool> toggleFocusPause() async {
+    final session = activeSession;
+    if (session == null) {
+      return false;
+    }
+    if (session.isPaused) {
+      return _resumeFocus();
+    }
+    return _pauseFocus(reason: 'manual');
+  }
+
+  Future<bool> startBreak() async {
+    final session = activeSession;
+    if (session == null) {
+      return false;
+    }
+    if (session.lobbyMode) {
+      submitBreakVote(true);
+      return true;
+    }
+    if (session.isPaused) {
+      return false;
+    }
+    return _pauseFocus(reason: 'break');
+  }
+
+  Future<bool> _pauseFocus({required String reason}) async {
+    final session = activeSession;
+    if (session == null || session.isPaused) {
+      return false;
+    }
+    final blockReason = pauseFocusBlockReason;
+    if (blockReason != null) {
+      lobbyError = blockReason;
+      _commit();
+      return false;
+    }
+    final previous = session;
+    final now = DateTime.now();
+    activeSession = ActiveFocusSession(
+      categoryId: session.categoryId,
+      durationMinutes: session.durationMinutes,
+      startedAt: session.startedAt,
+      lobbyMode: session.lobbyMode,
+      pausedAt: now,
+      pausedSeconds: session.pausedSeconds,
+      pauseReason: reason,
+      todoId: session.todoId,
+      unlockPackageName: session.unlockPackageName,
+    );
+    _focusCompletionTimer?.cancel();
+    lobbyError = null;
+    _commit();
+    _syncAppLockRulesToPlatform();
+    _syncNotifications();
+
+    final lobbyId = onlineLobbyId;
+    final userId = onlineLobbyUserId;
+    final service = _lobbyService;
+    if (session.lobbyMode &&
+        service != null &&
+        lobbyId != null &&
+        userId != null &&
+        onlineLobbyOwner) {
+      try {
+        await service.pauseLobby(
+          lobbyId: lobbyId,
+          ownerUserId: userId,
+          reason: reason,
+        );
+      } catch (error) {
+        activeSession = previous;
+        _setLobbyError(error);
+        _scheduleActiveFocusCompletion();
+        _syncNotifications();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<bool> _resumeFocus() async {
+    final session = activeSession;
+    final pausedAt = session?.pausedAt;
+    if (session == null || pausedAt == null) {
+      return false;
+    }
+    final blockReason = pauseFocusBlockReason;
+    if (blockReason != null) {
+      lobbyError = blockReason;
+      _commit();
+      return false;
+    }
+    final previous = session;
+    final now = DateTime.now();
+    final pauseDelta = max(0, now.difference(pausedAt).inSeconds).toInt();
+    final pausedSeconds = session.pausedSeconds + pauseDelta;
+    activeSession = ActiveFocusSession(
+      categoryId: session.categoryId,
+      durationMinutes: session.durationMinutes,
+      startedAt: session.startedAt,
+      lobbyMode: session.lobbyMode,
+      pausedSeconds: pausedSeconds,
+      todoId: session.todoId,
+      unlockPackageName: session.unlockPackageName,
+    );
+    lobbyError = null;
+    _commit();
+    _scheduleActiveFocusCompletion();
+    _syncAppLockRulesToPlatform();
+    _syncNotifications();
+
+    final lobbyId = onlineLobbyId;
+    final userId = onlineLobbyUserId;
+    final service = _lobbyService;
+    if (session.lobbyMode &&
+        service != null &&
+        lobbyId != null &&
+        userId != null &&
+        onlineLobbyOwner) {
+      try {
+        await service.resumeLobby(
+          lobbyId: lobbyId,
+          ownerUserId: userId,
+          pausedSeconds: pausedSeconds,
+        );
+      } catch (error) {
+        activeSession = previous;
+        _setLobbyError(error);
+        _focusCompletionTimer?.cancel();
+        _syncNotifications();
+        return false;
+      }
+    }
+    return true;
   }
 
   void addManualEntry({
@@ -3398,6 +3672,9 @@ class CatudyDemoStore extends ChangeNotifier {
     try {
       final result = await service.createLobby(
         displayName: displayName,
+        petId: selectedPetId,
+        petName: petDisplayName,
+        equippedPetItemId: equippedPetItemId,
         categoryId: selectedCategoryId,
         durationMinutes: selectedDurationMinutes,
       );
@@ -3427,6 +3704,9 @@ class CatudyDemoStore extends ChangeNotifier {
       final result = await service.joinLobby(
         code: cleanCode,
         displayName: displayName,
+        petId: selectedPetId,
+        petName: petDisplayName,
+        equippedPetItemId: equippedPetItemId,
       );
       _activateOnlineLobby(result);
     } catch (error) {
@@ -3438,10 +3718,6 @@ class CatudyDemoStore extends ChangeNotifier {
     final service = _lobbyService;
     final lobbyId = onlineLobbyId;
     final userId = onlineLobbyUserId;
-    unawaited(_onlineLobbySubscription?.cancel());
-    unawaited(_onlineMembersSubscription?.cancel());
-    _onlineLobbySubscription = null;
-    _onlineMembersSubscription = null;
     if (service != null && lobbyId != null && userId != null) {
       unawaited(
         service
@@ -3449,6 +3725,15 @@ class CatudyDemoStore extends ChangeNotifier {
             .catchError(_setLobbyError),
       );
     }
+    _closeOnlineLobbyLocally();
+    _commit();
+  }
+
+  void _closeOnlineLobbyLocally({bool clearError = true}) {
+    unawaited(_onlineLobbySubscription?.cancel());
+    unawaited(_onlineMembersSubscription?.cancel());
+    _onlineLobbySubscription = null;
+    _onlineMembersSubscription = null;
     onlineLobbyId = null;
     onlineLobbyUserId = null;
     onlineLobbyCode = null;
@@ -3457,9 +3742,10 @@ class CatudyDemoStore extends ChangeNotifier {
     currentUserReady = false;
     lobbyStarted = false;
     lobbyBusy = false;
-    lobbyError = null;
+    if (clearError) {
+      lobbyError = null;
+    }
     localBreakVote = null;
-    _commit();
   }
 
   void _startDemoLobby() {
@@ -3511,6 +3797,9 @@ class CatudyDemoStore extends ChangeNotifier {
             (member) => LobbyMember(
               userId: member.userId,
               name: member.displayName,
+              petId: member.petId,
+              petName: member.petName,
+              equippedPetItemId: member.equippedPetItemId,
               ready: member.ready,
               owner: member.owner,
               connected: member.connected,
@@ -3528,6 +3817,9 @@ class CatudyDemoStore extends ChangeNotifier {
           }
         }
       }
+      if (onlineLobbyOwner && breakVoteApproved && !activeFocusPaused) {
+        unawaited(_pauseFocus(reason: 'break'));
+      }
       _commit();
     }, onError: _setLobbyError);
   }
@@ -3538,6 +3830,17 @@ class CatudyDemoStore extends ChangeNotifier {
         ? lobby.categoryId
         : selectedCategoryId;
     selectedDurationMinutes = lobby.durationMinutes;
+    if (lobby.status == 'finished') {
+      if (activeSession?.lobbyMode == true) {
+        _focusCompletionTimer?.cancel();
+        _completeCurrentSession(completedAt: DateTime.now());
+        _restoredCompletedSession = true;
+        _syncAppLockRulesToPlatform();
+        _syncNotifications();
+      }
+      _closeOnlineLobbyLocally();
+      return;
+    }
     if (lobby.isRunning) {
       final startedAt = lobby.startedAt!;
       final current = activeSession;
@@ -3545,15 +3848,28 @@ class CatudyDemoStore extends ChangeNotifier {
           !current.lobbyMode ||
           current.startedAt != startedAt ||
           current.durationMinutes != lobby.durationMinutes ||
-          current.categoryId != lobby.categoryId) {
+          current.categoryId != lobby.categoryId ||
+          current.pausedAt != lobby.pausedAt ||
+          current.pausedSeconds != lobby.pausedSeconds ||
+          current.pauseReason != lobby.pauseReason) {
         activeSession = ActiveFocusSession(
           categoryId: lobby.categoryId,
           durationMinutes: lobby.durationMinutes,
           startedAt: startedAt,
           lobbyMode: true,
+          pausedAt: lobby.pausedAt,
+          pausedSeconds: lobby.pausedSeconds,
+          pauseReason: lobby.pauseReason,
         );
       }
       lobbyStarted = true;
+      if (lobby.isPaused) {
+        _focusCompletionTimer?.cancel();
+      } else {
+        _scheduleActiveFocusCompletion();
+      }
+      _syncAppLockRulesToPlatform();
+      _syncNotifications();
     }
   }
 
@@ -3697,18 +4013,31 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   void submitBreakVote(bool approved) {
+    if (activeSession?.lobbyMode == true && activeFocusPaused) {
+      return;
+    }
     final lobbyId = onlineLobbyId;
     final userId = onlineLobbyUserId;
     final service = _lobbyService;
+    _setLocalBreakVote(approved);
     if (service != null && lobbyId != null && userId != null) {
       unawaited(
         service
-            .setBreakVote(lobbyId: lobbyId, userId: userId, approved: approved)
+            .submitBreakVote(
+              lobbyId: lobbyId,
+              userId: userId,
+              approved: approved,
+            )
             .catchError((Object error) {
               _setLobbyError(error);
               return null;
             }),
       );
+      if (onlineLobbyOwner &&
+          _onlineLobbyMembers != null &&
+          breakVoteApproved) {
+        unawaited(_pauseFocus(reason: 'break'));
+      }
     } else {
       localBreakVote = approved;
       if (approved) {
@@ -3716,6 +4045,32 @@ class CatudyDemoStore extends ChangeNotifier {
       }
     }
     _commit();
+  }
+
+  void _setLocalBreakVote(bool approved) {
+    final userId = onlineLobbyUserId;
+    final members = _onlineLobbyMembers;
+    if (userId == null || members == null) {
+      localBreakVote = approved;
+      return;
+    }
+    _onlineLobbyMembers = [
+      for (final member in members)
+        if (member.userId == userId)
+          LobbyMember(
+            userId: member.userId,
+            name: member.name,
+            petId: member.petId,
+            petName: member.petName,
+            equippedPetItemId: member.equippedPetItemId,
+            ready: member.ready,
+            owner: member.owner,
+            connected: member.connected,
+            breakVote: approved,
+          )
+        else
+          member,
+    ];
   }
 
   void markIntroTourSeen() {
@@ -3968,8 +4323,7 @@ class CatudyDemoStore extends ChangeNotifier {
               'activeSessionCategory',
               session.categoryId,
             );
-            final elapsed = now.difference(session.startedAt).inMinutes;
-            final remaining = (session.durationMinutes - elapsed).clamp(
+            final remaining = ((remainingSeconds(now) + 59) ~/ 60).clamp(
               0,
               session.durationMinutes,
             );
@@ -4292,11 +4646,7 @@ class CatudyDemoStore extends ChangeNotifier {
           lobbyMode: false,
           unlockPackageName: pendingUnlockPackageName,
         );
-    final plannedSeconds = session.durationMinutes * 60;
-    final elapsedSeconds = completedAt
-        .difference(session.startedAt)
-        .inSeconds
-        .clamp(0, plannedSeconds);
+    final elapsedSeconds = session.elapsedSecondsAt(completedAt);
     final actualMinutes = (elapsedSeconds ~/ 60).clamp(
       0,
       session.durationMinutes,
@@ -4357,6 +4707,7 @@ class CatudyDemoStore extends ChangeNotifier {
     selectedTodoId = null;
     lobbyStarted = false;
     currentUserReady = false;
+    localBreakVote = null;
     lastResult = record;
     return record;
   }
@@ -4503,12 +4854,16 @@ class CatudyDemoStore extends ChangeNotifier {
       return;
     }
     final now = DateTime.now();
-    if (!session.plannedEndAt.isAfter(now)) {
+    if (session.isPaused) {
+      return;
+    }
+    final remaining = session.remainingSecondsAt(now);
+    if (remaining == 0) {
       _completeExpiredRestoredSession(now, persist: true);
       return;
     }
     _focusCompletionTimer = Timer(
-      session.plannedEndAt.difference(now),
+      Duration(seconds: remaining),
       () => _completeExpiredRestoredSession(DateTime.now(), persist: true),
     );
   }
@@ -4518,16 +4873,41 @@ class CatudyDemoStore extends ChangeNotifier {
     if (session == null) {
       return;
     }
-    if (session.plannedEndAt.isAfter(now)) {
+    if (session.isPaused) {
+      return;
+    }
+    if (session.remainingSecondsAt(now) > 0) {
       _scheduleActiveFocusCompletion();
       return;
     }
     _focusCompletionTimer?.cancel();
+    final wasLobbySession = session.lobbyMode;
+    final lobbyId = onlineLobbyId;
+    final userId = onlineLobbyUserId;
+    final service = _lobbyService;
     _completeCurrentSession(completedAt: session.plannedEndAt);
+    if (wasLobbySession) {
+      if (onlineLobbyOwner &&
+          service != null &&
+          lobbyId != null &&
+          userId != null) {
+        unawaited(
+          service.finishLobby(lobbyId: lobbyId, ownerUserId: userId).catchError(
+            (Object error) {
+              _setLobbyError(error);
+              return null;
+            },
+          ),
+        );
+      }
+      _closeOnlineLobbyLocally();
+    }
     _restoredCompletedSession = true;
     if (persist) {
       _commit();
     }
+    _syncAppLockRulesToPlatform();
+    _syncNotifications();
   }
 
   void _applyDefaults() {

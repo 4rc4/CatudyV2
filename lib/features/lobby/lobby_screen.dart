@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/theme/catudy_colors.dart';
@@ -188,11 +190,8 @@ class _CurrentLobbyCard extends StatelessWidget {
             accentColor: CatudyColors.violet,
           ),
           const SizedBox(height: 12),
-          for (final member in store.lobbyMembers)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _MemberTile(member: member, store: store),
-            ),
+          _LobbyPlazaScene(store: store, compact: true),
+          const SizedBox(height: 12),
           if (store.lobbyStartBlockReason != null) ...[
             Text(
               store.lobbyStartBlockReason!,
@@ -527,11 +526,8 @@ class LobbyRoomScreen extends StatelessWidget {
             else ...[
               _DurationPanel(store: store),
               const SizedBox(height: 14),
-              for (final member in store.lobbyMembers)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _MemberTile(member: member, store: store),
-                ),
+              _LobbyPlazaScene(store: store),
+              const SizedBox(height: 14),
               if (store.lobbyStartBlockReason != null) ...[
                 Text(
                   store.lobbyStartBlockReason!,
@@ -689,42 +685,460 @@ class _DurationPanel extends StatelessWidget {
   }
 }
 
-class _MemberTile extends StatelessWidget {
-  const _MemberTile({required this.member, required this.store});
+class _LobbyPlazaScene extends StatelessWidget {
+  const _LobbyPlazaScene({required this.store, this.compact = false});
 
-  final LobbyMember member;
   final CatudyDemoStore store;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return CatudyPanel(
-      child: Row(
+    final members = store.lobbyMembers
+        .where((member) => member.connected)
+        .toList(growable: false);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final height = compact
+            ? (width * 0.92).clamp(300.0, 430.0).toDouble()
+            : (width * 1.24).clamp(430.0, 620.0).toDouble();
+        final placements = [
+          for (var index = 0; index < members.length; index += 1)
+            _LobbyPetPlacement.forIndex(index, width, height, compact: compact),
+        ]..sort((a, b) => b.row.compareTo(a.row));
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: SizedBox(
+            height: height,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  CatudyAssets.lobbyPlaza,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.bottomCenter,
+                  filterQuality: FilterQuality.high,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const _LobbyPlazaFallback(),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.00),
+                        Colors.white.withValues(alpha: 0.04),
+                        Colors.black.withValues(alpha: 0.10),
+                      ],
+                      stops: const [0.0, 0.55, 1.0],
+                    ),
+                  ),
+                ),
+                for (final placement in placements)
+                  Positioned(
+                    left: placement.x - placement.size / 2,
+                    top: placement.y - placement.size / 2,
+                    width: placement.size,
+                    height: placement.size * 1.08,
+                    child: _LobbyPet(
+                      member: members[placement.index],
+                      store: store,
+                      size: placement.size,
+                    ),
+                  ),
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  top: 12,
+                  child: Row(
+                    children: [
+                      _LobbySceneBadge(
+                        icon: Icons.groups_rounded,
+                        label:
+                            '${members.length} ${store.t('social.participants')}',
+                      ),
+                      const Spacer(),
+                      _LobbySceneBadge(
+                        icon: Icons.timer_rounded,
+                        label:
+                            '${store.selectedDurationMinutes} ${store.t('common.minutesShort')}',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _LobbyPetPlacement {
+  const _LobbyPetPlacement({
+    required this.index,
+    required this.row,
+    required this.x,
+    required this.y,
+    required this.size,
+  });
+
+  factory _LobbyPetPlacement.forIndex(
+    int index,
+    double width,
+    double height, {
+    required bool compact,
+  }) {
+    var remaining = index;
+    var row = 0;
+    var rowCapacity = 2;
+    while (remaining >= rowCapacity) {
+      remaining -= rowCapacity;
+      row += 1;
+      rowCapacity = row + 2;
+    }
+    final countInRow = rowCapacity;
+    final rowProgress = countInRow == 1
+        ? 0.5
+        : (remaining + 1) / (countInRow + 1);
+    final rowWidth = width * (0.44 + row * 0.10).clamp(0.44, 0.74);
+    final x = width / 2 - rowWidth / 2 + rowWidth * rowProgress;
+    final frontY = compact ? height * 0.75 : height * 0.77;
+    final y = frontY - row * (compact ? height * 0.115 : height * 0.105);
+    final size = (width * (compact ? 0.25 : 0.29) * math.pow(0.80, row))
+        .clamp(compact ? 58.0 : 76.0, compact ? 96.0 : 128.0)
+        .toDouble();
+    return _LobbyPetPlacement(
+      index: index,
+      row: row,
+      x: x.clamp(size * 0.62, width - size * 0.62).toDouble(),
+      y: y.clamp(height * 0.38, height - size * 0.50).toDouble(),
+      size: size,
+    );
+  }
+
+  final int index;
+  final int row;
+  final double x;
+  final double y;
+  final double size;
+}
+
+class _LobbyPet extends StatelessWidget {
+  const _LobbyPet({
+    required this.member,
+    required this.store,
+    required this.size,
+  });
+
+  final LobbyMember member;
+  final CatudyDemoStore store;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final pet = store.unlockablePets.firstWhere(
+      (item) => item.id == member.petId,
+      orElse: () => store.unlockablePets.first,
+    );
+    final accessory = member.equippedPetItemId == null
+        ? null
+        : store.shopItemById(member.equippedPetItemId!);
+    return Semantics(
+      label: member.petName,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
-          CircleAvatar(
-            backgroundColor: member.ready
-                ? CatudyColors.teal
-                : CatudyColors.coral,
-            child: Icon(
-              member.ready ? Icons.check_rounded : Icons.schedule_rounded,
-              color: Colors.white,
+          Positioned(
+            bottom: size * 0.04,
+            child: Container(
+              width: size * 0.72,
+              height: size * 0.16,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              '${member.name}${member.owner ? ' - ${store.t('lobby.owner')}' : ''}',
-              style: const TextStyle(fontWeight: FontWeight.w900),
+          Positioned(
+            bottom: size * 0.12,
+            child: Container(
+              width: size * 0.95,
+              height: size * 0.95,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: pet.accent.withValues(alpha: 0.10),
+              ),
             ),
           ),
-          Text(
-            member.connected
-                ? store.t('lobby.online')
-                : store.t('lobby.offline'),
+          Positioned(
+            bottom: size * 0.12,
+            child: Image.asset(
+              CatudyAssets.mascot,
+              width: size * 0.90,
+              height: size * 0.90,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+            ),
+          ),
+          if (accessory?.id == 'violet_collar')
+            Positioned(
+              bottom: size * 0.25,
+              child: CustomPaint(
+                size: Size(size * 0.44, size * 0.16),
+                painter: _LobbyCollarPainter(color: accessory!.accent),
+              ),
+            ),
+          if (accessory?.id == 'sunny_hat')
+            Positioned(
+              top: size * 0.10,
+              child: CustomPaint(
+                size: Size(size * 0.46, size * 0.28),
+                painter: _LobbyHatPainter(color: accessory!.accent),
+              ),
+            ),
+          if (member.owner)
+            Positioned(
+              top: size * 0.05,
+              right: size * 0.07,
+              child: _TinyPetBadge(
+                color: CatudyColors.yellow,
+                icon: Icons.star_rounded,
+                size: size * 0.22,
+              ),
+            ),
+          Positioned(
+            bottom: size * 0.02,
+            right: size * 0.08,
+            child: _TinyPetBadge(
+              color: member.ready ? CatudyColors.teal : CatudyColors.coral,
+              icon: member.ready ? Icons.check_rounded : Icons.schedule_rounded,
+              size: size * 0.20,
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+class _TinyPetBadge extends StatelessWidget {
+  const _TinyPetBadge({
+    required this.color,
+    required this.icon,
+    required this.size,
+  });
+
+  final Color color;
+  final IconData icon;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size.clamp(16.0, 28.0),
+      height: size.clamp(16.0, 28.0),
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Icon(icon, color: Colors.white, size: size.clamp(10.0, 16.0)),
+    );
+  }
+}
+
+class _LobbySceneBadge extends StatelessWidget {
+  const _LobbySceneBadge({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.68)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: CatudyColors.violet, size: 16),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: CatudyColors.tealDark,
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LobbyPlazaFallback extends StatelessWidget {
+  const _LobbyPlazaFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _LobbyPlazaFallbackPainter());
+  }
+}
+
+class _LobbyPlazaFallbackPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sky = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF69C9FF), Color(0xFFEFF9FF), Color(0xFFF8D9B8)],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, sky);
+
+    final pathPaint = Paint()..color = const Color(0xFFF4CDAE);
+    final path = Path()
+      ..moveTo(size.width * 0.20, size.height)
+      ..lineTo(size.width * 0.40, size.height * 0.48)
+      ..lineTo(size.width * 0.60, size.height * 0.48)
+      ..lineTo(size.width * 0.82, size.height)
+      ..close();
+    canvas.drawPath(path, pathPaint);
+
+    final gardenPaint = Paint()..color = const Color(0xFF8DCB7F);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.width * 0.10, size.height * 0.58),
+        width: size.width * 0.46,
+        height: size.height * 0.22,
+      ),
+      gardenPaint,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.width * 0.90, size.height * 0.58),
+        width: size.width * 0.46,
+        height: size.height * 0.22,
+      ),
+      gardenPaint,
+    );
+
+    final gazeboPaint = Paint()..color = const Color(0xFFD8A7E8);
+    canvas.drawCircle(
+      Offset(size.width * 0.50, size.height * 0.35),
+      size.width * 0.10,
+      gazeboPaint,
+    );
+    canvas.drawRect(
+      Rect.fromCenter(
+        center: Offset(size.width * 0.50, size.height * 0.47),
+        width: size.width * 0.22,
+        height: size.height * 0.11,
+      ),
+      Paint()..color = Colors.white.withValues(alpha: 0.72),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _LobbyPlazaFallbackPainter oldDelegate) => false;
+}
+
+class _LobbyCollarPainter extends CustomPainter {
+  const _LobbyCollarPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final collar = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size.height * 0.26
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height * 1.8),
+      math.pi * 0.08,
+      math.pi * 0.84,
+      false,
+      collar,
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.5, size.height * 0.92),
+      size.height * 0.18,
+      Paint()..color = CatudyColors.yellow,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _LobbyCollarPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
+class _LobbyHatPainter extends CustomPainter {
+  const _LobbyHatPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final brim = Paint()..color = color;
+    final crown = Paint()..color = Color.lerp(color, Colors.white, 0.20)!;
+    canvas.drawOval(
+      Rect.fromLTWH(0, size.height * 0.46, size.width, size.height * 0.32),
+      brim,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * 0.22,
+          size.height * 0.16,
+          size.width * 0.56,
+          size.height * 0.46,
+        ),
+        Radius.circular(size.height * 0.28),
+      ),
+      crown,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(
+        size.width * 0.24,
+        size.height * 0.48,
+        size.width * 0.52,
+        size.height * 0.11,
+      ),
+      Paint()..color = CatudyColors.coral.withValues(alpha: 0.74),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _LobbyHatPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 class _LobbyError extends StatelessWidget {

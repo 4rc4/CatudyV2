@@ -146,7 +146,13 @@ class _TimerScreenState extends State<TimerScreen> {
                   if (session != null) ...[
                     const SizedBox(height: 18),
                     Text(
-                      store.t('focus.ritualBody'),
+                      session.isPaused
+                          ? store.t(
+                              session.isBreak
+                                  ? 'focus.breakActive'
+                                  : 'focus.paused',
+                            )
+                          : store.t('focus.ritualBody'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: CatudyColors.mutedFor(context),
@@ -158,6 +164,10 @@ class _TimerScreenState extends State<TimerScreen> {
               ),
             ),
             const SizedBox(height: 14),
+            if (session != null) ...[
+              _FocusControls(store: store),
+              const SizedBox(height: 14),
+            ],
             if (session?.lobbyMode == true) ...[
               _BreakVotePanel(store: store),
               const SizedBox(height: 14),
@@ -179,13 +189,30 @@ class _TimerScreenState extends State<TimerScreen> {
               SizedBox(
                 width: double.infinity,
                 child: _EndFocusButton(
+                  enabled: store.canEndActiveFocus && !store.lobbyBusy,
                   onPressed: () {
-                    store.completeFocus();
-                    context.go('/focus/result');
+                    unawaited(
+                      store.endActiveFocus().then((ended) {
+                        if (ended && context.mounted) {
+                          context.go('/focus/result');
+                        }
+                      }),
+                    );
                   },
                   label: store.t('focus.endFocus'),
                 ),
               ),
+            if (store.endFocusBlockReason != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                store.endFocusBlockReason!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: CatudyColors.mutedFor(context),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ],
         );
       },
@@ -199,11 +226,98 @@ class _TimerScreenState extends State<TimerScreen> {
   }
 }
 
+class _FocusControls extends StatelessWidget {
+  const _FocusControls({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final session = store.activeSession;
+    if (session == null) {
+      return const SizedBox.shrink();
+    }
+    final pauseBlocked = !store.canPauseActiveFocus || store.lobbyBusy;
+    final breakDisabled =
+        store.lobbyBusy ||
+        (session.lobbyMode
+            ? store.activeFocusPaused || store.currentUserBreakVote == true
+            : store.activeFocusPaused);
+    return CatudyPanel(
+      accentColor: store.activeFocusBreakActive
+          ? CatudyColors.teal
+          : CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: pauseBlocked
+                      ? null
+                      : () => unawaited(store.toggleFocusPause()),
+                  icon: Icon(
+                    store.activeFocusPaused
+                        ? Icons.play_arrow_rounded
+                        : Icons.pause_rounded,
+                  ),
+                  label: Text(
+                    store.activeFocusPaused
+                        ? store.t('focus.resumeFocus')
+                        : store.t('focus.pauseFocus'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: breakDisabled
+                      ? null
+                      : () => unawaited(store.startBreak()),
+                  icon: Icon(
+                    store.activeFocusBreakActive
+                        ? Icons.free_breakfast_rounded
+                        : Icons.local_cafe_rounded,
+                  ),
+                  label: Text(
+                    session.lobbyMode
+                        ? (store.currentUserBreakVote == true
+                              ? store.t('focus.breakRequested')
+                              : store.t('focus.requestBreak'))
+                        : store.t('focus.startBreak'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (store.pauseFocusBlockReason != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              store.pauseFocusBlockReason!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: CatudyColors.mutedFor(context),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _EndFocusButton extends StatefulWidget {
-  const _EndFocusButton({required this.onPressed, required this.label});
+  const _EndFocusButton({
+    required this.onPressed,
+    required this.label,
+    required this.enabled,
+  });
 
   final VoidCallback onPressed;
   final String label;
+  final bool enabled;
 
   @override
   State<_EndFocusButton> createState() => _EndFocusButtonState();
@@ -218,29 +332,40 @@ class _EndFocusButtonState extends State<_EndFocusButton> {
       button: true,
       label: widget.label,
       child: GestureDetector(
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTap: widget.onPressed,
+        onTapDown: widget.enabled
+            ? (_) => setState(() => _pressed = true)
+            : null,
+        onTapCancel: widget.enabled
+            ? () => setState(() => _pressed = false)
+            : null,
+        onTapUp: widget.enabled
+            ? (_) => setState(() => _pressed = false)
+            : null,
+        onTap: widget.enabled ? widget.onPressed : null,
         child: AnimatedScale(
           duration: const Duration(milliseconds: 110),
           curve: Curves.easeOut,
-          scale: _pressed ? 0.985 : 1,
+          scale: widget.enabled && _pressed ? 0.985 : 1,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
             height: 58,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22),
-              gradient: const LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [CatudyColors.coral, CatudyColors.violet],
-              ),
+              gradient: widget.enabled
+                  ? const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [CatudyColors.coral, CatudyColors.violet],
+                    )
+                  : null,
+              color: widget.enabled
+                  ? null
+                  : CatudyColors.muted.withValues(alpha: 0.2),
               boxShadow: [
                 BoxShadow(
                   color: CatudyColors.coral.withValues(
-                    alpha: _pressed ? 0.14 : 0.26,
+                    alpha: widget.enabled ? (_pressed ? 0.14 : 0.26) : 0,
                   ),
                   blurRadius: _pressed ? 8 : 20,
                   offset: Offset(0, _pressed ? 4 : 10),
@@ -297,6 +422,7 @@ class _BreakVotePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vote = store.currentUserBreakVote;
+    final votingClosed = store.activeFocusPaused || store.lobbyBusy;
     return CatudyPanel(
       accentColor: CatudyColors.teal,
       child: Column(
@@ -311,11 +437,15 @@ class _BreakVotePanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            store.t('lobby.breakVoteStatus', {
-              'yes': store.breakVoteApproveCount,
-              'no': store.breakVoteRejectCount,
-              'total': store.breakVoteTotalCount,
-            }),
+            store.activeFocusBreakActive
+                ? store.t('lobby.breakActive')
+                : store.t('lobby.breakVoteStatus', {
+                    'yes': store.breakVoteApproveCount,
+                    'no': store.breakVoteRejectCount,
+                    'cast': store.breakVoteCastCount,
+                    'total': store.breakVoteTotalCount,
+                    'needed': store.breakVoteThreshold,
+                  }),
             style: TextStyle(
               color: CatudyColors.mutedFor(context),
               fontWeight: FontWeight.w800,
@@ -326,7 +456,9 @@ class _BreakVotePanel extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => store.submitBreakVote(false),
+                  onPressed: votingClosed
+                      ? null
+                      : () => store.submitBreakVote(false),
                   icon: Icon(
                     vote == false
                         ? Icons.check_circle_rounded
@@ -338,7 +470,9 @@ class _BreakVotePanel extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () => store.submitBreakVote(true),
+                  onPressed: votingClosed
+                      ? null
+                      : () => store.submitBreakVote(true),
                   icon: Icon(
                     vote == true
                         ? Icons.check_circle_rounded

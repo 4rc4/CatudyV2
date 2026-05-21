@@ -124,6 +124,9 @@ class CatudyNotificationService {
     await initialize();
     const id = 900002;
     await _plugin.cancel(id: id);
+    if (session.isPaused) {
+      return;
+    }
     final endAt = session.plannedEndAt;
     if (!endAt.isAfter(DateTime.now())) {
       return;
