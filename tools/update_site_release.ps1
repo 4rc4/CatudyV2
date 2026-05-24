@@ -49,24 +49,28 @@ $json = $manifest | ConvertTo-Json -Depth 5
 
 $indexPath = Join-Path $SiteDir 'site\index.html'
 $html = [IO.File]::ReadAllText($indexPath, $utf8Bom)
+$latestHref = "./downloads/$ApkLatestName"
+$versionLabel = "Android APK $ApkVersion"
 
 $html = [regex]::Replace(
   $html,
-  'href="\./downloads/catudy-android-demo-[^"]+\.apk"',
-  "href=`"./downloads/$ApkLatestName`"",
-  1
+  'href="(?:https://catudy\.com/|\.\/)?downloads/catudy-android-demo-[^"]+\.apk"',
+  "href=`"$latestHref`""
 )
 $html = [regex]::Replace(
   $html,
   'download(?:="[^"]*")?(\s+data-i18n="downloadButton")',
-  "download=`"$ApkFileName`"`$1",
-  1
+  "download=`"$ApkFileName`"`$1"
 )
 $html = [regex]::Replace(
   $html,
   '<strong>v[^<]+</strong>',
-  "<strong>$ApkVersion</strong>",
-  1
+  "<strong>$ApkVersion</strong>"
+)
+$html = [regex]::Replace(
+  $html,
+  'Android APK v\d+(?:\.\d+){1,3}',
+  $versionLabel
 )
 
 [IO.File]::WriteAllText(
@@ -74,3 +78,23 @@ $html = [regex]::Replace(
   $html,
   $utf8Bom
 )
+
+$scriptPath = Join-Path $SiteDir 'site\script.js'
+if (Test-Path -LiteralPath $scriptPath) {
+  $script = [IO.File]::ReadAllText($scriptPath, $utf8NoBom)
+  $script = [regex]::Replace(
+    $script,
+    '("hero\.androidCta"\s*:\s*")Android APK v[^"]+(")',
+    "`${1}$versionLabel`${2}"
+  )
+  $script = [regex]::Replace(
+    $script,
+    '("download\.androidTitle"\s*:\s*")Android APK v[^"]+(")',
+    "`${1}$versionLabel`${2}"
+  )
+  [IO.File]::WriteAllText(
+    $scriptPath,
+    $script,
+    $utf8NoBom
+  )
+}
