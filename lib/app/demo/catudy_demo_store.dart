@@ -17,6 +17,7 @@ import '../online/catudy_social_service.dart';
 import '../premium/catudy_premium_models.dart';
 import '../storage/catudy_local_storage.dart';
 import '../theme/catudy_colors.dart';
+import '../catudy_pet_accessories.dart';
 import 'package:home_widget/home_widget.dart';
 
 final catudyDemoStore = CatudyDemoStore();
@@ -944,6 +945,18 @@ class CatudyDemoStore extends ChangeNotifier {
       accent: CatudyColors.teal,
       icon: Icons.wb_sunny_rounded,
     ),
+    for (final accessory in CatudyPetAccessories.all)
+      ShopItem(
+        id: accessory.id,
+        name: accessory.name,
+        description: accessory.description,
+        price: accessory.price,
+        slot: 'pet',
+        rarity: accessory.rarity,
+        accent: accessory.accent,
+        icon: accessory.icon,
+        assetPath: accessory.trimmedAssetPath,
+      ),
     const ShopItem(
       id: 'soft_study_nook',
       name: 'Yumuşak Çalışma Alanı',
@@ -3128,6 +3141,8 @@ class CatudyDemoStore extends ChangeNotifier {
     ownedItems.add(id);
     if (item.isRoomFurniture) {
       equippedRoomItemIds[item.slot] = id;
+    } else if (item.slot == 'pet') {
+      equippedPetItemId = id;
     }
     petMood = (petMood + 6).clamp(0, 100);
     _commit();

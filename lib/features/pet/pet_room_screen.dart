@@ -5,11 +5,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../features/onboarding/pet_intro_tour.dart';
 import '../../shared/widgets/catudy_info_bubble.dart';
+import '../../shared/widgets/catudy_pet_avatar.dart';
 import '../../shared/widgets/store_builder.dart';
 
 class PetRoomScreen extends StatefulWidget {
@@ -127,6 +127,8 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             hunger: store.petHunger,
             energy: store.petEnergy,
             gold: store.gold,
+            equippedPetItemId:
+                visited?.equippedPetItemId ?? store.equippedPetItemId,
             studying: store.activeSession != null,
             rewardBoostPercent: store.focusRewardBoostPercent,
             studyItem: studyItem,
@@ -267,6 +269,7 @@ class _RoomScene extends StatelessWidget {
     required this.hunger,
     required this.energy,
     required this.gold,
+    required this.equippedPetItemId,
     required this.studying,
     required this.rewardBoostPercent,
     required this.studyItem,
@@ -292,6 +295,7 @@ class _RoomScene extends StatelessWidget {
   final int hunger;
   final int energy;
   final int gold;
+  final String? equippedPetItemId;
   final bool studying;
   final double rewardBoostPercent;
   final ShopItem? studyItem;
@@ -425,6 +429,7 @@ class _RoomScene extends StatelessWidget {
                 bottom: petBottom,
                 child: _RoomPet(
                   studying: studying,
+                  equippedPetItemId: equippedPetItemId,
                   mascotSize: petSize,
                   boxWidth: petBoxWidth,
                   boxHeight: petBoxHeight,
@@ -1369,12 +1374,14 @@ class _RoomWindowPainter extends CustomPainter {
 class _RoomPet extends StatelessWidget {
   const _RoomPet({
     required this.studying,
+    required this.equippedPetItemId,
     required this.mascotSize,
     required this.boxWidth,
     required this.boxHeight,
   });
 
   final bool studying;
+  final String? equippedPetItemId;
   final double mascotSize;
   final double boxWidth;
   final double boxHeight;
@@ -1402,8 +1409,8 @@ class _RoomPet extends StatelessWidget {
           ),
           Positioned(
             bottom: shadowHeight * 0.12,
-            child: Image.asset(
-              CatudyAssets.mascot,
+            child: CatudyPetAvatar(
+              equippedItemId: equippedPetItemId,
               width: mascotSize,
               height: mascotSize,
               fit: BoxFit.contain,

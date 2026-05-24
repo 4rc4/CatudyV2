@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/catudy_assets.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_pet_avatar.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/store_builder.dart';
 
@@ -194,7 +194,10 @@ class _LeaderboardListRow extends StatelessWidget {
         children: [
           SizedBox(width: 34, child: _RankMark(rank: rank)),
           const SizedBox(width: 8),
-          _PetBadge(accent: pet.accent),
+          _PetBadge(
+            accent: pet.accent,
+            equippedPetItemId: profile.equippedPetItemId,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Row(
@@ -297,7 +300,10 @@ class _CurrentUserStrip extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          _PetBadge(accent: pet.accent),
+          _PetBadge(
+            accent: pet.accent,
+            equippedPetItemId: profile.equippedPetItemId,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -349,9 +355,10 @@ class _RankMark extends StatelessWidget {
 }
 
 class _PetBadge extends StatelessWidget {
-  const _PetBadge({required this.accent});
+  const _PetBadge({required this.accent, required this.equippedPetItemId});
 
   final Color accent;
+  final String? equippedPetItemId;
 
   @override
   Widget build(BuildContext context) {
@@ -364,7 +371,7 @@ class _PetBadge extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: accent.withValues(alpha: 0.34)),
       ),
-      child: Image.asset(CatudyAssets.mascot, fit: BoxFit.contain),
+      child: CatudyPetAvatar(equippedItemId: equippedPetItemId),
     );
   }
 }

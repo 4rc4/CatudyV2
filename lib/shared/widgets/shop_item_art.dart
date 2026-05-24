@@ -12,11 +12,7 @@ class ShopItemArt extends StatelessWidget {
   Widget build(BuildContext context) {
     final assetPath = item.assetPath;
     if (assetPath == null) {
-      return CircleAvatar(
-        radius: size / 2,
-        backgroundColor: item.accent.withValues(alpha: 0.22),
-        child: Icon(item.icon, color: item.accent, size: size * 0.48),
-      );
+      return _fallbackArt();
     }
     return Container(
       width: size,
@@ -33,8 +29,19 @@ class ShopItemArt extends StatelessWidget {
           fit: BoxFit.contain,
           filterQuality: FilterQuality.medium,
           isAntiAlias: true,
+          errorBuilder: (_, _, _) => Center(
+            child: Icon(item.icon, color: item.accent, size: size * 0.48),
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _fallbackArt() {
+    return CircleAvatar(
+      radius: size / 2,
+      backgroundColor: item.accent.withValues(alpha: 0.22),
+      child: Icon(item.icon, color: item.accent, size: size * 0.48),
     );
   }
 }

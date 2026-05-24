@@ -11,6 +11,7 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_pet_avatar.dart';
 import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/catudy_test_ad_banner.dart';
 import '../../shared/widgets/catudy_visual_system.dart';
@@ -879,8 +880,8 @@ class _LobbyPet extends StatelessWidget {
           ),
           Positioned(
             bottom: size * 0.12,
-            child: Image.asset(
-              CatudyAssets.mascot,
+            child: CatudyPetAvatar(
+              equippedItemId: accessory?.id,
               width: size * 0.90,
               height: size * 0.90,
               fit: BoxFit.contain,
