@@ -354,11 +354,11 @@ class _RoomScene extends StatelessWidget {
             width: (roomWidth * 0.43).clamp(166.0, 212.0).toDouble(),
             aspectRatio: 360 / 300,
           );
-          final petSize = (roomWidth * (studying ? 0.31 : 0.34))
-              .clamp(126.0, 158.0)
+          final petSize = (roomWidth * (studying ? 0.37 : 0.40))
+              .clamp(148.0, 188.0)
               .toDouble();
-          final petBoxWidth = petSize * (studying ? 1.32 : 1.18);
-          final petBoxHeight = petSize * (studying ? 1.05 : 1.14);
+          final petBoxWidth = petSize * (studying ? 1.24 : 1.12);
+          final petBoxHeight = petSize * (studying ? 1.02 : 1.10);
           final petCenterX = roomWidth * (studying ? 0.53 : 0.50);
           final maxPetLeft = (roomWidth - petBoxWidth - 24).clamp(
             24.0,
