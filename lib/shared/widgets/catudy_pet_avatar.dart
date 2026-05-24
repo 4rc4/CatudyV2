@@ -19,6 +19,10 @@ class CatudyPetAvatar extends StatelessWidget {
   final BoxFit fit;
   final FilterQuality filterQuality;
 
+  static const _mascotSourceSize = Size(311, 466);
+  static const _accessoryTopOverflowRatio = 180 / 466;
+  static const _accessoryCanvasHeightRatio = (466 + 180) / 466;
+
   @override
   Widget build(BuildContext context) {
     final accessoryPath = CatudyPetAccessories.alignedAssetPathFor(
@@ -26,28 +30,69 @@ class CatudyPetAvatar extends StatelessWidget {
     );
     return SizedBox(
       width: width,
-      height: height,
-      child: Stack(
-        fit: StackFit.expand,
-        alignment: Alignment.center,
-        children: [
-          Image.asset(
-            CatudyAssets.mascot,
-            fit: fit,
-            filterQuality: filterQuality,
-            isAntiAlias: true,
-          ),
-          if (accessoryPath != null)
-            Image.asset(
-              accessoryPath,
+      height: height == null ? null : height! * _accessoryCanvasHeightRatio,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final boxSize = constraints.biggest;
+          if (!boxSize.width.isFinite || !boxSize.height.isFinite) {
+            return Image.asset(
+              CatudyAssets.mascot,
               fit: fit,
               filterQuality: filterQuality,
               isAntiAlias: true,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
-            ),
-          if (accessoryPath == null && equippedItemId != null)
-            _LegacyPetAccessoryOverlay(equippedItemId: equippedItemId!),
-        ],
+            );
+          }
+          final reservesOverflow = height != null;
+          final catSlotSize = Size(
+            boxSize.width,
+            reservesOverflow
+                ? boxSize.height / _accessoryCanvasHeightRatio
+                : boxSize.height,
+          );
+          final topOverflow = reservesOverflow
+              ? catSlotSize.height * _accessoryTopOverflowRatio
+              : 0.0;
+          final fitted = applyBoxFit(fit, _mascotSourceSize, catSlotSize);
+          final mascotSize = fitted.destination;
+          final mascotLeft = (catSlotSize.width - mascotSize.width) / 2;
+          final mascotTop =
+              topOverflow + (catSlotSize.height - mascotSize.height) / 2;
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                left: mascotLeft,
+                top: mascotTop,
+                width: mascotSize.width,
+                height: mascotSize.height,
+                child: Image.asset(
+                  CatudyAssets.mascot,
+                  fit: BoxFit.fill,
+                  filterQuality: filterQuality,
+                  isAntiAlias: true,
+                ),
+              ),
+              if (accessoryPath != null)
+                Positioned(
+                  left: mascotLeft,
+                  top:
+                      mascotTop -
+                      mascotSize.height * _accessoryTopOverflowRatio,
+                  width: mascotSize.width,
+                  height: mascotSize.height * _accessoryCanvasHeightRatio,
+                  child: Image.asset(
+                    accessoryPath,
+                    fit: BoxFit.fill,
+                    filterQuality: filterQuality,
+                    isAntiAlias: true,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                  ),
+                ),
+              if (accessoryPath == null && equippedItemId != null)
+                _LegacyPetAccessoryOverlay(equippedItemId: equippedItemId!),
+            ],
+          );
+        },
       ),
     );
   }

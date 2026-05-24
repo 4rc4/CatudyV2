@@ -376,6 +376,7 @@ class _RoomScene extends StatelessWidget {
 
           return Stack(
             fit: StackFit.expand,
+            clipBehavior: Clip.none,
             children: [
               const Positioned.fill(child: _RoomBackground()),
               if (roomEffectAccent != null)
@@ -1395,6 +1396,7 @@ class _RoomPet extends StatelessWidget {
       height: boxHeight,
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
           Positioned(
             bottom: studying ? 4 : 0,
