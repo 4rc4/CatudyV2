@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:catudy_app/app/catudy_pet_accessories.dart';
@@ -23,6 +24,13 @@ void main() {
         reason: '${accessory.id} needs authored pet avatar placement.',
       );
     }
+  });
+
+  test('bundles pet accessory asset folders for runtime equipment', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+
+    expect(pubspec, contains('assets/cat_accessories/wearables/aligned/'));
+    expect(pubspec, contains('assets/cat_accessories/wearables/trimmed/'));
   });
 
   test(
