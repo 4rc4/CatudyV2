@@ -354,12 +354,12 @@ class _RoomScene extends StatelessWidget {
             width: (roomWidth * 0.43).clamp(166.0, 212.0).toDouble(),
             aspectRatio: 360 / 300,
           );
-          final petSize = (roomWidth * (studying ? 0.37 : 0.40))
-              .clamp(148.0, 188.0)
+          final petSize = (roomWidth * (studying ? 0.48 : 0.52))
+              .clamp(184.0, 242.0)
               .toDouble();
-          final petBoxWidth = petSize * (studying ? 1.24 : 1.12);
-          final petBoxHeight = petSize * (studying ? 1.02 : 1.10);
-          final petCenterX = roomWidth * (studying ? 0.53 : 0.50);
+          final petBoxWidth = petSize * (studying ? 1.18 : 1.10);
+          final petBoxHeight = petSize * (studying ? 1.30 : 1.36);
+          final petCenterX = roomWidth * (studying ? 0.52 : 0.50);
           final maxPetLeft = (roomWidth - petBoxWidth - 24).clamp(
             24.0,
             roomWidth,
@@ -367,10 +367,10 @@ class _RoomScene extends StatelessWidget {
           final petLeft = (petCenterX - petBoxWidth / 2)
               .clamp(24.0, maxPetLeft)
               .toDouble();
-          final petBottom = (controlsReserve + 84)
-              .clamp(236.0, 304.0)
+          final petBottom = (controlsReserve + 44)
+              .clamp(218.0, 270.0)
               .toDouble();
-          final speechBottom = (petBottom + petBoxHeight - 8)
+          final speechBottom = (petBottom + petBoxHeight - 12)
               .clamp(roomHeight * 0.43, roomHeight * 0.62)
               .toDouble();
 

@@ -92,6 +92,29 @@ class CatudyPetAccessory {
       'assets/cat_accessories/wearables/aligned/$id.png';
 }
 
+class CatudyPetAccessoryPlacement {
+  const CatudyPetAccessoryPlacement({
+    required this.targetAnchor,
+    required this.targetWidth,
+    this.sourceAnchor = const Offset(0.5, 0.5),
+    this.scaleMultiplier = 1.0,
+    this.useAlignedCanvas = false,
+  });
+
+  const CatudyPetAccessoryPlacement.canvas()
+    : targetAnchor = Offset.zero,
+      targetWidth = 0,
+      sourceAnchor = Offset.zero,
+      scaleMultiplier = 1,
+      useAlignedCanvas = true;
+
+  final Offset targetAnchor;
+  final double targetWidth;
+  final Offset sourceAnchor;
+  final double scaleMultiplier;
+  final bool useAlignedCanvas;
+}
+
 class CatudyPetAccessories {
   const CatudyPetAccessories._();
 
@@ -458,4 +481,260 @@ class CatudyPetAccessories {
 
   static String? alignedAssetPathFor(String? id) =>
       id == null ? null : byId(id)?.alignedAssetPath;
+
+  static String? trimmedAssetPathFor(String? id) =>
+      id == null ? null : byId(id)?.trimmedAssetPath;
+
+  static CatudyPetAccessoryPlacement? placementFor(String? id) =>
+      id == null ? null : _placements[id];
+
+  static const _placements = <String, CatudyPetAccessoryPlacement>{
+    'purple_witch_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 112),
+      targetWidth: 252,
+      sourceAnchor: Offset(0.5, 0.90),
+    ),
+    'pink_flower_clip': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(218, 108),
+      targetWidth: 104,
+    ),
+    'gold_halo': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 48),
+      targetWidth: 160,
+      sourceAnchor: Offset(0.5, 0.82),
+    ),
+    'silver_viking_helmet': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 128),
+      targetWidth: 236,
+      sourceAnchor: Offset(0.5, 0.82),
+    ),
+    'blue_backwards_cap': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 124),
+      targetWidth: 224,
+      sourceAnchor: Offset(0.5, 0.80),
+    ),
+    'gold_monocle': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(104, 151),
+      targetWidth: 96,
+    ),
+    'green_bow_tie': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 224),
+      targetWidth: 136,
+    ),
+    'black_top_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 126),
+      targetWidth: 204,
+      sourceAnchor: Offset(0.5, 0.88),
+    ),
+    'purple_eye_mask': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 196,
+    ),
+    'pineapple_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 124),
+      targetWidth: 182,
+      sourceAnchor: Offset(0.5, 0.92),
+    ),
+    'black_sunglasses': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 192,
+    ),
+    'yellow_sun_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 130),
+      targetWidth: 266,
+      sourceAnchor: Offset(0.5, 0.82),
+    ),
+    'red_white_headband': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 101),
+      targetWidth: 194,
+    ),
+    'brown_aviator_cap': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 190),
+      targetWidth: 218,
+      sourceAnchor: Offset(0.5, 0.94),
+    ),
+    'pink_bow': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(216, 110),
+      targetWidth: 132,
+    ),
+    'detective_cap': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 124),
+      targetWidth: 208,
+      sourceAnchor: Offset(0.5, 0.86),
+    ),
+    'red_cat_eye_glasses': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 188,
+    ),
+    'sailor_hat': CatudyPetAccessoryPlacement.canvas(),
+    'gold_tiara': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 118),
+      targetWidth: 190,
+      sourceAnchor: Offset(0.5, 0.86),
+    ),
+    'blue_party_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 120),
+      targetWidth: 128,
+      sourceAnchor: Offset(0.5, 0.95),
+    ),
+    'black_ninja_headband': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 152),
+      targetWidth: 212,
+      sourceAnchor: Offset(0.5, 0.50),
+    ),
+    'green_shutter_glasses': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 194,
+    ),
+    'cowboy_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 126),
+      targetWidth: 250,
+      sourceAnchor: Offset(0.5, 0.86),
+    ),
+    'graduation_cap': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 124),
+      targetWidth: 230,
+      sourceAnchor: Offset(0.5, 0.82),
+    ),
+    'gold_monocle_chain': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(105, 151),
+      targetWidth: 98,
+    ),
+    'black_mustache': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 178),
+      targetWidth: 154,
+      sourceAnchor: Offset(0.5, 0.45),
+    ),
+    'brown_mustache': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 178),
+      targetWidth: 154,
+      sourceAnchor: Offset(0.5, 0.45),
+    ),
+    'gray_mustache': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 178),
+      targetWidth: 152,
+      sourceAnchor: Offset(0.5, 0.45),
+    ),
+    'white_beard': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 198),
+      targetWidth: 182,
+      sourceAnchor: Offset(0.5, 0.18),
+    ),
+    'black_beard': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 200),
+      targetWidth: 182,
+      sourceAnchor: Offset(0.5, 0.18),
+    ),
+    'red_clown_nose': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 164),
+      targetWidth: 56,
+    ),
+    'groucho_glasses': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 164),
+      targetWidth: 192,
+    ),
+    'pixel_sunglasses': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 196,
+    ),
+    'red_shutter_glasses': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 196,
+    ),
+    'heart_sunglasses': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 200,
+    ),
+    'yellow_star_sunglasses': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 214,
+    ),
+    'pink_round_glasses': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 180,
+    ),
+    'rainbow_ski_goggles': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 154),
+      targetWidth: 208,
+    ),
+    'pink_tiara': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 118),
+      targetWidth: 190,
+      sourceAnchor: Offset(0.5, 0.86),
+    ),
+    'knight_helmet': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 192),
+      targetWidth: 224,
+      sourceAnchor: Offset(0.5, 0.86),
+    ),
+    'fur_viking_helmet': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 128),
+      targetWidth: 236,
+      sourceAnchor: Offset(0.5, 0.82),
+    ),
+    'green_army_helmet': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 148),
+      targetWidth: 218,
+      sourceAnchor: Offset(0.5, 0.88),
+    ),
+    'aviator_helmet': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 190),
+      targetWidth: 218,
+      sourceAnchor: Offset(0.5, 0.94),
+    ),
+    'astronaut_helmet': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 194),
+      targetWidth: 232,
+      sourceAnchor: Offset(0.5, 0.86),
+    ),
+    'pink_earmuffs': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 136),
+      targetWidth: 238,
+    ),
+    'blue_headphones': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 138),
+      targetWidth: 240,
+    ),
+    'chef_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 124),
+      targetWidth: 208,
+      sourceAnchor: Offset(0.5, 0.88),
+    ),
+    'star_wizard_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 122),
+      targetWidth: 236,
+      sourceAnchor: Offset(0.5, 0.91),
+    ),
+    'classic_top_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 126),
+      targetWidth: 204,
+      sourceAnchor: Offset(0.5, 0.88),
+    ),
+    'flower_crown': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 114),
+      targetWidth: 248,
+    ),
+    'hibiscus_flower': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(218, 108),
+      targetWidth: 104,
+    ),
+    'left_leaf_clip': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(100, 112),
+      targetWidth: 86,
+    ),
+    'right_leaf_clip': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(210, 112),
+      targetWidth: 86,
+    ),
+    'thin_gold_halo': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 48),
+      targetWidth: 160,
+      sourceAnchor: Offset(0.5, 0.82),
+    ),
+    'rainbow_party_hat': CatudyPetAccessoryPlacement(
+      targetAnchor: Offset(155, 120),
+      targetWidth: 128,
+      sourceAnchor: Offset(0.5, 0.95),
+    ),
+  };
 }

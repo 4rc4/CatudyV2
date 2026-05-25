@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:catudy_app/app/catudy_pet_accessories.dart';
 import 'package:catudy_app/app/demo/catudy_demo_store.dart';
 import 'package:catudy_app/app/lock/catudy_app_lock_models.dart';
 import 'package:catudy_app/app/online/catudy_auth_service.dart';
@@ -14,6 +15,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
+  test('defines runtime placement for every pet accessory asset', () {
+    for (final accessory in CatudyPetAccessories.all) {
+      expect(
+        CatudyPetAccessories.placementFor(accessory.id),
+        isNotNull,
+        reason: '${accessory.id} needs authored pet avatar placement.',
+      );
+    }
+  });
+
   test(
     'loads persisted guest profile, categories, wallet, and inventory',
     () async {
