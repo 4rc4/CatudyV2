@@ -19,8 +19,21 @@ PREVIEW_ON_CAT = OUT_ROOT / "wearables_on_purple_cat_preview.png"
 MASCOT_PATH = ROOT / "assets" / "brand" / "catudy-mascot.png"
 CAT_CANVAS_SIZE = (311, 466)
 ACCESSORY_TOP_OVERFLOW = 180
-GLOBAL_ACCESSORY_SCALE = 1.20
+GLOBAL_ACCESSORY_SCALE = 1.42
 CANVAS_SIZE = (CAT_CANVAS_SIZE[0], CAT_CANVAS_SIZE[1] + ACCESSORY_TOP_OVERFLOW)
+FACE_CENTER_X = 140
+RIGHT_EYE_X = 205
+LEFT_EAR_DECOR_X = 75
+RIGHT_EAR_DECOR_X = 207
+REMOVED_FROM_GAME = {
+    "green_army_helmet",
+    "aviator_helmet",
+    "astronaut_helmet",
+    "pink_earmuffs",
+    "blue_headphones",
+    "chef_hat",
+    "star_wizard_hat",
+}
 DEFAULT_SOURCES = {
     "main": Path(r"C:\Users\arca\Desktop\Untitled - May 24, 2026 at 18.51.47.png"),
     "extra": Path(r"C:\Users\arca\Desktop\Aksesuars.png"),
@@ -37,61 +50,63 @@ class ItemSpec:
 
 
 ITEMS = [
-    ItemSpec("purple_witch_hat", "main", (155, 101), 190, (0.5, 0.93)),
-    ItemSpec("pink_flower_clip", "main", (222, 82), 76),
-    ItemSpec("gold_halo", "main", (155, 50), 135, (0.5, 0.82)),
-    ItemSpec("silver_viking_helmet", "main", (155, 119), 198, (0.5, 0.82)),
-    ItemSpec("blue_backwards_cap", "main", (155, 101), 172, (0.5, 0.82)),
-    ItemSpec("gold_monocle", "main", (105, 145), 76),
-    ItemSpec("green_bow_tie", "main", (155, 222), 98),
-    ItemSpec("black_top_hat", "main", (155, 101), 145, (0.5, 0.88)),
-    ItemSpec("purple_eye_mask", "main", (155, 144), 150),
-    ItemSpec("pineapple_hat", "main", (155, 99), 118, (0.5, 0.92)),
-    ItemSpec("black_sunglasses", "main", (155, 144), 160),
-    ItemSpec("yellow_sun_hat", "main", (155, 102), 185, (0.5, 0.82)),
-    ItemSpec("red_white_headband", "main", (155, 95), 158),
-    ItemSpec("brown_aviator_cap", "main", (155, 188), 178, (0.5, 0.94)),
-    ItemSpec("pink_bow", "main", (224, 84), 96),
-    ItemSpec("detective_cap", "main", (155, 99), 145, (0.5, 0.86)),
-    ItemSpec("red_cat_eye_glasses", "main", (155, 145), 145),
-    ItemSpec("sailor_hat", "main", (155, 145), 145),
-    ItemSpec("gold_tiara", "main", (155, 95), 130, (0.5, 0.86)),
-    ItemSpec("blue_party_hat", "main", (155, 94), 70, (0.5, 0.95)),
-    ItemSpec("black_ninja_headband", "main", (155, 100), 154),
-    ItemSpec("green_shutter_glasses", "main", (155, 145), 148),
-    ItemSpec("cowboy_hat", "main", (155, 101), 168, (0.5, 0.86)),
-    ItemSpec("graduation_cap", "main", (155, 97), 155, (0.5, 0.82)),
-    ItemSpec("gold_monocle_chain", "extra", (106, 145), 78),
-    ItemSpec("black_mustache", "extra", (155, 176), 110, (0.5, 0.25)),
-    ItemSpec("brown_mustache", "extra", (155, 176), 110, (0.5, 0.25)),
-    ItemSpec("gray_mustache", "extra", (155, 176), 116, (0.5, 0.25)),
-    ItemSpec("white_beard", "extra", (155, 183), 128, (0.5, 0.12)),
-    ItemSpec("black_beard", "extra", (155, 184), 132, (0.5, 0.12)),
-    ItemSpec("red_clown_nose", "extra", (155, 171), 36),
-    ItemSpec("groucho_glasses", "extra", (155, 164), 136),
-    ItemSpec("pixel_sunglasses", "extra", (155, 144), 158),
-    ItemSpec("red_shutter_glasses", "extra", (155, 144), 150),
-    ItemSpec("heart_sunglasses", "extra", (155, 146), 164),
-    ItemSpec("yellow_star_sunglasses", "extra", (155, 145), 166),
-    ItemSpec("pink_round_glasses", "extra", (155, 145), 136),
-    ItemSpec("rainbow_ski_goggles", "extra", (155, 145), 162),
-    ItemSpec("pink_tiara", "extra", (155, 95), 132, (0.5, 0.86)),
-    ItemSpec("knight_helmet", "extra", (155, 195), 170, (0.5, 0.86)),
-    ItemSpec("fur_viking_helmet", "extra", (155, 119), 190, (0.5, 0.82)),
-    ItemSpec("green_army_helmet", "extra", (155, 122), 150, (0.5, 0.88)),
-    ItemSpec("aviator_helmet", "extra", (155, 188), 178, (0.5, 0.94)),
-    ItemSpec("astronaut_helmet", "extra", (155, 214), 190, (0.5, 0.86)),
-    ItemSpec("pink_earmuffs", "extra", (155, 112), 198),
-    ItemSpec("blue_headphones", "extra", (155, 114), 200),
-    ItemSpec("chef_hat", "extra", (155, 100), 132, (0.5, 0.88)),
-    ItemSpec("star_wizard_hat", "extra", (155, 101), 160, (0.5, 0.91)),
-    ItemSpec("classic_top_hat", "extra", (155, 101), 145, (0.5, 0.88)),
-    ItemSpec("flower_crown", "extra", (155, 98), 150, (0.5, 0.86)),
-    ItemSpec("hibiscus_flower", "extra", (224, 86), 72),
-    ItemSpec("left_leaf_clip", "extra", (104, 88), 56),
-    ItemSpec("right_leaf_clip", "extra", (208, 88), 56),
-    ItemSpec("thin_gold_halo", "extra", (155, 50), 135, (0.5, 0.82)),
-    ItemSpec("rainbow_party_hat", "extra", (155, 94), 70, (0.5, 0.95)),
+    ItemSpec("purple_witch_hat", "main", (FACE_CENTER_X, 88), 245, (0.5, 0.93)),
+    ItemSpec("pink_flower_clip", "main", (RIGHT_EAR_DECOR_X + 4, 74), 82),
+    ItemSpec("gold_halo", "main", (FACE_CENTER_X, 2), 146, (0.5, 0.82)),
+    ItemSpec(
+        "silver_viking_helmet", "main", (FACE_CENTER_X, 60), 218, (0.5, 0.82)
+    ),
+    ItemSpec("blue_backwards_cap", "main", (FACE_CENTER_X, 101), 182, (0.5, 0.82)),
+    ItemSpec("gold_monocle", "main", (RIGHT_EYE_X, 156), 92),
+    ItemSpec("green_bow_tie", "main", (FACE_CENTER_X, 222), 105),
+    ItemSpec("black_top_hat", "main", (FACE_CENTER_X, 75), 160, (0.5, 0.88)),
+    ItemSpec("purple_eye_mask", "main", (FACE_CENTER_X, 145), 160),
+    ItemSpec("pineapple_hat", "main", (FACE_CENTER_X, 70), 132, (0.5, 0.92)),
+    ItemSpec("black_sunglasses", "main", (FACE_CENTER_X, 145), 180),
+    ItemSpec("yellow_sun_hat", "main", (FACE_CENTER_X, 102), 208, (0.5, 0.82)),
+    ItemSpec("red_white_headband", "main", (FACE_CENTER_X, 95), 158),
+    ItemSpec("brown_aviator_cap", "main", (FACE_CENTER_X, 188), 178, (0.5, 0.94)),
+    ItemSpec("pink_bow", "main", (104, 80), 168),
+    ItemSpec("detective_cap", "main", (FACE_CENTER_X, 76), 165, (0.5, 0.86)),
+    ItemSpec("red_cat_eye_glasses", "main", (FACE_CENTER_X, 145), 155),
+    ItemSpec("sailor_hat", "main", (FACE_CENTER_X, 145), 145),
+    ItemSpec("gold_tiara", "main", (FACE_CENTER_X, 95), 140, (0.5, 0.86)),
+    ItemSpec("blue_party_hat", "main", (FACE_CENTER_X, 100), 110, (0.5, 0.95)),
+    ItemSpec("black_ninja_headband", "main", (FACE_CENTER_X, 145), 170),
+    ItemSpec("green_shutter_glasses", "main", (FACE_CENTER_X, 145), 158),
+    ItemSpec("cowboy_hat", "main", (FACE_CENTER_X, 70), 182, (0.5, 0.86)),
+    ItemSpec("graduation_cap", "main", (FACE_CENTER_X, 81), 162, (0.5, 0.82)),
+    ItemSpec("gold_monocle_chain", "extra", (RIGHT_EYE_X - 7, 168), 92),
+    ItemSpec("black_mustache", "extra", (FACE_CENTER_X, 177), 135, (0.5, 0.25)),
+    ItemSpec("brown_mustache", "extra", (FACE_CENTER_X, 177), 135, (0.5, 0.25)),
+    ItemSpec("gray_mustache", "extra", (FACE_CENTER_X, 177), 140, (0.5, 0.25)),
+    ItemSpec("white_beard", "extra", (FACE_CENTER_X, 183), 140, (0.5, 0.12)),
+    ItemSpec("black_beard", "extra", (FACE_CENTER_X, 184), 142, (0.5, 0.12)),
+    ItemSpec("red_clown_nose", "extra", (FACE_CENTER_X, 171), 52),
+    ItemSpec("groucho_glasses", "extra", (FACE_CENTER_X, 165), 168),
+    ItemSpec("pixel_sunglasses", "extra", (FACE_CENTER_X, 160), 190),
+    ItemSpec("red_shutter_glasses", "extra", (FACE_CENTER_X, 144), 174),
+    ItemSpec("heart_sunglasses", "extra", (FACE_CENTER_X, 146), 172),
+    ItemSpec("yellow_star_sunglasses", "extra", (FACE_CENTER_X, 145), 166),
+    ItemSpec("pink_round_glasses", "extra", (FACE_CENTER_X, 145), 152),
+    ItemSpec("rainbow_ski_goggles", "extra", (FACE_CENTER_X, 145), 170),
+    ItemSpec("pink_tiara", "extra", (FACE_CENTER_X, 95), 142, (0.5, 0.86)),
+    ItemSpec("knight_helmet", "extra", (FACE_CENTER_X, 166), 190, (0.5, 0.86)),
+    ItemSpec("fur_viking_helmet", "extra", (FACE_CENTER_X, 119), 200, (0.5, 0.82)),
+    ItemSpec("green_army_helmet", "extra", (FACE_CENTER_X, 122), 160, (0.5, 0.88)),
+    ItemSpec("aviator_helmet", "extra", (FACE_CENTER_X, 188), 188, (0.5, 0.94)),
+    ItemSpec("astronaut_helmet", "extra", (FACE_CENTER_X, 214), 198, (0.5, 0.86)),
+    ItemSpec("pink_earmuffs", "extra", (FACE_CENTER_X, 112), 198),
+    ItemSpec("blue_headphones", "extra", (FACE_CENTER_X, 114), 200),
+    ItemSpec("chef_hat", "extra", (FACE_CENTER_X, 100), 150, (0.5, 0.88)),
+    ItemSpec("star_wizard_hat", "extra", (FACE_CENTER_X, 74), 170, (0.5, 0.91)),
+    ItemSpec("classic_top_hat", "extra", (FACE_CENTER_X, 75), 160, (0.5, 0.88)),
+    ItemSpec("flower_crown", "extra", (FACE_CENTER_X, 62), 210, (0.5, 0.86)),
+    ItemSpec("hibiscus_flower", "extra", (RIGHT_EAR_DECOR_X + 5, 64), 92),
+    ItemSpec("left_leaf_clip", "extra", (FACE_CENTER_X - 61, 72), 80),
+    ItemSpec("right_leaf_clip", "extra", (FACE_CENTER_X + 61, 72), 80),
+    ItemSpec("thin_gold_halo", "extra", (FACE_CENTER_X, 2), 146, (0.5, 0.82)),
+    ItemSpec("rainbow_party_hat", "extra", (FACE_CENTER_X, 100), 110, (0.5, 0.95)),
 ]
 
 
@@ -226,6 +241,43 @@ def trim_alpha(image: Image.Image, pad: int = 0) -> Image.Image:
     )
 
 
+def soften_astronaut_visor(image: Image.Image) -> Image.Image:
+    rgba = np.array(image.convert("RGBA"))
+    h, w = rgba.shape[:2]
+    yy, xx = np.ogrid[:h, :w]
+    cx = w * 0.5
+    cy = h * 0.45
+    rx = w * 0.39
+    ry = h * 0.32
+    inner_visor = ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 < 0.9
+    alpha = rgba[:, :, 3]
+    luminance = (
+        rgba[:, :, 0].astype(np.float32) * 0.299
+        + rgba[:, :, 1].astype(np.float32) * 0.587
+        + rgba[:, :, 2].astype(np.float32) * 0.114
+    )
+    visor_pixels = inner_visor & (alpha > 20) & (luminance < 245)
+    softened_alpha = np.clip(34 + luminance * 0.18, 34, 82).astype(np.uint8)
+    alpha[visor_pixels] = np.minimum(alpha[visor_pixels], softened_alpha[visor_pixels])
+    return Image.fromarray(rgba, "RGBA")
+
+
+def draw_scaled_polyline(
+    canvas: Image.Image,
+    points: list[tuple[int, int]],
+    *,
+    fill: tuple[int, int, int, int],
+    width: int,
+) -> None:
+    scale = 3
+    overlay = Image.new("RGBA", (canvas.width * scale, canvas.height * scale), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+    scaled = [(x * scale, y * scale) for x, y in points]
+    draw.line(scaled, fill=fill, width=width * scale, joint="curve")
+    overlay = overlay.resize(canvas.size, Image.Resampling.LANCZOS)
+    canvas.alpha_composite(overlay)
+
+
 def place_scaled(
     canvas: Image.Image,
     image: Image.Image,
@@ -256,15 +308,55 @@ def align_sailor_asset(trimmed: Image.Image) -> Image.Image:
     place_scaled(
         canvas,
         hat,
-        target_width=128,
-        target_anchor=(155, 101 + ACCESSORY_TOP_OVERFLOW),
+        target_width=160,
+        target_anchor=(FACE_CENTER_X, 114 + ACCESSORY_TOP_OVERFLOW),
         source_anchor=(0.5, 0.86),
     )
     place_scaled(
         canvas,
         scarf,
-        target_width=92,
-        target_anchor=(155, 212 + ACCESSORY_TOP_OVERFLOW),
+        target_width=110,
+        target_anchor=(FACE_CENTER_X, 252 + ACCESSORY_TOP_OVERFLOW),
+    )
+    return canvas
+
+
+def align_pink_bow_asset(trimmed: Image.Image, spec: ItemSpec) -> Image.Image:
+    canvas = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
+    y_offset = ACCESSORY_TOP_OVERFLOW
+    draw_scaled_polyline(
+        canvas,
+        [
+            (42, y_offset + 128),
+            (55, y_offset + 114),
+            (75, y_offset + 99),
+            (101, y_offset + 89),
+            (130, y_offset + 85),
+        ],
+        fill=(183, 66, 109, 210),
+        width=16,
+    )
+    draw_scaled_polyline(
+        canvas,
+        [
+            (43, y_offset + 126),
+            (57, y_offset + 112),
+            (78, y_offset + 99),
+            (103, y_offset + 91),
+            (130, y_offset + 88),
+        ],
+        fill=(245, 115, 160, 245),
+        width=10,
+    )
+    place_scaled(
+        canvas,
+        trimmed,
+        target_width=spec.target_width,
+        target_anchor=(
+            spec.target_anchor[0],
+            spec.target_anchor[1] + ACCESSORY_TOP_OVERFLOW,
+        ),
+        source_anchor=spec.source_anchor,
     )
     return canvas
 
@@ -273,11 +365,14 @@ def align_asset(trimmed: Image.Image, spec: ItemSpec) -> Image.Image:
     canvas = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
     if spec.item_id == "sailor_hat":
         return align_sailor_asset(trimmed)
+    if spec.item_id == "pink_bow":
+        return align_pink_bow_asset(trimmed, spec)
     if trimmed.width <= 1 or trimmed.height <= 1:
         return canvas
+    source = soften_astronaut_visor(trimmed) if spec.item_id == "astronaut_helmet" else trimmed
     place_scaled(
         canvas,
-        trimmed,
+        source,
         target_width=spec.target_width,
         target_anchor=(
             spec.target_anchor[0],
@@ -390,6 +485,8 @@ def import_sources(sources: dict[str, Path]) -> None:
                 f"but {len(specs)} item specs were expected."
             )
         for spec, component in zip(specs, components):
+            if spec.item_id in REMOVED_FROM_GAME:
+                continue
             trimmed = trim_to_mask(source, component)
             aligned = align_asset(trimmed, spec)
             trimmed_path = TRIMMED_DIR / f"{spec.item_id}.png"

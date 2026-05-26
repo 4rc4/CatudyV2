@@ -83,9 +83,7 @@ class CatudyPetAvatar extends StatelessWidget {
                   isAntiAlias: true,
                 ),
               ),
-              if (placement != null &&
-                  placement.useAlignedCanvas &&
-                  alignedPath != null)
+              if (accessory != null && alignedPath != null)
                 _AlignedAccessoryLayer(
                   path: alignedPath,
                   left: canvasLeft,
@@ -101,15 +99,6 @@ class CatudyPetAvatar extends StatelessWidget {
                   canvasLeft: canvasLeft,
                   canvasTop: canvasTop,
                   scale: mascotScale,
-                  filterQuality: filterQuality,
-                )
-              else if (accessory != null && alignedPath != null)
-                _AlignedAccessoryLayer(
-                  path: alignedPath,
-                  left: canvasLeft,
-                  top: canvasTop,
-                  width: canvasSize.width,
-                  height: canvasSize.height,
                   filterQuality: filterQuality,
                 ),
               if (accessory == null && equippedItemId != null)
