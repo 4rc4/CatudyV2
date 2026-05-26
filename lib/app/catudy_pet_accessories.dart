@@ -2,6 +2,21 @@ import 'package:flutter/material.dart';
 
 import 'theme/catudy_colors.dart';
 
+class CatudyPetAccessoryVariant {
+  const CatudyPetAccessoryVariant({
+    required this.id,
+    required this.label,
+    required this.accent,
+  });
+
+  final String id;
+  final String label;
+  final Color accent;
+
+  String get trimmedAssetPath =>
+      'assets/cat_accessories/wearables/trimmed/$id.png';
+}
+
 class CatudyPetAccessory {
   const CatudyPetAccessory({
     required this.id,
@@ -11,6 +26,8 @@ class CatudyPetAccessory {
     required this.rarity,
     required this.accent,
     required this.icon,
+    this.variantGroupId,
+    this.variants = const <CatudyPetAccessoryVariant>[],
   });
 
   const CatudyPetAccessory.hat({
@@ -19,6 +36,9 @@ class CatudyPetAccessory {
     int price = 170,
     String rarity = 'common',
     Color accent = CatudyColors.violet,
+    String? variantGroupId,
+    List<CatudyPetAccessoryVariant> variants =
+        const <CatudyPetAccessoryVariant>[],
   }) : this(
          id: id,
          name: name,
@@ -27,6 +47,8 @@ class CatudyPetAccessory {
          rarity: rarity,
          accent: accent,
          icon: Icons.checkroom_rounded,
+         variantGroupId: variantGroupId,
+         variants: variants,
        );
 
   const CatudyPetAccessory.face({
@@ -35,6 +57,9 @@ class CatudyPetAccessory {
     int price = 140,
     String rarity = 'common',
     Color accent = CatudyColors.coral,
+    String? variantGroupId,
+    List<CatudyPetAccessoryVariant> variants =
+        const <CatudyPetAccessoryVariant>[],
   }) : this(
          id: id,
          name: name,
@@ -43,6 +68,8 @@ class CatudyPetAccessory {
          rarity: rarity,
          accent: accent,
          icon: Icons.face_rounded,
+         variantGroupId: variantGroupId,
+         variants: variants,
        );
 
   const CatudyPetAccessory.glasses({
@@ -51,6 +78,9 @@ class CatudyPetAccessory {
     int price = 160,
     String rarity = 'common',
     Color accent = CatudyColors.blue,
+    String? variantGroupId,
+    List<CatudyPetAccessoryVariant> variants =
+        const <CatudyPetAccessoryVariant>[],
   }) : this(
          id: id,
          name: name,
@@ -59,6 +89,8 @@ class CatudyPetAccessory {
          rarity: rarity,
          accent: accent,
          icon: Icons.visibility_rounded,
+         variantGroupId: variantGroupId,
+         variants: variants,
        );
 
   const CatudyPetAccessory.decor({
@@ -67,6 +99,9 @@ class CatudyPetAccessory {
     int price = 150,
     String rarity = 'common',
     Color accent = CatudyColors.teal,
+    String? variantGroupId,
+    List<CatudyPetAccessoryVariant> variants =
+        const <CatudyPetAccessoryVariant>[],
   }) : this(
          id: id,
          name: name,
@@ -75,6 +110,8 @@ class CatudyPetAccessory {
          rarity: rarity,
          accent: accent,
          icon: Icons.auto_awesome_rounded,
+         variantGroupId: variantGroupId,
+         variants: variants,
        );
 
   final String id;
@@ -84,6 +121,11 @@ class CatudyPetAccessory {
   final String rarity;
   final Color accent;
   final IconData icon;
+  final String? variantGroupId;
+  final List<CatudyPetAccessoryVariant> variants;
+
+  bool get isShopVisible => variantGroupId == null;
+  bool get hasVariants => variants.length > 1;
 
   String get trimmedAssetPath =>
       'assets/cat_accessories/wearables/trimmed/$id.png';
@@ -121,90 +163,131 @@ class CatudyPetAccessories {
   static const all = <CatudyPetAccessory>[
     CatudyPetAccessory.hat(
       id: 'purple_witch_hat',
-      name: 'Purple Witch Hat',
+      name: 'Witch Hat',
       price: 220,
       rarity: 'rare',
       accent: CatudyColors.violet,
     ),
     CatudyPetAccessory.decor(
       id: 'pink_flower_clip',
-      name: 'Pink Flower Clip',
+      name: 'Flower',
       price: 130,
       accent: CatudyColors.coral,
     ),
     CatudyPetAccessory.decor(
       id: 'gold_halo',
-      name: 'Gold Halo',
+      name: 'Halo',
       price: 220,
       rarity: 'rare',
       accent: CatudyColors.yellow,
     ),
     CatudyPetAccessory.hat(
       id: 'silver_viking_helmet',
-      name: 'Silver Viking Helmet',
+      name: 'Viking',
       price: 260,
       rarity: 'rare',
       accent: CatudyColors.yellow,
     ),
     CatudyPetAccessory.hat(
       id: 'blue_backwards_cap',
-      name: 'Blue Backwards Cap',
+      name: 'Cap',
       price: 160,
       accent: CatudyColors.blue,
     ),
     CatudyPetAccessory.glasses(
       id: 'gold_monocle',
-      name: 'Gold Monocle',
+      name: 'Monocle',
       price: 170,
       accent: CatudyColors.yellow,
     ),
     CatudyPetAccessory.decor(
       id: 'green_bow_tie',
-      name: 'Green Bow Tie',
+      name: 'Bow Tie',
       price: 140,
       accent: CatudyColors.teal,
     ),
     CatudyPetAccessory.hat(
       id: 'black_top_hat',
-      name: 'Black Top Hat',
+      name: 'Top Hat',
       price: 210,
       rarity: 'rare',
       accent: CatudyColors.violetDark,
     ),
     CatudyPetAccessory.glasses(
       id: 'purple_eye_mask',
-      name: 'Purple Eye Mask',
+      name: 'Mask',
       price: 150,
       accent: CatudyColors.violet,
     ),
     CatudyPetAccessory.hat(
       id: 'pineapple_hat',
-      name: 'Pineapple Hat',
+      name: 'Pineapple',
       price: 180,
       accent: CatudyColors.yellow,
     ),
     CatudyPetAccessory.glasses(
       id: 'black_sunglasses',
-      name: 'Black Sunglasses',
+      name: 'Sunglasses',
       price: 150,
       accent: CatudyColors.violetDark,
+      variants: [
+        CatudyPetAccessoryVariant(
+          id: 'black_sunglasses',
+          label: 'Black',
+          accent: CatudyColors.violetDark,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'red_cat_eye_glasses',
+          label: 'Red',
+          accent: CatudyColors.coral,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'green_shutter_glasses',
+          label: 'Green',
+          accent: CatudyColors.teal,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'pixel_sunglasses',
+          label: 'Pixel',
+          accent: CatudyColors.blue,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'red_shutter_glasses',
+          label: 'Shutter',
+          accent: CatudyColors.coral,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'heart_sunglasses',
+          label: 'Heart',
+          accent: CatudyColors.coral,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'yellow_star_sunglasses',
+          label: 'Star',
+          accent: CatudyColors.yellow,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'pink_round_glasses',
+          label: 'Pink',
+          accent: CatudyColors.coral,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'rainbow_ski_goggles',
+          label: 'Rainbow',
+          accent: CatudyColors.teal,
+        ),
+      ],
     ),
     CatudyPetAccessory.hat(
       id: 'yellow_sun_hat',
-      name: 'Yellow Sun Hat',
+      name: 'Sun Hat',
       price: 200,
       rarity: 'rare',
       accent: CatudyColors.yellow,
     ),
     CatudyPetAccessory.hat(
-      id: 'red_white_headband',
-      name: 'Red White Headband',
-      price: 140,
-      accent: CatudyColors.coral,
-    ),
-    CatudyPetAccessory.hat(
       id: 'brown_aviator_cap',
-      name: 'Brown Aviator Cap',
+      name: 'Aviator',
       price: 210,
       rarity: 'rare',
       accent: CatudyColors.coral,
@@ -217,47 +300,36 @@ class CatudyPetAccessories {
     ),
     CatudyPetAccessory.hat(
       id: 'detective_cap',
-      name: 'Detective Cap',
+      name: 'Detective',
       price: 170,
       accent: CatudyColors.coral,
     ),
     CatudyPetAccessory.glasses(
       id: 'red_cat_eye_glasses',
-      name: 'Red Cat Eye Glasses',
+      name: 'Red',
       price: 160,
       accent: CatudyColors.coral,
-    ),
-    CatudyPetAccessory.hat(
-      id: 'sailor_hat',
-      name: 'Sailor Hat',
-      price: 210,
-      rarity: 'rare',
-      accent: CatudyColors.blue,
+      variantGroupId: 'black_sunglasses',
     ),
     CatudyPetAccessory.decor(
       id: 'gold_tiara',
-      name: 'Gold Tiara',
+      name: 'Tiara',
       price: 230,
       rarity: 'rare',
       accent: CatudyColors.yellow,
     ),
     CatudyPetAccessory.hat(
       id: 'blue_party_hat',
-      name: 'Blue Party Hat',
+      name: 'Party Hat',
       price: 150,
       accent: CatudyColors.blue,
     ),
-    CatudyPetAccessory.hat(
-      id: 'black_ninja_headband',
-      name: 'Black Ninja Headband',
-      price: 150,
-      accent: CatudyColors.violetDark,
-    ),
     CatudyPetAccessory.glasses(
       id: 'green_shutter_glasses',
-      name: 'Green Shutter Glasses',
+      name: 'Green',
       price: 160,
       accent: CatudyColors.teal,
+      variantGroupId: 'black_sunglasses',
     ),
     CatudyPetAccessory.hat(
       id: 'cowboy_hat',
@@ -267,46 +339,78 @@ class CatudyPetAccessories {
     ),
     CatudyPetAccessory.hat(
       id: 'graduation_cap',
-      name: 'Graduation Cap',
+      name: 'Grad Cap',
       price: 220,
       rarity: 'rare',
       accent: CatudyColors.violetDark,
     ),
     CatudyPetAccessory.glasses(
       id: 'gold_monocle_chain',
-      name: 'Gold Monocle Chain',
+      name: 'Chain',
       price: 180,
       accent: CatudyColors.yellow,
     ),
     CatudyPetAccessory.face(
       id: 'black_mustache',
-      name: 'Black Mustache',
+      name: 'Mustache',
       price: 120,
       accent: CatudyColors.violetDark,
+      variants: [
+        CatudyPetAccessoryVariant(
+          id: 'black_mustache',
+          label: 'Black',
+          accent: CatudyColors.violetDark,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'brown_mustache',
+          label: 'Brown',
+          accent: CatudyColors.coral,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'gray_mustache',
+          label: 'Gray',
+          accent: CatudyColors.muted,
+        ),
+      ],
     ),
     CatudyPetAccessory.face(
       id: 'brown_mustache',
-      name: 'Brown Mustache',
+      name: 'Brown',
       price: 120,
       accent: CatudyColors.coral,
+      variantGroupId: 'black_mustache',
     ),
     CatudyPetAccessory.face(
       id: 'gray_mustache',
-      name: 'Gray Mustache',
+      name: 'Gray',
       price: 120,
       accent: CatudyColors.muted,
+      variantGroupId: 'black_mustache',
     ),
     CatudyPetAccessory.face(
       id: 'white_beard',
-      name: 'White Beard',
+      name: 'White',
       price: 150,
       accent: CatudyColors.lavender,
+      variantGroupId: 'black_beard',
     ),
     CatudyPetAccessory.face(
       id: 'black_beard',
-      name: 'Black Beard',
+      name: 'Beard',
       price: 150,
       accent: CatudyColors.violetDark,
+      variants: [
+        CatudyPetAccessoryVariant(
+          id: 'black_beard',
+          label: 'Black',
+          accent: CatudyColors.violetDark,
+        ),
+        CatudyPetAccessoryVariant(
+          id: 'white_beard',
+          label: 'White',
+          accent: CatudyColors.lavender,
+        ),
+      ],
     ),
     CatudyPetAccessory.face(
       id: 'red_clown_nose',
@@ -316,47 +420,53 @@ class CatudyPetAccessories {
     ),
     CatudyPetAccessory.glasses(
       id: 'groucho_glasses',
-      name: 'Groucho Glasses',
+      name: 'Groucho',
       price: 170,
       accent: CatudyColors.coral,
     ),
     CatudyPetAccessory.glasses(
       id: 'pixel_sunglasses',
-      name: 'Pixel Sunglasses',
+      name: 'Pixel',
       price: 150,
       accent: CatudyColors.blue,
+      variantGroupId: 'black_sunglasses',
     ),
     CatudyPetAccessory.glasses(
       id: 'red_shutter_glasses',
-      name: 'Red Shutter Glasses',
+      name: 'Shutter',
       price: 160,
       accent: CatudyColors.coral,
+      variantGroupId: 'black_sunglasses',
     ),
     CatudyPetAccessory.glasses(
       id: 'heart_sunglasses',
-      name: 'Heart Sunglasses',
+      name: 'Heart',
       price: 170,
       accent: CatudyColors.coral,
+      variantGroupId: 'black_sunglasses',
     ),
     CatudyPetAccessory.glasses(
       id: 'yellow_star_sunglasses',
-      name: 'Star Sunglasses',
+      name: 'Star',
       price: 190,
       rarity: 'rare',
       accent: CatudyColors.yellow,
+      variantGroupId: 'black_sunglasses',
     ),
     CatudyPetAccessory.glasses(
       id: 'pink_round_glasses',
-      name: 'Pink Round Glasses',
+      name: 'Pink',
       price: 160,
       accent: CatudyColors.coral,
+      variantGroupId: 'black_sunglasses',
     ),
     CatudyPetAccessory.glasses(
       id: 'rainbow_ski_goggles',
-      name: 'Rainbow Ski Goggles',
+      name: 'Rainbow',
       price: 220,
       rarity: 'rare',
       accent: CatudyColors.teal,
+      variantGroupId: 'black_sunglasses',
     ),
     CatudyPetAccessory.decor(
       id: 'pink_tiara',
@@ -366,68 +476,71 @@ class CatudyPetAccessories {
       accent: CatudyColors.coral,
     ),
     CatudyPetAccessory.hat(
-      id: 'knight_helmet',
-      name: 'Knight Helmet',
-      price: 260,
-      rarity: 'rare',
-      accent: CatudyColors.muted,
-    ),
-    CatudyPetAccessory.hat(
       id: 'fur_viking_helmet',
-      name: 'Fur Viking Helmet',
+      name: 'Fur Viking',
       price: 240,
       rarity: 'rare',
       accent: CatudyColors.coral,
     ),
     CatudyPetAccessory.hat(
       id: 'classic_top_hat',
-      name: 'Classic Top Hat',
+      name: 'Classic Hat',
       price: 210,
       rarity: 'rare',
       accent: CatudyColors.violetDark,
     ),
     CatudyPetAccessory.decor(
       id: 'flower_crown',
-      name: 'Flower Crown',
+      name: 'Crown',
       price: 190,
       accent: CatudyColors.coral,
     ),
     CatudyPetAccessory.decor(
       id: 'hibiscus_flower',
-      name: 'Hibiscus Flower',
+      name: 'Hibiscus',
       price: 130,
       accent: CatudyColors.coral,
     ),
     CatudyPetAccessory.decor(
-      id: 'left_leaf_clip',
-      name: 'Left Leaf Clip',
-      price: 120,
-      accent: CatudyColors.teal,
-    ),
-    CatudyPetAccessory.decor(
-      id: 'right_leaf_clip',
-      name: 'Right Leaf Clip',
-      price: 120,
+      id: 'leaf_clips',
+      name: 'Leaf Clips',
+      price: 140,
       accent: CatudyColors.teal,
     ),
     CatudyPetAccessory.decor(
       id: 'thin_gold_halo',
-      name: 'Thin Gold Halo',
+      name: 'Thin Halo',
       price: 220,
       rarity: 'rare',
       accent: CatudyColors.yellow,
     ),
     CatudyPetAccessory.hat(
       id: 'rainbow_party_hat',
-      name: 'Rainbow Party Hat',
+      name: 'Rainbow Hat',
       price: 170,
       accent: CatudyColors.coral,
     ),
   ];
 
+  static List<CatudyPetAccessory> get shopCatalog =>
+      all.where((accessory) => accessory.isShopVisible).toList();
+
   static CatudyPetAccessory? byId(String id) {
     for (final accessory in all) {
       if (accessory.id == id) {
+        return accessory;
+      }
+    }
+    return null;
+  }
+
+  static CatudyPetAccessory? parentForVariant(String id) {
+    for (final accessory in all) {
+      if (!accessory.isShopVisible) {
+        continue;
+      }
+      if (accessory.id == id ||
+          accessory.variants.any((variant) => variant.id == id)) {
         return accessory;
       }
     }
@@ -499,10 +612,6 @@ class CatudyPetAccessories {
       targetWidth: 351,
       sourceAnchor: Offset(0.5, 0.82),
     ),
-    'red_white_headband': CatudyPetAccessoryPlacement(
-      targetAnchor: Offset(155, 76),
-      targetWidth: 256,
-    ),
     'brown_aviator_cap': CatudyPetAccessoryPlacement(
       targetAnchor: Offset(155, 172),
       targetWidth: 288,
@@ -521,11 +630,6 @@ class CatudyPetAccessories {
       targetAnchor: Offset(155, 154),
       targetWidth: 248,
     ),
-    'sailor_hat': CatudyPetAccessoryPlacement(
-      targetAnchor: Offset(155, 194),
-      targetWidth: 282,
-      sourceAnchor: Offset(0.5, 0.58),
-    ),
     'gold_tiara': CatudyPetAccessoryPlacement(
       targetAnchor: Offset(155, 100),
       targetWidth: 251,
@@ -535,11 +639,6 @@ class CatudyPetAccessories {
       targetAnchor: Offset(155, 100),
       targetWidth: 169,
       sourceAnchor: Offset(0.5, 0.95),
-    ),
-    'black_ninja_headband': CatudyPetAccessoryPlacement(
-      targetAnchor: Offset(155, 152),
-      targetWidth: 280,
-      sourceAnchor: Offset(0.5, 0.50),
     ),
     'green_shutter_glasses': CatudyPetAccessoryPlacement(
       targetAnchor: Offset(155, 154),
@@ -621,11 +720,6 @@ class CatudyPetAccessories {
       targetWidth: 251,
       sourceAnchor: Offset(0.5, 0.86),
     ),
-    'knight_helmet': CatudyPetAccessoryPlacement(
-      targetAnchor: Offset(155, 192),
-      targetWidth: 296,
-      sourceAnchor: Offset(0.5, 0.86),
-    ),
     'fur_viking_helmet': CatudyPetAccessoryPlacement(
       targetAnchor: Offset(155, 98),
       targetWidth: 312,
@@ -644,14 +738,7 @@ class CatudyPetAccessories {
       targetAnchor: Offset(242, 70),
       targetWidth: 137,
     ),
-    'left_leaf_clip': CatudyPetAccessoryPlacement(
-      targetAnchor: Offset(108, 84),
-      targetWidth: 114,
-    ),
-    'right_leaf_clip': CatudyPetAccessoryPlacement(
-      targetAnchor: Offset(218, 84),
-      targetWidth: 114,
-    ),
+    'leaf_clips': CatudyPetAccessoryPlacement.canvas(),
     'thin_gold_halo': CatudyPetAccessoryPlacement(
       targetAnchor: Offset(155, 30),
       targetWidth: 211,

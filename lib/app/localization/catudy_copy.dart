@@ -492,12 +492,8 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'shop.room.slot.decor': 'Işık ve dekor',
     'shop.room.slot.shelf': 'Raflar',
 
-    'item.violet_collar.name': 'Mor Tasma',
-    'item.violet_collar.description': 'Mochi için yumuşak bir pet kozmetiği.',
     'item.focus_badge.name': 'Odak Rozeti',
     'item.focus_badge.description': 'Herkese açık profilinde gösterilir.',
-    'item.sunny_hat.name': 'Güneş Şapkası',
-    'item.sunny_hat.description': 'Pet odası için sıcak bir kozmetik.',
     'item.soft_study_nook.name': 'Yumuşak Çalışma Alanı',
     'item.soft_study_nook.description':
         'Mochi için minderli, alçak bir çalışma köşesi.',
@@ -1398,12 +1394,8 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'shop.room.slot.decor': 'Lighting & decor',
     'shop.room.slot.shelf': 'Shelves',
 
-    'item.violet_collar.name': 'Violet Collar',
-    'item.violet_collar.description': 'A soft pet cosmetic for Mochi.',
     'item.focus_badge.name': 'Focus Badge',
     'item.focus_badge.description': 'Shown on your public profile.',
-    'item.sunny_hat.name': 'Sunny Hat',
-    'item.sunny_hat.description': 'A warm cosmetic for Pet Room.',
     'item.soft_study_nook.name': 'Soft Study Nook',
     'item.soft_study_nook.description':
         'A cushioned low study corner made for Mochi.',

@@ -404,11 +404,17 @@ class _ShopItemCard extends StatelessWidget {
     final owned = store.ownedItems.contains(item.id);
     return _ProductCard(
       accent: item.accent,
-      art: ShopItemArt(item: item, size: 92),
+      art: ShopItemArt(item: item, size: 52),
       title: store.itemName(item),
       body: store.itemDescription(item),
       chips: [
         _MetaChip(label: item.rarity),
+        if (item.hasVariants)
+          _MetaChip(
+            label: store.languageCode == 'tr'
+                ? '${item.variants.length} stil'
+                : '${item.variants.length} styles',
+          ),
         if (item.isRoomFurniture)
           _MetaChip(
             label:
@@ -489,7 +495,7 @@ class _CrateCard extends StatelessWidget {
     };
     return _ProductCard(
       accent: accent,
-      art: Icon(Icons.inventory_2_rounded, color: accent, size: 58),
+      art: Icon(Icons.inventory_2_rounded, color: accent, size: 34),
       title: crate.name,
       body: crate.description,
       chips: [
@@ -528,7 +534,7 @@ class _PetUnlockCard extends StatelessWidget {
         : (currentPoints / requiredPoints).clamp(0.0, 1.0);
     return _ProductCard(
       accent: accent,
-      art: Icon(Icons.pets_rounded, color: accent, size: 54),
+      art: Icon(Icons.pets_rounded, color: accent, size: 34),
       title: name,
       body: description,
       chips: [
@@ -593,12 +599,8 @@ class _ProductGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const spacing = 10.0;
-        final columns = constraints.maxWidth >= 640
-            ? 3
-            : constraints.maxWidth >= 330
-            ? 2
-            : 1;
+        const spacing = 6.0;
+        final columns = constraints.maxWidth >= 300 ? 2 : 1;
         final width =
             (constraints.maxWidth - (spacing * (columns - 1))) / columns;
         return Wrap(
@@ -635,63 +637,94 @@ class _ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(11),
+      constraints: const BoxConstraints(minHeight: 104),
+      padding: const EdgeInsets.all(7),
       decoration: BoxDecoration(
         color: CatudyColors.surfaceFor(context),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: accent.withValues(alpha: 0.14)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          AspectRatio(
-            aspectRatio: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Center(
+                  child: FittedBox(fit: BoxFit.contain, child: art),
+                ),
               ),
-              child: Center(child: art),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.blueFor(context),
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            body,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.mutedFor(context),
-              fontSize: 12,
-              height: 1.18,
-            ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: CatudyColors.blueFor(context),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      body,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontSize: 10.5,
+                        height: 1.12,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Wrap(spacing: 3, runSpacing: 3, children: chips),
+                  ],
+                ),
+              ),
+            ],
           ),
           if (progress != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             ClipRRect(
               borderRadius: BorderRadius.circular(999),
               child: LinearProgressIndicator(
                 value: progress,
-                minHeight: 7,
+                minHeight: 5,
                 color: accent,
                 backgroundColor: CatudyColors.surfaceStrongFor(context),
               ),
             ),
           ],
-          const SizedBox(height: 8),
-          Wrap(spacing: 5, runSpacing: 5, children: chips),
-          const SizedBox(height: 8),
-          SizedBox(height: 38, child: action),
+          const SizedBox(height: 6),
+          Theme(
+            data: Theme.of(context).copyWith(
+              filledButtonTheme: FilledButtonThemeData(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+            child: SizedBox(height: 30, child: action),
+          ),
         ],
       ),
     );
@@ -706,13 +739,13 @@ class _CosmeticArt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 88,
-      height: 88,
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
         color: item.accent.withValues(alpha: 0.16),
         shape: BoxShape.circle,
       ),
-      child: Icon(item.icon, color: item.accent, size: 42),
+      child: Icon(item.icon, color: item.accent, size: 24),
     );
   }
 }
@@ -725,7 +758,7 @@ class _MetaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
       decoration: BoxDecoration(
         color: CatudyColors.surfaceStrongFor(context),
         borderRadius: BorderRadius.circular(999),
@@ -734,7 +767,7 @@ class _MetaChip extends StatelessWidget {
         label,
         style: TextStyle(
           color: CatudyColors.mutedFor(context),
-          fontSize: 11,
+          fontSize: 9.5,
           fontWeight: FontWeight.w800,
         ),
       ),

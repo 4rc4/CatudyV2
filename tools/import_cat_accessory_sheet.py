@@ -33,7 +33,12 @@ REMOVED_FROM_GAME = {
     "blue_headphones",
     "chef_hat",
     "star_wizard_hat",
+    "red_white_headband",
+    "black_ninja_headband",
+    "sailor_hat",
+    "knight_helmet",
 }
+LEAF_CLIP_PARTS = {"left_leaf_clip", "right_leaf_clip"}
 DEFAULT_SOURCES = {
     "main": Path(r"C:\Users\arca\Desktop\Untitled - May 24, 2026 at 18.51.47.png"),
     "extra": Path(r"C:\Users\arca\Desktop\Aksesuars.png"),
@@ -474,6 +479,7 @@ def import_sources(sources: dict[str, Path]) -> None:
     grouped = {key: [item for item in ITEMS if item.source_key == key] for key in sources}
     trimmed_paths: list[Path] = []
     aligned_paths: list[Path] = []
+    leaf_clip_layers: dict[str, Image.Image] = {}
 
     for source_key, source_path in sources.items():
         source = Image.open(source_path).convert("RGBA")
@@ -485,16 +491,31 @@ def import_sources(sources: dict[str, Path]) -> None:
                 f"but {len(specs)} item specs were expected."
             )
         for spec, component in zip(specs, components):
-            if spec.item_id in REMOVED_FROM_GAME:
-                continue
             trimmed = trim_to_mask(source, component)
             aligned = align_asset(trimmed, spec)
+            if spec.item_id in LEAF_CLIP_PARTS:
+                leaf_clip_layers[spec.item_id] = aligned
+                continue
+            if spec.item_id in REMOVED_FROM_GAME:
+                continue
             trimmed_path = TRIMMED_DIR / f"{spec.item_id}.png"
             aligned_path = ALIGNED_DIR / f"{spec.item_id}.png"
             trimmed.save(trimmed_path)
             aligned.save(aligned_path)
             trimmed_paths.append(trimmed_path)
             aligned_paths.append(aligned_path)
+
+    if LEAF_CLIP_PARTS.issubset(leaf_clip_layers):
+        combined = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
+        for item_id in ("left_leaf_clip", "right_leaf_clip"):
+            combined.alpha_composite(leaf_clip_layers[item_id])
+        trimmed = trim_alpha(combined, pad=8)
+        trimmed_path = TRIMMED_DIR / "leaf_clips.png"
+        aligned_path = ALIGNED_DIR / "leaf_clips.png"
+        trimmed.save(trimmed_path)
+        combined.save(aligned_path)
+        trimmed_paths.append(trimmed_path)
+        aligned_paths.append(aligned_path)
 
     make_preview(trimmed_paths, PREVIEW_TRIMMED)
     make_on_cat_preview(aligned_paths)

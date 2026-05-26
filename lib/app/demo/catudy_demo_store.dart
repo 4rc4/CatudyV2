@@ -420,6 +420,20 @@ class UnlockablePet {
   final Color accent;
 }
 
+class ShopItemVariant {
+  const ShopItemVariant({
+    required this.id,
+    required this.label,
+    required this.accent,
+    required this.assetPath,
+  });
+
+  final String id;
+  final String label;
+  final Color accent;
+  final String assetPath;
+}
+
 class ShopItem {
   const ShopItem({
     required this.id,
@@ -431,6 +445,7 @@ class ShopItem {
     required this.accent,
     required this.icon,
     this.assetPath,
+    this.variants = const <ShopItemVariant>[],
   });
 
   final String id;
@@ -442,8 +457,13 @@ class ShopItem {
   final Color accent;
   final IconData icon;
   final String? assetPath;
+  final List<ShopItemVariant> variants;
 
   bool get isRoomFurniture => slot.startsWith('room_');
+  bool get hasVariants => variants.length > 1;
+
+  bool containsItemId(String itemId) =>
+      id == itemId || variants.any((variant) => variant.id == itemId);
 
   int get rewardBoostBasisPoints =>
       isRoomFurniture ? price.clamp(0, 800).toInt() : 0;
@@ -521,6 +541,7 @@ class LeaderboardProfile {
 
 class CatudyDemoStore extends ChangeNotifier {
   static const currentTermsVersion = 1;
+  static const _starterPetItemId = 'pink_bow';
 
   CatudyDemoStore({CatudyLocalStorage storage = const CatudyLocalStorage()})
     : _storage = storage {
@@ -916,16 +937,6 @@ class CatudyDemoStore extends ChangeNotifier {
 
   final shopItems = <ShopItem>[
     const ShopItem(
-      id: 'violet_collar',
-      name: 'Violet Collar',
-      description: 'A soft profile cosmetic for Mochi.',
-      price: 80,
-      slot: 'pet',
-      rarity: 'common',
-      accent: CatudyColors.violet,
-      icon: Icons.workspace_premium_rounded,
-    ),
-    const ShopItem(
       id: 'focus_badge',
       name: 'Focus Badge',
       description: 'Shown on your public profile.',
@@ -935,17 +946,7 @@ class CatudyDemoStore extends ChangeNotifier {
       accent: CatudyColors.teal,
       icon: Icons.military_tech_rounded,
     ),
-    const ShopItem(
-      id: 'sunny_hat',
-      name: 'Sunny Hat',
-      description: 'A warm cosmetic for Pet Room.',
-      price: 160,
-      slot: 'pet',
-      rarity: 'rare',
-      accent: CatudyColors.teal,
-      icon: Icons.wb_sunny_rounded,
-    ),
-    for (final accessory in CatudyPetAccessories.all)
+    for (final accessory in CatudyPetAccessories.shopCatalog)
       ShopItem(
         id: accessory.id,
         name: accessory.name,
@@ -956,6 +957,15 @@ class CatudyDemoStore extends ChangeNotifier {
         accent: accessory.accent,
         icon: accessory.icon,
         assetPath: accessory.trimmedAssetPath,
+        variants: [
+          for (final variant in accessory.variants)
+            ShopItemVariant(
+              id: variant.id,
+              label: variant.label,
+              accent: variant.accent,
+              assetPath: variant.trimmedAssetPath,
+            ),
+        ],
       ),
     const ShopItem(
       id: 'soft_study_nook',
@@ -1076,7 +1086,7 @@ class CatudyDemoStore extends ChangeNotifier {
   bool petNameChosen = false;
   String profileAvatarId = 'catudy';
   String? customProfileImageBase64;
-  String? equippedPetItemId = 'violet_collar';
+  String? equippedPetItemId = _starterPetItemId;
   String? equippedProfileItemId;
   PremiumEntitlement premiumEntitlement = const PremiumEntitlement.inactive();
   LockSettings lockSettings = const LockSettings();
@@ -1820,7 +1830,7 @@ class CatudyDemoStore extends ChangeNotifier {
         name: languageCode == 'en' ? 'Ada' : 'Ada',
         petId: 'miso',
         petName: 'Miso',
-        equippedPetItemId: 'sunny_hat',
+        equippedPetItemId: 'black_sunglasses',
         roomItemIds: const {
           'room_study': 'soft_study_nook',
           'room_bed': 'cloud_nap_bed',
@@ -3133,16 +3143,22 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   bool buyItem(String id) {
-    final item = shopItems.firstWhere((entry) => entry.id == id);
-    if (ownedItems.contains(id) || gold < item.price) {
+    ShopItem? item;
+    for (final entry in shopItems) {
+      if (entry.id == id) {
+        item = entry;
+        break;
+      }
+    }
+    if (item == null || ownedItems.contains(item.id) || gold < item.price) {
       return false;
     }
     gold -= item.price;
-    ownedItems.add(id);
+    ownedItems.add(item.id);
     if (item.isRoomFurniture) {
-      equippedRoomItemIds[item.slot] = id;
+      equippedRoomItemIds[item.slot] = item.id;
     } else if (item.slot == 'pet') {
-      equippedPetItemId = id;
+      equippedPetItemId = item.id;
     }
     petMood = (petMood + 6).clamp(0, 100);
     _commit();
@@ -3472,16 +3488,16 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   void equipItem(String id) {
-    if (!ownedItems.contains(id)) {
+    final item = shopItemById(id);
+    if (item == null || !ownedItems.contains(item.id)) {
       return;
     }
-    final item = shopItems.firstWhere((entry) => entry.id == id);
     if (item.isRoomFurniture) {
-      equippedRoomItemIds[item.slot] = id;
+      equippedRoomItemIds[item.slot] = item.id;
     } else if (item.slot == 'pet') {
       equippedPetItemId = id;
     } else {
-      equippedProfileItemId = id;
+      equippedProfileItemId = item.id;
     }
     _commit();
   }
@@ -4219,7 +4235,17 @@ class CatudyDemoStore extends ChangeNotifier {
         return item;
       }
     }
+    for (final item in shopItems) {
+      if (item.containsItemId(id)) {
+        return item;
+      }
+    }
     return null;
+  }
+
+  bool ownsItem(String id) {
+    final item = shopItemById(id);
+    return item != null && ownedItems.contains(item.id);
   }
 
   ShopItem? roomItemForSlot(String slot, {LeaderboardProfile? profile}) {
@@ -4235,7 +4261,7 @@ class CatudyDemoStore extends ChangeNotifier {
 
   ShopItem? equippedPetItemForProfile(LeaderboardProfile? profile) {
     final id = profile?.equippedPetItemId ?? equippedPetItemId;
-    if (id == null || (profile == null && !ownedItems.contains(id))) {
+    if (id == null || (profile == null && !ownsItem(id))) {
       return null;
     }
     return shopItemById(id);
@@ -4942,7 +4968,7 @@ class CatudyDemoStore extends ChangeNotifier {
     _profileFetches.clear();
     ownedItems
       ..clear()
-      ..add('violet_collar');
+      ..add(_starterPetItemId);
     ownedCosmeticIds.clear();
     equippedRoomItemIds.clear();
     unlockedPetIds
@@ -5006,7 +5032,7 @@ class CatudyDemoStore extends ChangeNotifier {
     petNameChosen = false;
     profileAvatarId = 'catudy';
     customProfileImageBase64 = null;
-    equippedPetItemId = 'violet_collar';
+    equippedPetItemId = _starterPetItemId;
     equippedProfileItemId = null;
     premiumEntitlement = const PremiumEntitlement.inactive();
     lockSettings = const LockSettings();
@@ -5182,9 +5208,7 @@ class CatudyDemoStore extends ChangeNotifier {
     ownedItems
       ..clear()
       ..addAll(_readStringList(json['ownedItems']));
-    if (ownedItems.isEmpty) {
-      ownedItems.add('violet_collar');
-    }
+    _normalizeOwnedItems();
     ownedCosmeticIds
       ..clear()
       ..addAll(_readStringList(json['ownedCosmeticIds']));
@@ -5255,8 +5279,11 @@ class CatudyDemoStore extends ChangeNotifier {
     equippedRoomItemIds
       ..clear()
       ..addAll(_readStringMap(json['equippedRoomItemIds']));
-    if (equippedPetItemId != null && !ownedItems.contains(equippedPetItemId)) {
+    if (equippedPetItemId != null && !ownsItem(equippedPetItemId!)) {
       equippedPetItemId = null;
+    }
+    if (equippedPetItemId == null && ownedItems.contains(_starterPetItemId)) {
+      equippedPetItemId = _starterPetItemId;
     }
     if (equippedProfileItemId != null &&
         !ownedItems.contains(equippedProfileItemId)) {
@@ -5460,6 +5487,22 @@ class CatudyDemoStore extends ChangeNotifier {
     'activeSession': activeSession?.toJson(),
     'lastResult': lastResult?.toJson(),
   };
+
+  void _normalizeOwnedItems() {
+    final normalized = <String>{};
+    for (final id in ownedItems) {
+      final item = shopItemById(id);
+      if (item != null) {
+        normalized.add(item.id);
+      }
+    }
+    ownedItems
+      ..clear()
+      ..addAll(normalized);
+    if (ownedItems.isEmpty) {
+      ownedItems.add(_starterPetItemId);
+    }
+  }
 
   void _normalizeRoomEquipment() {
     equippedRoomItemIds.removeWhere((slot, id) {

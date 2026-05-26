@@ -66,8 +66,8 @@ void main() {
         'offlineMode': true,
         'dndReminder': false,
         'notifications': false,
-        'ownedItems': ['violet_collar', 'sunny_hat'],
-        'equippedPetItemId': 'sunny_hat',
+        'ownedItems': ['black_sunglasses', 'pink_bow'],
+        'equippedPetItemId': 'pink_bow',
       });
       final store = CatudyDemoStore(storage: storage);
 
@@ -78,8 +78,8 @@ void main() {
       expect(store.selectedDurationMinutes, 40);
       expect(store.gold, 70);
       expect(store.history.single.manual, isTrue);
-      expect(store.ownedItems.contains('sunny_hat'), isTrue);
-      expect(store.equippedPetItemId, 'sunny_hat');
+      expect(store.ownedItems.contains('pink_bow'), isTrue);
+      expect(store.equippedPetItemId, 'pink_bow');
       expect(storage.state?['displayName'], 'Arca');
     },
   );
@@ -99,7 +99,7 @@ void main() {
       'selectedDurationMinutes': 25,
       'gold': 0,
       'focusPoints': 0,
-      'ownedItems': ['violet_collar'],
+      'ownedItems': ['black_sunglasses'],
       'activeSession': {
         'categoryId': 'study',
         'durationMinutes': 25,
@@ -256,15 +256,37 @@ void main() {
 
     store.gold = 120;
     store.focusPoints = 80;
-    store.ownedItems.add('sunny_hat');
+    store.ownedItems.add('pink_bow');
 
     store.loadDemoWallet();
 
     expect(store.gold, 5000);
     expect(store.focusPoints, 2500);
-    expect(store.ownedItems.contains('sunny_hat'), isTrue);
+    expect(store.ownedItems.contains('pink_bow'), isTrue);
     expect(storage.state?['gold'], 5000);
     expect(storage.state?['focusPoints'], 2500);
+  });
+
+  test('pet accessory variants unlock through the parent shop item', () async {
+    final storage = _MemoryStorage(null);
+    final store = CatudyDemoStore(storage: storage);
+
+    await store.load();
+
+    store.gold = 1000;
+
+    expect(store.shopItemById('heart_sunglasses')?.id, 'black_sunglasses');
+    expect(
+      store.shopItems.any((item) => item.id == 'heart_sunglasses'),
+      isFalse,
+    );
+    expect(store.buyItem('black_sunglasses'), isTrue);
+
+    store.equipItem('heart_sunglasses');
+
+    expect(store.ownedItems.contains('black_sunglasses'), isTrue);
+    expect(store.ownedItems.contains('heart_sunglasses'), isFalse);
+    expect(store.equippedPetItemId, 'heart_sunglasses');
   });
 
   test('pet name is chosen and persisted', () async {
@@ -921,7 +943,7 @@ void main() {
       'languageCode': 'tr',
       'history': [],
       'selectedCategoryId': 'study',
-      'ownedItems': ['violet_collar'],
+      'ownedItems': ['black_sunglasses'],
     });
     final store = CatudyDemoStore(storage: storage);
 
@@ -960,7 +982,7 @@ void main() {
         },
       ],
       'selectedCategoryId': 'study',
-      'ownedItems': ['violet_collar'],
+      'ownedItems': ['black_sunglasses'],
     });
     final store = CatudyDemoStore(storage: storage);
 
@@ -995,7 +1017,7 @@ void main() {
         'todos': [],
         'categories': [],
         'friendRequests': [],
-        'ownedItems': ['violet_collar'],
+        'ownedItems': ['black_sunglasses'],
       },
       {
         'stateUpdatedAt': newTime.toIso8601String(),
@@ -1025,7 +1047,7 @@ void main() {
         'todos': [],
         'categories': [],
         'friendRequests': [],
-        'ownedItems': ['sunny_hat'],
+        'ownedItems': ['pink_bow'],
       },
     );
 
@@ -1037,7 +1059,7 @@ void main() {
       )['minutes'],
       30,
     );
-    expect(merged['ownedItems'], containsAll(['violet_collar', 'sunny_hat']));
+    expect(merged['ownedItems'], containsAll(['black_sunglasses', 'pink_bow']));
   });
 
   test(
@@ -1103,7 +1125,7 @@ void main() {
           },
         ],
         'selectedCategoryId': 'study',
-        'ownedItems': ['violet_collar'],
+        'ownedItems': ['black_sunglasses'],
       }),
     );
 

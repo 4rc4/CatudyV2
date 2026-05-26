@@ -888,22 +888,6 @@ class _LobbyPet extends StatelessWidget {
               filterQuality: FilterQuality.high,
             ),
           ),
-          if (accessory?.id == 'violet_collar')
-            Positioned(
-              bottom: size * 0.25,
-              child: CustomPaint(
-                size: Size(size * 0.44, size * 0.16),
-                painter: _LobbyCollarPainter(color: accessory!.accent),
-              ),
-            ),
-          if (accessory?.id == 'sunny_hat')
-            Positioned(
-              top: size * 0.10,
-              child: CustomPaint(
-                size: Size(size * 0.46, size * 0.28),
-                painter: _LobbyHatPainter(color: accessory!.accent),
-              ),
-            ),
           if (member.owner)
             Positioned(
               top: size * 0.05,
@@ -1068,78 +1052,6 @@ class _LobbyPlazaFallbackPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _LobbyPlazaFallbackPainter oldDelegate) => false;
-}
-
-class _LobbyCollarPainter extends CustomPainter {
-  const _LobbyCollarPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final collar = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.height * 0.26
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(
-      Rect.fromLTWH(0, 0, size.width, size.height * 1.8),
-      math.pi * 0.08,
-      math.pi * 0.84,
-      false,
-      collar,
-    );
-    canvas.drawCircle(
-      Offset(size.width * 0.5, size.height * 0.92),
-      size.height * 0.18,
-      Paint()..color = CatudyColors.yellow,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _LobbyCollarPainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
-class _LobbyHatPainter extends CustomPainter {
-  const _LobbyHatPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final brim = Paint()..color = color;
-    final crown = Paint()..color = Color.lerp(color, Colors.white, 0.20)!;
-    canvas.drawOval(
-      Rect.fromLTWH(0, size.height * 0.46, size.width, size.height * 0.32),
-      brim,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          size.width * 0.22,
-          size.height * 0.16,
-          size.width * 0.56,
-          size.height * 0.46,
-        ),
-        Radius.circular(size.height * 0.28),
-      ),
-      crown,
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(
-        size.width * 0.24,
-        size.height * 0.48,
-        size.width * 0.52,
-        size.height * 0.11,
-      ),
-      Paint()..color = CatudyColors.coral.withValues(alpha: 0.74),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _LobbyHatPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 class _LobbyError extends StatelessWidget {

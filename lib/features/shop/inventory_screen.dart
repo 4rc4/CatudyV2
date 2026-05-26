@@ -514,7 +514,7 @@ class _PetSelectionCard extends StatelessWidget {
     final unlocked = store.unlockedPetIds.contains(pet.id);
     return _InventoryCard(
       accent: pet.accent,
-      art: Icon(Icons.pets_rounded, color: pet.accent, size: 54),
+      art: Icon(Icons.pets_rounded, color: pet.accent, size: 34),
       title: pet.name,
       body: unlocked
           ? pet.description
@@ -542,7 +542,7 @@ class _InventoryItemCard extends StatelessWidget {
     final isEquipped = item.isRoomFurniture
         ? store.equippedRoomItemIds[item.slot] == item.id
         : item.slot == 'pet'
-        ? store.equippedPetItemId == item.id
+        ? item.containsItemId(store.equippedPetItemId ?? '')
         : store.equippedProfileItemId == item.id;
     final status = item.isRoomFurniture
         ? isEquipped
@@ -558,9 +558,16 @@ class _InventoryItemCard extends StatelessWidget {
 
     return _InventoryCard(
       accent: item.accent,
-      art: ShopItemArt(item: item, size: 92),
+      art: ShopItemArt(item: item, size: 52),
       title: store.itemName(item),
       body: status,
+      extra: item.slot == 'pet' && item.hasVariants
+          ? _VariantSelector(
+              item: item,
+              selectedId: store.equippedPetItemId,
+              onSelected: store.equipItem,
+            )
+          : null,
       action: FilledButton(
         onPressed: isEquipped
             ? () => context.go('/pet-room')
@@ -619,12 +626,8 @@ class _InventoryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const spacing = 10.0;
-        final columns = constraints.maxWidth >= 640
-            ? 3
-            : constraints.maxWidth >= 330
-            ? 2
-            : 1;
+        const spacing = 6.0;
+        final columns = constraints.maxWidth >= 300 ? 2 : 1;
         final width =
             (constraints.maxWidth - (spacing * (columns - 1))) / columns;
         return Wrap(
@@ -646,6 +649,7 @@ class _InventoryCard extends StatelessWidget {
     required this.body,
     required this.action,
     required this.accent,
+    this.extra,
   });
 
   final Widget art;
@@ -653,55 +657,132 @@ class _InventoryCard extends StatelessWidget {
   final String body;
   final Widget action;
   final Color accent;
+  final Widget? extra;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(11),
+      constraints: const BoxConstraints(minHeight: 104),
+      padding: const EdgeInsets.all(7),
       decoration: BoxDecoration(
         color: CatudyColors.surfaceFor(context),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: accent.withValues(alpha: 0.14)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          AspectRatio(
-            aspectRatio: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(18),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Center(
+                  child: FittedBox(fit: BoxFit.contain, child: art),
+                ),
               ),
-              child: Center(child: art),
-            ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: CatudyColors.blueFor(context),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      body,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: CatudyColors.mutedFor(context),
+                        fontSize: 10.5,
+                        height: 1.12,
+                      ),
+                    ),
+                    if (extra != null) ...[const SizedBox(height: 5), extra!],
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.blueFor(context),
-              fontWeight: FontWeight.w900,
+          const SizedBox(height: 6),
+          Theme(
+            data: Theme.of(context).copyWith(
+              filledButtonTheme: FilledButtonThemeData(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
             ),
+            child: SizedBox(height: 30, child: action),
           ),
-          const SizedBox(height: 3),
-          Text(
-            body,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.mutedFor(context),
-              fontSize: 12,
-              height: 1.18,
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(height: 38, child: action),
         ],
       ),
+    );
+  }
+}
+
+class _VariantSelector extends StatelessWidget {
+  const _VariantSelector({
+    required this.item,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  final ShopItem item;
+  final String? selectedId;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        for (final variant in item.variants)
+          Tooltip(
+            message: variant.label,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: () => onSelected(variant.id),
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: variant.accent.withValues(alpha: 0.22),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: selectedId == variant.id
+                        ? variant.accent
+                        : variant.accent.withValues(alpha: 0.35),
+                    width: selectedId == variant.id ? 2 : 1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -714,13 +795,13 @@ class _InventoryCosmeticArt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 88,
-      height: 88,
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
         color: item.accent.withValues(alpha: 0.16),
         shape: BoxShape.circle,
       ),
-      child: Icon(item.icon, color: item.accent, size: 42),
+      child: Icon(item.icon, color: item.accent, size: 24),
     );
   }
 }
