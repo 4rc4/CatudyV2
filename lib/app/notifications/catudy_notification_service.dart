@@ -213,20 +213,20 @@ class CatudyNotificationService {
   }) async {
     await initialize();
     final english = _isEnglish(languageCode);
-    final title = english ? 'Mochi update' : 'Mochi bildirimi';
+    final title = english ? 'Cat update' : 'Kedi bildirimi';
     final body = switch (alertType) {
       'happiness' =>
         english
-            ? 'Mochi feels low. A real focus streak will help.'
-            : 'Mochi biraz durgun. Gercek odak serisi iyi gelir.',
+            ? 'Your cat feels low. A real focus streak will help.'
+            : 'Kedin biraz durgun. Gercek odak serisi iyi gelir.',
       'hunger' =>
         english
-            ? 'Mochi needs attention. Focus today to refill the routine.'
-            : 'Mochi ilgi istiyor. Bugun odaklanip ritmi doldur.',
+            ? 'Your cat needs attention. Focus today to refill the routine.'
+            : 'Kedin ilgi istiyor. Bugun odaklanip ritmi doldur.',
       'energy_full' =>
         english
-            ? 'Mochi is rested and ready for a new focus session.'
-            : 'Mochi dinlendi ve yeni odak seansina hazir.',
+            ? 'Your cat is rested and ready for a new focus session.'
+            : 'Kedin dinlendi ve yeni odak seansina hazir.',
       _ => english ? 'Open Catudy to check your pet.' : 'Petini kontrol et.',
     };
     await _plugin.show(

@@ -286,7 +286,7 @@ class _PetIntroTourOverlayState extends State<_PetIntroTourOverlay> {
       route: '/pet-room',
       title: 'Pet odası',
       message:
-          'Mochi burada yaşar. Mutluluk, açlık ve enerji barlarına dokunarak ne anlama geldiklerini görebilirsin.',
+          'Kedin burada yaşar. Mutluluk, açlık ve enerji barlarına dokunarak ne anlama geldiklerini görebilirsin.',
       alignment: Alignment.topCenter,
       arrowAlignment: Alignment.topCenter,
       icon: Icons.pets_rounded,

@@ -287,6 +287,8 @@ void main() {
     expect(store.ownedItems.contains('black_sunglasses'), isTrue);
     expect(store.ownedItems.contains('heart_sunglasses'), isFalse);
     expect(store.equippedPetItemId, 'heart_sunglasses');
+    expect(store.equippedPetItemIds['eyes'], 'heart_sunglasses');
+    expect(store.equippedPetItemIds['head'], 'pink_bow');
   });
 
   test('pet name is chosen and persisted', () async {
@@ -869,7 +871,7 @@ void main() {
     expect(store.itemName(item), 'Soft Study Nook');
     expect(
       store.itemDescription(item),
-      'A cushioned low study corner made for Mochi.',
+      'A cushioned low study corner made for your cat.',
     );
   });
 

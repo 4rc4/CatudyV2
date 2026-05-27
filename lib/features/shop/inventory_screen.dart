@@ -4,14 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../app/demo/catudy_demo_store.dart';
 import '../../app/premium/catudy_premium_models.dart';
 import '../../app/theme/catudy_colors.dart';
-import '../../shared/widgets/catudy_filter_tabs.dart';
 import '../../shared/widgets/catudy_panel.dart';
+import '../../shared/widgets/catudy_pet_avatar.dart';
 import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/screen_scaffold.dart';
 import '../../shared/widgets/shop_item_art.dart';
 import '../../shared/widgets/store_builder.dart';
 
-enum _InventoryCategory { room, pet, profile, extras }
+enum _InventoryCategory { room, accessories, cats, profile }
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -21,7 +21,7 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen> {
-  _InventoryCategory _category = _InventoryCategory.room;
+  _InventoryCategory _category = _InventoryCategory.accessories;
 
   @override
   Widget build(BuildContext context) {
@@ -33,39 +33,26 @@ class _InventoryScreenState extends State<InventoryScreen> {
         final roomItems = ownedItems
             .where((item) => item.isRoomFurniture)
             .toList();
-        final petItems = ownedItems
-            .where((item) => item.slot == 'pet')
+        final accessoryItems = ownedItems
+            .where((item) => item.isPetAccessory)
             .toList();
         final profileItems = ownedItems
             .where((item) => item.slot == 'profile')
             .toList();
-        final petStyles = _ownedCosmeticsFor(store, {'pet_style'});
-        final roomEffects = _ownedCosmeticsFor(store, {'room_effect'});
         final profileThemes = _ownedCosmeticsFor(store, {'profile_theme'});
         final profileBadges = _ownedCosmeticsFor(store, {'profile_badge'});
-        final widgetThemes = _ownedCosmeticsFor(store, {'widget_theme'});
-        final dialoguePacks = _ownedCosmeticsFor(store, {'dialogue_pack'});
         final categoryChildren = switch (_category) {
-          _InventoryCategory.room => _roomChildren(
+          _InventoryCategory.room => _roomChildren(store, roomItems: roomItems),
+          _InventoryCategory.accessories => _accessoryChildren(
             store,
-            roomItems: roomItems,
-            roomEffects: roomEffects,
+            accessoryItems: accessoryItems,
           ),
-          _InventoryCategory.pet => _petChildren(
-            store,
-            petItems: petItems,
-            petStyles: petStyles,
-          ),
+          _InventoryCategory.cats => _catChildren(store),
           _InventoryCategory.profile => _profileChildren(
             store,
             profileItems: profileItems,
             profileThemes: profileThemes,
             profileBadges: profileBadges,
-          ),
-          _InventoryCategory.extras => _extraChildren(
-            store,
-            widgetThemes: widgetThemes,
-            dialoguePacks: dialoguePacks,
           ),
         };
 
@@ -74,32 +61,29 @@ class _InventoryScreenState extends State<InventoryScreen> {
           showBack: true,
           fallbackBackPath: '/pet-room',
           children: [
-            _InventorySummary(
-              store: store,
-              ownedItems: ownedItems.length,
-              equippedRoomCount: store.equippedRoomItems.length,
-            ),
-            const SizedBox(height: 14),
-            CatudyFilterTabs<_InventoryCategory>(
+            _CategoryBar<_InventoryCategory>(
               selected: _category,
               onChanged: (category) => setState(() => _category = category),
               tabs: [
-                CatudyFilterTab(
+                _CategoryTab(
                   value: _InventoryCategory.room,
                   label: store.t('inventory.category.room'),
                   icon: Icons.weekend_rounded,
-                  count: roomItems.length + roomEffects.length,
+                  count: roomItems.length,
                 ),
-                CatudyFilterTab(
-                  value: _InventoryCategory.pet,
-                  label: store.t('inventory.category.pet'),
+                _CategoryTab(
+                  value: _InventoryCategory.accessories,
+                  label: store.t('inventory.category.accessories'),
+                  icon: Icons.checkroom_rounded,
+                  count: accessoryItems.length,
+                ),
+                _CategoryTab(
+                  value: _InventoryCategory.cats,
+                  label: store.t('inventory.category.cats'),
                   icon: Icons.pets_rounded,
-                  count:
-                      store.unlockedPetIds.length +
-                      petItems.length +
-                      petStyles.length,
+                  count: store.unlockedPetIds.length,
                 ),
-                CatudyFilterTab(
+                _CategoryTab(
                   value: _InventoryCategory.profile,
                   label: store.t('inventory.category.profile'),
                   icon: Icons.badge_rounded,
@@ -107,12 +91,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       profileItems.length +
                       profileThemes.length +
                       profileBadges.length,
-                ),
-                CatudyFilterTab(
-                  value: _InventoryCategory.extras,
-                  label: store.t('inventory.category.extras'),
-                  icon: Icons.auto_awesome_rounded,
-                  count: widgetThemes.length + dialoguePacks.length,
                 ),
               ],
             ),
@@ -137,87 +115,54 @@ class _InventoryScreenState extends State<InventoryScreen> {
   List<Widget> _roomChildren(
     CatudyDemoStore store, {
     required List<ShopItem> roomItems,
-    required List<CosmeticItem> roomEffects,
   }) {
-    final children = <Widget>[];
-    for (final slot in const [
-      'room_study',
-      'room_bed',
-      'room_decor',
-      'room_shelf',
-    ]) {
-      final items = roomItems.where((item) => item.slot == slot).toList();
-      if (items.isEmpty) {
-        continue;
-      }
-      children.add(
-        _InventoryPanel(
-          title: _roomSlotTitle(store, slot),
-          icon: _roomSlotIcon(slot),
-          accentColor: _roomSlotColor(slot),
-          children: [
-            for (final item in items)
-              _InventoryItemCard(store: store, item: item),
-          ],
-        ),
-      );
-      children.add(const SizedBox(height: 12));
+    if (roomItems.isEmpty) {
+      return const [];
     }
-    if (roomEffects.isNotEmpty) {
-      children.add(
-        _InventoryPanel(
-          title: store.t('inventory.roomEffects'),
-          icon: Icons.auto_awesome_motion_rounded,
-          accentColor: CatudyColors.violet,
-          children: [
-            for (final item in roomEffects)
-              _PremiumInventoryCard(store: store, item: item),
-          ],
-        ),
-      );
-    }
-    return children;
-  }
-
-  List<Widget> _petChildren(
-    CatudyDemoStore store, {
-    required List<ShopItem> petItems,
-    required List<CosmeticItem> petStyles,
-  }) {
     return [
       _InventoryPanel(
-        title: store.t('inventory.pets'),
+        title: store.t('inventory.roomFurniture'),
+        icon: Icons.weekend_rounded,
+        accentColor: CatudyColors.teal,
+        children: [
+          for (final item in roomItems)
+            _InventoryItemCard(store: store, item: item),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _accessoryChildren(
+    CatudyDemoStore store, {
+    required List<ShopItem> accessoryItems,
+  }) {
+    if (accessoryItems.isEmpty) {
+      return const [];
+    }
+    return [
+      _InventoryPanel(
+        title: store.t('inventory.accessories'),
+        icon: Icons.checkroom_rounded,
+        accentColor: CatudyColors.violet,
+        children: [
+          for (final item in accessoryItems)
+            _InventoryItemCard(store: store, item: item),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _catChildren(CatudyDemoStore store) {
+    return [
+      _InventoryPanel(
+        title: store.t('inventory.category.cats'),
         icon: Icons.pets_rounded,
         accentColor: CatudyColors.coral,
         children: [
           for (final pet in store.unlockablePets)
-            _PetSelectionCard(store: store, pet: pet),
+            _CatSelectionCard(store: store, pet: pet),
         ],
       ),
-      if (petItems.isNotEmpty) ...[
-        const SizedBox(height: 12),
-        _InventoryPanel(
-          title: store.t('inventory.petCosmetic'),
-          icon: Icons.checkroom_rounded,
-          accentColor: CatudyColors.teal,
-          children: [
-            for (final item in petItems)
-              _InventoryItemCard(store: store, item: item),
-          ],
-        ),
-      ],
-      if (petStyles.isNotEmpty) ...[
-        const SizedBox(height: 12),
-        _InventoryPanel(
-          title: store.t('inventory.petStyles'),
-          icon: Icons.auto_awesome_rounded,
-          accentColor: CatudyColors.violet,
-          children: [
-            for (final item in petStyles)
-              _PremiumInventoryCard(store: store, item: item),
-          ],
-        ),
-      ],
     ];
   }
 
@@ -227,73 +172,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
     required List<CosmeticItem> profileThemes,
     required List<CosmeticItem> profileBadges,
   }) {
-    return [
-      if (profileItems.isNotEmpty)
-        _InventoryPanel(
-          title: store.t('inventory.profileCosmetic'),
-          icon: Icons.military_tech_rounded,
-          accentColor: CatudyColors.teal,
-          children: [
-            for (final item in profileItems)
-              _InventoryItemCard(store: store, item: item),
-          ],
-        ),
-      if (profileThemes.isNotEmpty) ...[
-        if (profileItems.isNotEmpty) const SizedBox(height: 12),
-        _InventoryPanel(
-          title: store.t('inventory.profileStyles'),
-          icon: Icons.crop_square_rounded,
-          accentColor: CatudyColors.violet,
-          children: [
-            for (final item in profileThemes)
-              _PremiumInventoryCard(store: store, item: item),
-          ],
-        ),
-      ],
-      if (profileBadges.isNotEmpty) ...[
-        if (profileItems.isNotEmpty || profileThemes.isNotEmpty)
-          const SizedBox(height: 12),
-        _InventoryPanel(
-          title: store.t('inventory.profileBadges'),
-          icon: Icons.workspace_premium_rounded,
-          accentColor: CatudyColors.coral,
-          children: [
-            for (final item in profileBadges)
-              _PremiumInventoryCard(store: store, item: item),
-          ],
-        ),
-      ],
+    final children = <Widget>[
+      for (final item in profileItems)
+        _InventoryItemCard(store: store, item: item),
+      for (final item in profileThemes)
+        _PremiumInventoryCard(store: store, item: item),
+      for (final item in profileBadges)
+        _PremiumInventoryCard(store: store, item: item),
     ];
-  }
-
-  List<Widget> _extraChildren(
-    CatudyDemoStore store, {
-    required List<CosmeticItem> widgetThemes,
-    required List<CosmeticItem> dialoguePacks,
-  }) {
+    if (children.isEmpty) {
+      return const [];
+    }
     return [
-      if (widgetThemes.isNotEmpty)
-        _InventoryPanel(
-          title: store.t('inventory.widgetThemes'),
-          icon: Icons.widgets_rounded,
-          accentColor: CatudyColors.teal,
-          children: [
-            for (final item in widgetThemes)
-              _PremiumInventoryCard(store: store, item: item),
-          ],
-        ),
-      if (dialoguePacks.isNotEmpty) ...[
-        if (widgetThemes.isNotEmpty) const SizedBox(height: 12),
-        _InventoryPanel(
-          title: store.t('inventory.dialoguePacks'),
-          icon: Icons.chat_bubble_rounded,
-          accentColor: CatudyColors.coral,
-          children: [
-            for (final item in dialoguePacks)
-              _PremiumInventoryCard(store: store, item: item),
-          ],
-        ),
-      ],
+      _InventoryPanel(
+        title: store.t('inventory.category.profile'),
+        icon: Icons.badge_rounded,
+        accentColor: CatudyColors.teal,
+        children: children,
+      ),
     ];
   }
 
@@ -309,133 +205,131 @@ class _InventoryScreenState extends State<InventoryScreen> {
         )
         .toList();
   }
-
-  String _roomSlotTitle(CatudyDemoStore store, String slot) {
-    return switch (slot) {
-      'room_study' => store.t('shop.room.slot.study'),
-      'room_bed' => store.t('shop.room.slot.bed'),
-      'room_decor' => store.t('shop.room.slot.decor'),
-      'room_shelf' => store.t('shop.room.slot.shelf'),
-      _ => store.t('inventory.roomFurniture'),
-    };
-  }
-
-  IconData _roomSlotIcon(String slot) {
-    return switch (slot) {
-      'room_study' => Icons.auto_stories_rounded,
-      'room_bed' => Icons.bed_rounded,
-      'room_decor' => Icons.lightbulb_rounded,
-      'room_shelf' => Icons.menu_book_rounded,
-      _ => Icons.weekend_rounded,
-    };
-  }
-
-  Color _roomSlotColor(String slot) {
-    return switch (slot) {
-      'room_study' => CatudyColors.teal,
-      'room_bed' => CatudyColors.lavender,
-      'room_decor' => CatudyColors.yellow,
-      'room_shelf' => CatudyColors.tealDark,
-      _ => CatudyColors.violet,
-    };
-  }
 }
 
-class _InventorySummary extends StatelessWidget {
-  const _InventorySummary({
-    required this.store,
-    required this.ownedItems,
-    required this.equippedRoomCount,
+class _CategoryTab<T> {
+  const _CategoryTab({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.count,
   });
 
-  final CatudyDemoStore store;
-  final int ownedItems;
-  final int equippedRoomCount;
+  final T value;
+  final String label;
+  final IconData icon;
+  final int count;
+}
+
+class _CategoryBar<T> extends StatelessWidget {
+  const _CategoryBar({
+    required this.tabs,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<_CategoryTab<T>> tabs;
+  final T selected;
+  final ValueChanged<T> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return CatudyPanel(
-      color: CatudyColors.cream,
-      accentColor: CatudyColors.teal,
-      child: Row(
-        children: [
-          Expanded(
-            child: _InventoryMetric(
-              icon: Icons.pets_rounded,
-              value: store.selectedPet.name,
-              label: store.t('profile.myPet'),
-              color: store.selectedPet.accent,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _InventoryMetric(
-              icon: Icons.inventory_2_rounded,
-              value: '$ownedItems',
-              label: store.t('inventory.ownedItems'),
-              color: CatudyColors.violet,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _InventoryMetric(
-              icon: Icons.weekend_rounded,
-              value: '$equippedRoomCount',
-              label: store.t('inventory.roomEquipped'),
-              color: CatudyColors.teal,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.all(8),
+      accentColor: CatudyColors.violet,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const spacing = 8.0;
+          final width = (constraints.maxWidth - spacing) / 2;
+          return Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            children: [
+              for (final tab in tabs)
+                SizedBox(
+                  width: width,
+                  child: _CategoryButton<T>(
+                    tab: tab,
+                    selected: selected == tab.value,
+                    onTap: () => onChanged(tab.value),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _InventoryMetric extends StatelessWidget {
-  const _InventoryMetric({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.color,
+class _CategoryButton<T> extends StatelessWidget {
+  const _CategoryButton({
+    required this.tab,
+    required this.selected,
+    required this.onTap,
   });
 
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color color;
+  final _CategoryTab<T> tab;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      decoration: BoxDecoration(
-        color: CatudyColors.surfaceFor(context),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.blueFor(context),
-              fontWeight: FontWeight.w900,
-            ),
+    final color = selected
+        ? CatudyColors.violet
+        : CatudyColors.surfaceFor(context);
+    final foreground = selected ? Colors.white : CatudyColors.blueFor(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 54,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? CatudyColors.violet
+                : CatudyColors.violet.withValues(alpha: 0.16),
           ),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: CatudyColors.mutedFor(context),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+        ),
+        child: Row(
+          children: [
+            Icon(tab.icon, color: foreground, size: 19),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Text(
+                tab.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
-          ),
-        ],
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: selected
+                    ? Colors.white.withValues(alpha: 0.18)
+                    : CatudyColors.violet.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${tab.count}',
+                style: TextStyle(
+                  color: foreground,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -457,6 +351,7 @@ class _InventoryPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CatudyPanel(
+      padding: const EdgeInsets.all(12),
       accentColor: accentColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,7 +361,7 @@ class _InventoryPanel extends StatelessWidget {
             icon: icon,
             accentColor: accentColor,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _InventoryGrid(children: children),
         ],
       ),
@@ -503,8 +398,8 @@ class _InventoryEmptyPanel extends StatelessWidget {
   }
 }
 
-class _PetSelectionCard extends StatelessWidget {
-  const _PetSelectionCard({required this.store, required this.pet});
+class _CatSelectionCard extends StatelessWidget {
+  const _CatSelectionCard({required this.store, required this.pet});
 
   final CatudyDemoStore store;
   final UnlockablePet pet;
@@ -512,19 +407,35 @@ class _PetSelectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final unlocked = store.unlockedPetIds.contains(pet.id);
+    final selected = store.selectedPetId == pet.id;
     return _InventoryCard(
       accent: pet.accent,
-      art: Icon(Icons.pets_rounded, color: pet.accent, size: 34),
-      title: pet.name,
-      body: unlocked
-          ? pet.description
-          : '${pet.requiredPoints} ${store.t('common.points')}',
+      art: CatudyPetAvatar(
+        assetPath: pet.assetPath,
+        width: 58,
+        height: 58,
+        fit: BoxFit.contain,
+      ),
+      title: store.t('shop.catRequiredMinutes', {
+        'minutes': pet.requiredPoints,
+      }),
+      chips: [
+        _MetaChip(
+          label: unlocked
+              ? store.t('shop.unlocked')
+              : '${store.focusPoints}/${pet.requiredPoints}',
+        ),
+      ],
       action: FilledButton(
         onPressed: unlocked ? () => store.selectPet(pet.id) : null,
         child: Text(
-          store.selectedPetId == pet.id
+          selected
               ? store.t('common.selected')
-              : store.t('common.select'),
+              : unlocked
+              ? store.t('common.select')
+              : store.t('shop.catRequiredMinutes', {
+                  'minutes': pet.requiredPoints,
+                }),
         ),
       ),
     );
@@ -541,30 +452,24 @@ class _InventoryItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isEquipped = item.isRoomFurniture
         ? store.equippedRoomItemIds[item.slot] == item.id
-        : item.slot == 'pet'
-        ? item.containsItemId(store.equippedPetItemId ?? '')
+        : item.isPetAccessory
+        ? store.isPetAccessoryEquipped(item)
         : store.equippedProfileItemId == item.id;
-    final status = item.isRoomFurniture
-        ? isEquipped
-              ? store.t('inventory.roomEquipped')
-              : store.t('inventory.roomFurniture')
-        : item.slot == 'pet'
-        ? isEquipped
-              ? store.t('inventory.petEquipped')
-              : store.t('inventory.petCosmetic')
-        : isEquipped
-        ? store.t('inventory.profileEquipped')
-        : store.t('inventory.profileCosmetic');
 
     return _InventoryCard(
       accent: item.accent,
-      art: ShopItemArt(item: item, size: 52),
+      art: ShopItemArt(item: item, size: 58),
       title: store.itemName(item),
-      body: status,
-      extra: item.slot == 'pet' && item.hasVariants
+      chips: [
+        if (item.isPetAccessory)
+          for (final slot in item.occupiedSlots)
+            _MetaChip(label: _slotLabel(store, slot)),
+        if (isEquipped) _MetaChip(label: store.t('common.selected')),
+      ],
+      extra: item.isPetAccessory && item.hasVariants
           ? _VariantSelector(
               item: item,
-              selectedId: store.equippedPetItemId,
+              selectedId: store.equippedVariantIdFor(item),
               onSelected: store.equipItem,
             )
           : null,
@@ -574,11 +479,21 @@ class _InventoryItemCard extends StatelessWidget {
             : () => store.equipItem(item.id),
         child: Text(
           isEquipped
-              ? store.t('profile.petRoom')
+              ? store.t('common.selected')
               : store.t('inventory.equipped'),
         ),
       ),
     );
+  }
+
+  String _slotLabel(CatudyDemoStore store, String slot) {
+    return switch (slot) {
+      'head' => store.t('inventory.slot.head'),
+      'eyes' => store.t('inventory.slot.eyes'),
+      'nose' => store.t('inventory.slot.nose'),
+      'mouth' => store.t('inventory.slot.mouth'),
+      _ => slot,
+    };
   }
 }
 
@@ -591,25 +506,21 @@ class _PremiumInventoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEquipped = switch (item.slot) {
-      'pet_style' => store.selectedPetStyleId == item.id,
-      'room_effect' => store.selectedRoomEffectId == item.id,
       'profile_theme' => store.selectedProfileThemeId == item.id,
-      'widget_theme' => store.selectedWidgetThemeId == item.id,
-      'dialogue_pack' => store.selectedDialoguePackId == item.id,
       _ => false,
     };
     return _InventoryCard(
       accent: item.accent,
-      art: _InventoryCosmeticArt(item: item),
+      art: Icon(item.icon, color: item.accent, size: 34),
       title: item.name,
-      body: store.t('inventory.cosmeticSlot.${item.slot}'),
+      chips: [if (isEquipped) _MetaChip(label: store.t('common.selected'))],
       action: FilledButton(
         onPressed: isEquipped
-            ? () => context.go('/pet-room')
+            ? () => context.go('/profile')
             : () => store.equipCosmetic(item.id),
         child: Text(
           isEquipped
-              ? store.t('profile.petRoom')
+              ? store.t('common.selected')
               : store.t('inventory.equipped'),
         ),
       ),
@@ -626,8 +537,8 @@ class _InventoryGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const spacing = 6.0;
-        final columns = constraints.maxWidth >= 300 ? 2 : 1;
+        const spacing = 7.0;
+        final columns = constraints.maxWidth >= 285 ? 3 : 2;
         final width =
             (constraints.maxWidth - (spacing * (columns - 1))) / columns;
         return Wrap(
@@ -646,7 +557,7 @@ class _InventoryCard extends StatelessWidget {
   const _InventoryCard({
     required this.art,
     required this.title,
-    required this.body,
+    required this.chips,
     required this.action,
     required this.accent,
     this.extra,
@@ -654,7 +565,7 @@ class _InventoryCard extends StatelessWidget {
 
   final Widget art;
   final String title;
-  final String body;
+  final List<Widget> chips;
   final Widget action;
   final Color accent;
   final Widget? extra;
@@ -662,80 +573,71 @@ class _InventoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 104),
+      height: extra == null ? 182 : 216,
       padding: const EdgeInsets.all(7),
       decoration: BoxDecoration(
         color: CatudyColors.surfaceFor(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: accent.withValues(alpha: 0.14)),
+        border: Border.all(color: accent.withValues(alpha: 0.24), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(7),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 62,
+                  height: 62,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: FittedBox(fit: BoxFit.contain, child: art),
+                  ),
                 ),
-                child: Center(
-                  child: FittedBox(fit: BoxFit.contain, child: art),
+                const SizedBox(height: 6),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: CatudyColors.blueFor(context),
+                    fontSize: 11.5,
+                    height: 1.08,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: CatudyColors.blueFor(context),
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      body,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: CatudyColors.mutedFor(context),
-                        fontSize: 10.5,
-                        height: 1.12,
-                      ),
-                    ),
-                    if (extra != null) ...[const SizedBox(height: 5), extra!],
-                  ],
+                const SizedBox(height: 5),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 3,
+                  runSpacing: 3,
+                  children: chips,
                 ),
-              ),
-            ],
+                if (extra != null) ...[const SizedBox(height: 6), extra!],
+              ],
+            ),
           ),
           const SizedBox(height: 6),
           Theme(
             data: Theme.of(context).copyWith(
               filledButtonTheme: FilledButtonThemeData(
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 30),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 28),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
             ),
-            child: SizedBox(height: 30, child: action),
+            child: SizedBox(height: 28, child: action),
           ),
         ],
       ),
@@ -757,6 +659,7 @@ class _VariantSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
+      alignment: WrapAlignment.center,
       spacing: 4,
       runSpacing: 4,
       children: [
@@ -767,8 +670,8 @@ class _VariantSelector extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               onTap: () => onSelected(variant.id),
               child: Container(
-                width: 18,
-                height: 18,
+                width: 16,
+                height: 16,
                 decoration: BoxDecoration(
                   color: variant.accent.withValues(alpha: 0.22),
                   shape: BoxShape.circle,
@@ -787,21 +690,29 @@ class _VariantSelector extends StatelessWidget {
   }
 }
 
-class _InventoryCosmeticArt extends StatelessWidget {
-  const _InventoryCosmeticArt({required this.item});
+class _MetaChip extends StatelessWidget {
+  const _MetaChip({required this.label});
 
-  final CosmeticItem item;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 52,
-      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: item.accent.withValues(alpha: 0.16),
-        shape: BoxShape.circle,
+        color: CatudyColors.surfaceStrongFor(context),
+        borderRadius: BorderRadius.circular(999),
       ),
-      child: Icon(item.icon, color: item.accent, size: 24),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: CatudyColors.mutedFor(context),
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }

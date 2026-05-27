@@ -7,6 +7,8 @@ class CatudyPetAvatar extends StatelessWidget {
   const CatudyPetAvatar({
     super.key,
     this.equippedItemId,
+    this.equippedItemIds,
+    this.assetPath = CatudyAssets.mascot,
     this.width,
     this.height,
     this.fit = BoxFit.contain,
@@ -14,6 +16,8 @@ class CatudyPetAvatar extends StatelessWidget {
   });
 
   final String? equippedItemId;
+  final List<String>? equippedItemIds;
+  final String assetPath;
   final double? width;
   final double? height;
   final BoxFit fit;
@@ -27,14 +31,7 @@ class CatudyPetAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accessory = CatudyPetAccessories.byId(equippedItemId ?? '');
-    final placement = CatudyPetAccessories.placementFor(equippedItemId);
-    final trimmedPath = CatudyPetAccessories.trimmedAssetPathFor(
-      equippedItemId,
-    );
-    final alignedPath = CatudyPetAccessories.alignedAssetPathFor(
-      equippedItemId,
-    );
+    final accessoryIds = _effectiveAccessoryIds();
     return SizedBox(
       width: width,
       height: height == null ? null : height! * _accessoryCanvasHeightRatio,
@@ -43,7 +40,7 @@ class CatudyPetAvatar extends StatelessWidget {
           final boxSize = constraints.biggest;
           if (!boxSize.width.isFinite || !boxSize.height.isFinite) {
             return Image.asset(
-              CatudyAssets.mascot,
+              assetPath,
               fit: fit,
               filterQuality: filterQuality,
               isAntiAlias: true,
@@ -77,27 +74,19 @@ class CatudyPetAvatar extends StatelessWidget {
                 width: mascotSize.width,
                 height: mascotSize.height,
                 child: Image.asset(
-                  CatudyAssets.mascot,
+                  assetPath,
                   fit: BoxFit.fill,
                   filterQuality: filterQuality,
                   isAntiAlias: true,
                 ),
               ),
-              if (accessory != null && alignedPath != null)
-                _AlignedAccessoryLayer(
-                  path: alignedPath,
-                  left: canvasLeft,
-                  top: canvasTop,
-                  width: canvasSize.width,
-                  height: canvasSize.height,
-                  filterQuality: filterQuality,
-                )
-              else if (placement != null && trimmedPath != null)
-                _AnchoredAccessoryLayer(
-                  path: trimmedPath,
-                  placement: placement,
+              for (final accessoryId in accessoryIds)
+                _AccessoryLayer(
+                  accessoryId: accessoryId,
                   canvasLeft: canvasLeft,
                   canvasTop: canvasTop,
+                  canvasWidth: canvasSize.width,
+                  canvasHeight: canvasSize.height,
                   scale: mascotScale,
                   filterQuality: filterQuality,
                 ),
@@ -105,6 +94,69 @@ class CatudyPetAvatar extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  List<String> _effectiveAccessoryIds() {
+    final ids = <String>[];
+    for (final id in equippedItemIds ?? const <String>[]) {
+      if (id.isNotEmpty && !ids.contains(id)) {
+        ids.add(id);
+      }
+    }
+    final legacyId = equippedItemId;
+    if (ids.isEmpty && legacyId != null && legacyId.isNotEmpty) {
+      ids.add(legacyId);
+    }
+    return ids;
+  }
+}
+
+class _AccessoryLayer extends StatelessWidget {
+  const _AccessoryLayer({
+    required this.accessoryId,
+    required this.canvasLeft,
+    required this.canvasTop,
+    required this.canvasWidth,
+    required this.canvasHeight,
+    required this.scale,
+    required this.filterQuality,
+  });
+
+  final String accessoryId;
+  final double canvasLeft;
+  final double canvasTop;
+  final double canvasWidth;
+  final double canvasHeight;
+  final double scale;
+  final FilterQuality filterQuality;
+
+  @override
+  Widget build(BuildContext context) {
+    final accessory = CatudyPetAccessories.byId(accessoryId);
+    final alignedPath = CatudyPetAccessories.alignedAssetPathFor(accessoryId);
+    if (accessory != null && alignedPath != null) {
+      return _AlignedAccessoryLayer(
+        path: alignedPath,
+        left: canvasLeft,
+        top: canvasTop,
+        width: canvasWidth,
+        height: canvasHeight,
+        filterQuality: filterQuality,
+      );
+    }
+    final placement = CatudyPetAccessories.placementFor(accessoryId);
+    final trimmedPath = CatudyPetAccessories.trimmedAssetPathFor(accessoryId);
+    if (placement == null || trimmedPath == null) {
+      return const SizedBox.shrink();
+    }
+    return _AnchoredAccessoryLayer(
+      path: trimmedPath,
+      placement: placement,
+      canvasLeft: canvasLeft,
+      canvasTop: canvasTop,
+      scale: scale,
+      filterQuality: filterQuality,
     );
   }
 }

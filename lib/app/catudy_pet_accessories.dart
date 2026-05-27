@@ -27,6 +27,7 @@ class CatudyPetAccessory {
     required this.accent,
     required this.icon,
     this.variantGroupId,
+    this.occupiedSlots = const <String>[],
     this.variants = const <CatudyPetAccessoryVariant>[],
   });
 
@@ -37,6 +38,7 @@ class CatudyPetAccessory {
     String rarity = 'common',
     Color accent = CatudyColors.violet,
     String? variantGroupId,
+    List<String> occupiedSlots = const <String>['head'],
     List<CatudyPetAccessoryVariant> variants =
         const <CatudyPetAccessoryVariant>[],
   }) : this(
@@ -48,6 +50,7 @@ class CatudyPetAccessory {
          accent: accent,
          icon: Icons.checkroom_rounded,
          variantGroupId: variantGroupId,
+         occupiedSlots: occupiedSlots,
          variants: variants,
        );
 
@@ -58,6 +61,7 @@ class CatudyPetAccessory {
     String rarity = 'common',
     Color accent = CatudyColors.coral,
     String? variantGroupId,
+    List<String> occupiedSlots = const <String>['mouth'],
     List<CatudyPetAccessoryVariant> variants =
         const <CatudyPetAccessoryVariant>[],
   }) : this(
@@ -69,6 +73,7 @@ class CatudyPetAccessory {
          accent: accent,
          icon: Icons.face_rounded,
          variantGroupId: variantGroupId,
+         occupiedSlots: occupiedSlots,
          variants: variants,
        );
 
@@ -79,6 +84,7 @@ class CatudyPetAccessory {
     String rarity = 'common',
     Color accent = CatudyColors.blue,
     String? variantGroupId,
+    List<String> occupiedSlots = const <String>['eyes'],
     List<CatudyPetAccessoryVariant> variants =
         const <CatudyPetAccessoryVariant>[],
   }) : this(
@@ -90,6 +96,7 @@ class CatudyPetAccessory {
          accent: accent,
          icon: Icons.visibility_rounded,
          variantGroupId: variantGroupId,
+         occupiedSlots: occupiedSlots,
          variants: variants,
        );
 
@@ -100,6 +107,7 @@ class CatudyPetAccessory {
     String rarity = 'common',
     Color accent = CatudyColors.teal,
     String? variantGroupId,
+    List<String> occupiedSlots = const <String>['head'],
     List<CatudyPetAccessoryVariant> variants =
         const <CatudyPetAccessoryVariant>[],
   }) : this(
@@ -111,6 +119,7 @@ class CatudyPetAccessory {
          accent: accent,
          icon: Icons.auto_awesome_rounded,
          variantGroupId: variantGroupId,
+         occupiedSlots: occupiedSlots,
          variants: variants,
        );
 
@@ -122,6 +131,7 @@ class CatudyPetAccessory {
   final Color accent;
   final IconData icon;
   final String? variantGroupId;
+  final List<String> occupiedSlots;
   final List<CatudyPetAccessoryVariant> variants;
 
   bool get isShopVisible => variantGroupId == null;
@@ -205,6 +215,7 @@ class CatudyPetAccessories {
       name: 'Bow Tie',
       price: 140,
       accent: CatudyColors.teal,
+      occupiedSlots: ['mouth'],
     ),
     CatudyPetAccessory.hat(
       id: 'black_top_hat',
@@ -417,12 +428,14 @@ class CatudyPetAccessories {
       name: 'Red Nose',
       price: 100,
       accent: CatudyColors.coral,
+      occupiedSlots: ['nose'],
     ),
     CatudyPetAccessory.glasses(
       id: 'groucho_glasses',
       name: 'Groucho',
       price: 170,
       accent: CatudyColors.coral,
+      occupiedSlots: ['eyes', 'nose', 'mouth'],
     ),
     CatudyPetAccessory.glasses(
       id: 'pixel_sunglasses',

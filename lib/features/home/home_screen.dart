@@ -332,8 +332,8 @@ class _PetCompanionCard extends StatelessWidget {
                   label: _moodLabel(store),
                   infoTitle: store.t('home.happiness'),
                   infoMessage: store.languageCode == 'en'
-                      ? 'Mochi gets happier with focus sessions and favorite items. High happiness makes the room feel more lively.'
-                      : 'Mochi gerçek odak serileriyle daha mutlu olur. Mutluluk yüksekken oda daha canlı hissettirir.',
+                      ? 'Your cat gets happier with focus sessions and favorite items. High happiness makes the room feel more lively.'
+                      : 'Kedin gerçek odak serileriyle daha mutlu olur. Mutluluk yüksekken oda daha canlı hissettirir.',
                 ),
               ),
               const SizedBox(width: 10),

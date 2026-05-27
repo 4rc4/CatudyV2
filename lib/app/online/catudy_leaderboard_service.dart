@@ -21,7 +21,7 @@ class CatudyOnlineLeaderboardProfile {
       userId: _readString(json, 'user_id'),
       displayName: _readString(json, 'display_name', 'Guest Cat'),
       petId: _readString(json, 'pet_id', 'mochi'),
-      petName: _readString(json, 'pet_name', 'Mochi'),
+      petName: _readString(json, 'pet_name', 'White Cat'),
       equippedPetItemId: _readNullableString(json, 'equipped_pet_item_id'),
       roomItemIds: _readStringMap(json['room_item_ids']),
       points: _readInt(json, 'points', 0),
@@ -113,7 +113,7 @@ class CatudyLeaderboardService {
           ? 'Guest Cat'
           : displayName.trim(),
       'pet_id': petId,
-      'pet_name': petName.trim().isEmpty ? 'Mochi' : petName.trim(),
+      'pet_name': petName.trim().isEmpty ? 'White Cat' : petName.trim(),
       'equipped_pet_item_id': equippedPetItemId,
       'room_item_ids': roomItemIds,
       'points': points,

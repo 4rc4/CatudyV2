@@ -56,14 +56,14 @@ void main() {
 
     expect(find.text('Topluluk'), findsOneWidget);
     expect(find.text('Lobiler'), findsOneWidget);
-    expect(find.text('Lobi kur veya katıl'), findsOneWidget);
-    expect(find.text('Online lobi kur'), findsWidgets);
-    expect(find.text('Koda katıl'), findsWidgets);
+    expect(find.text('Lobi kur veya katıl'), findsNothing);
+    expect(find.text('Online lobi kur'), findsNothing);
+    expect(find.text('Koda katıl'), findsNothing);
 
     await _pumpCatudy(tester, initialLocation: '/lobby');
 
     expect(find.text('Topluluk'), findsOneWidget);
-    expect(find.text('Lobi kur veya katıl'), findsOneWidget);
+    expect(find.text('Lobi kur veya katıl'), findsNothing);
   });
 
   testWidgets('renders one-surface focus composer', (tester) async {
@@ -131,13 +131,13 @@ void main() {
   ) async {
     await _pumpCatudy(tester, initialLocation: '/pet-room');
     expect(find.text('Pet Odası'), findsOneWidget);
-    expect(find.text('Mochi Odası'), findsOneWidget);
+    expect(find.text('Beyaz Kedi Odası'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
         (widget) =>
             widget is Image &&
             widget.image is AssetImage &&
-            (widget.image as AssetImage).assetName == CatudyAssets.mascot,
+            (widget.image as AssetImage).assetName == CatudyAssets.whiteCat,
       ),
       findsWidgets,
     );
@@ -188,9 +188,7 @@ void main() {
     expect(find.byIcon(Icons.apple_rounded), findsNothing);
   });
 
-  testWidgets('renders premium, season pass, and crates routes', (
-    tester,
-  ) async {
+  testWidgets('renders premium and season pass routes', (tester) async {
     await _pumpCatudy(tester, initialLocation: '/plus');
     expect(find.text('Catudy Plus'), findsOneWidget);
     expect(find.text('Buddy Pass'), findsOneWidget);
@@ -198,10 +196,6 @@ void main() {
     await _pumpCatudy(tester, initialLocation: '/season');
     expect(find.text('Focus Pass'), findsOneWidget);
     expect(find.text('Ücretsiz yol'), findsOneWidget);
-
-    await _pumpCatudy(tester, initialLocation: '/crates');
-    expect(find.text('Kutular'), findsOneWidget);
-    expect(find.text('Koleksiyon'), findsOneWidget);
   });
 }
 

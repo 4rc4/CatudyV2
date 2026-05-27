@@ -112,9 +112,14 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
         final bedItem = store.roomItemForSlot('room_bed', profile: visited);
         final decorItem = store.roomItemForSlot('room_decor', profile: visited);
         final shelfItem = store.roomItemForSlot('room_shelf', profile: visited);
-        final roomEffect = visited == null
-            ? store.cosmeticById(store.selectedRoomEffectId)
-            : null;
+        final petAssetPath = visited == null
+            ? store.selectedPet.assetPath
+            : store.unlockablePets
+                  .firstWhere(
+                    (pet) => pet.id == visited.petId,
+                    orElse: () => store.selectedPet,
+                  )
+                  .assetPath;
 
         return SizedBox.expand(
           child: _RoomScene(
@@ -129,15 +134,16 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             gold: store.gold,
             equippedPetItemId:
                 visited?.equippedPetItemId ?? store.equippedPetItemId,
+            equippedPetItemIds: visited == null
+                ? store.equippedPetAccessoryIds
+                : const <String>[],
+            petAssetPath: petAssetPath,
             studying: store.activeSession != null,
             rewardBoostPercent: store.focusRewardBoostPercent,
             studyItem: studyItem,
             bedItem: bedItem,
             decorItem: decorItem,
             shelfItem: shelfItem,
-            roomEffectAccent: roomEffect?.accent,
-            maintenanceTitle: store.t('pet.roomMaintenanceTitle'),
-            maintenanceBody: store.t('pet.roomMaintenanceBody'),
             visiting: visited != null,
             onSettings: () => context.push('/settings'),
             onInfo: () => showPetIntroTour(context),
@@ -270,15 +276,14 @@ class _RoomScene extends StatelessWidget {
     required this.energy,
     required this.gold,
     required this.equippedPetItemId,
+    required this.equippedPetItemIds,
+    required this.petAssetPath,
     required this.studying,
     required this.rewardBoostPercent,
     required this.studyItem,
     required this.bedItem,
     required this.decorItem,
     required this.shelfItem,
-    required this.roomEffectAccent,
-    required this.maintenanceTitle,
-    required this.maintenanceBody,
     required this.visiting,
     required this.onSettings,
     required this.onInfo,
@@ -296,15 +301,14 @@ class _RoomScene extends StatelessWidget {
   final int energy;
   final int gold;
   final String? equippedPetItemId;
+  final List<String> equippedPetItemIds;
+  final String petAssetPath;
   final bool studying;
   final double rewardBoostPercent;
   final ShopItem? studyItem;
   final ShopItem? bedItem;
   final ShopItem? decorItem;
   final ShopItem? shelfItem;
-  final Color? roomEffectAccent;
-  final String maintenanceTitle;
-  final String maintenanceBody;
   final bool visiting;
   final VoidCallback onSettings;
   final VoidCallback onInfo;
@@ -379,23 +383,6 @@ class _RoomScene extends StatelessWidget {
             clipBehavior: Clip.none,
             children: [
               const Positioned.fill(child: _RoomBackground()),
-              if (roomEffectAccent != null)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: Alignment.topCenter,
-                          radius: 1.15,
-                          colors: [
-                            roomEffectAccent!.withValues(alpha: 0.24),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               bookcase.positioned(
                 child: _TinyShelf(
                   item: shelfItem,
@@ -431,6 +418,8 @@ class _RoomScene extends StatelessWidget {
                 child: _RoomPet(
                   studying: studying,
                   equippedPetItemId: equippedPetItemId,
+                  equippedPetItemIds: equippedPetItemIds,
+                  assetPath: petAssetPath,
                   mascotSize: petSize,
                   boxWidth: petBoxWidth,
                   boxHeight: petBoxHeight,
@@ -460,15 +449,6 @@ class _RoomScene extends StatelessWidget {
                   onSettings: onSettings,
                   onInfo: onInfo,
                   onRename: onRename,
-                ),
-              ),
-              Positioned(
-                left: horizontalInset,
-                right: horizontalInset,
-                top: (roomHeight * 0.108).clamp(78.0, 98.0).toDouble(),
-                child: _RoomMaintenanceBanner(
-                  title: maintenanceTitle,
-                  body: maintenanceBody,
                 ),
               ),
               Positioned(
@@ -1376,6 +1356,8 @@ class _RoomPet extends StatelessWidget {
   const _RoomPet({
     required this.studying,
     required this.equippedPetItemId,
+    required this.equippedPetItemIds,
+    required this.assetPath,
     required this.mascotSize,
     required this.boxWidth,
     required this.boxHeight,
@@ -1383,6 +1365,8 @@ class _RoomPet extends StatelessWidget {
 
   final bool studying;
   final String? equippedPetItemId;
+  final List<String> equippedPetItemIds;
+  final String assetPath;
   final double mascotSize;
   final double boxWidth;
   final double boxHeight;
@@ -1413,6 +1397,8 @@ class _RoomPet extends StatelessWidget {
             bottom: shadowHeight * 0.12,
             child: CatudyPetAvatar(
               equippedItemId: equippedPetItemId,
+              equippedItemIds: equippedPetItemIds,
+              assetPath: assetPath,
               width: mascotSize,
               height: mascotSize,
               fit: BoxFit.contain,

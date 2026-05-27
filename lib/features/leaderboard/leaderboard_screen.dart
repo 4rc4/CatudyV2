@@ -196,6 +196,7 @@ class _LeaderboardListRow extends StatelessWidget {
           const SizedBox(width: 8),
           _PetBadge(
             accent: pet.accent,
+            assetPath: pet.assetPath,
             equippedPetItemId: profile.equippedPetItemId,
           ),
           const SizedBox(width: 12),
@@ -302,6 +303,7 @@ class _CurrentUserStrip extends StatelessWidget {
           const SizedBox(width: 12),
           _PetBadge(
             accent: pet.accent,
+            assetPath: pet.assetPath,
             equippedPetItemId: profile.equippedPetItemId,
           ),
           const SizedBox(width: 12),
@@ -355,9 +357,14 @@ class _RankMark extends StatelessWidget {
 }
 
 class _PetBadge extends StatelessWidget {
-  const _PetBadge({required this.accent, required this.equippedPetItemId});
+  const _PetBadge({
+    required this.accent,
+    required this.assetPath,
+    required this.equippedPetItemId,
+  });
 
   final Color accent;
+  final String assetPath;
   final String? equippedPetItemId;
 
   @override
@@ -371,7 +378,10 @@ class _PetBadge extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: accent.withValues(alpha: 0.34)),
       ),
-      child: CatudyPetAvatar(equippedItemId: equippedPetItemId),
+      child: CatudyPetAvatar(
+        equippedItemId: equippedPetItemId,
+        assetPath: assetPath,
+      ),
     );
   }
 }

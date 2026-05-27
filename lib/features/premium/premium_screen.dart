@@ -716,36 +716,13 @@ class _QuickLinks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttons = [
-      FilledButton.tonalIcon(
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.tonalIcon(
         onPressed: () => context.push('/season'),
         icon: const Icon(Icons.emoji_events_rounded),
         label: Text(store.t('premium.openSeason')),
       ),
-      FilledButton.tonalIcon(
-        onPressed: () => context.push('/crates'),
-        icon: const Icon(Icons.inventory_2_rounded),
-        label: Text(store.t('premium.openCrates')),
-      ),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 360) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [buttons[0], const SizedBox(height: 10), buttons[1]],
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(child: buttons[0]),
-            const SizedBox(width: 10),
-            Expanded(child: buttons[1]),
-          ],
-        );
-      },
     );
   }
 }

@@ -14,7 +14,6 @@ import '../features/home/home_screen.dart';
 import '../features/leaderboard/leaderboard_screen.dart';
 import '../features/lobby/lobby_screen.dart';
 import '../features/pet/pet_room_screen.dart';
-import '../features/premium/crates_screen.dart';
 import '../features/premium/premium_screen.dart';
 import '../features/premium/season_pass_screen.dart';
 import '../features/profile/profile_screen.dart';
@@ -112,11 +111,6 @@ class CatudyRouter {
             path: '/season/rewards',
             pageBuilder: (context, state) =>
                 _animatedPage(state, const SeasonRewardsScreen()),
-          ),
-          GoRoute(
-            path: '/crates',
-            pageBuilder: (context, state) =>
-                _animatedPage(state, const CratesScreen()),
           ),
           GoRoute(
             path: '/focus/start',

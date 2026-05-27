@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../catudy_assets.dart';
 import '../lock/catudy_app_lock_models.dart';
 import '../lock/catudy_app_lock_service.dart';
 import '../localization/catudy_copy.dart';
@@ -411,6 +412,7 @@ class UnlockablePet {
     required this.requiredPoints,
     required this.description,
     required this.accent,
+    required this.assetPath,
   });
 
   final String id;
@@ -418,6 +420,7 @@ class UnlockablePet {
   final int requiredPoints;
   final String description;
   final Color accent;
+  final String assetPath;
 }
 
 class ShopItemVariant {
@@ -445,6 +448,7 @@ class ShopItem {
     required this.accent,
     required this.icon,
     this.assetPath,
+    this.occupiedSlots = const <String>[],
     this.variants = const <ShopItemVariant>[],
   });
 
@@ -457,9 +461,11 @@ class ShopItem {
   final Color accent;
   final IconData icon;
   final String? assetPath;
+  final List<String> occupiedSlots;
   final List<ShopItemVariant> variants;
 
   bool get isRoomFurniture => slot.startsWith('room_');
+  bool get isPetAccessory => slot == 'pet';
   bool get hasVariants => variants.length > 1;
 
   bool containsItemId(String itemId) =>
@@ -542,6 +548,12 @@ class LeaderboardProfile {
 class CatudyDemoStore extends ChangeNotifier {
   static const currentTermsVersion = 1;
   static const _starterPetItemId = 'pink_bow';
+  static const _petAccessorySlotOrder = <String>[
+    'head',
+    'eyes',
+    'nose',
+    'mouth',
+  ];
 
   CatudyDemoStore({CatudyLocalStorage storage = const CatudyLocalStorage()})
     : _storage = storage {
@@ -650,7 +662,7 @@ class CatudyDemoStore extends ChangeNotifier {
     const CosmeticItem(
       id: 'aurora_tail',
       name: 'Aurora Tail',
-      description: 'A mythic glow that follows Mochi around the room.',
+      description: 'A mythic glow that follows your cat around the room.',
       slot: 'pet_style',
       rarity: Rarity.mythic,
       accent: CatudyColors.teal,
@@ -757,7 +769,7 @@ class CatudyDemoStore extends ChangeNotifier {
     const CosmeticItem(
       id: 'pet_widget_theme',
       name: 'Pet Widget Theme',
-      description: 'Widget cards with Mochi peeking over the progress bar.',
+      description: 'Widget cards with your cat peeking over the progress bar.',
       slot: 'widget_theme',
       rarity: Rarity.rare,
       accent: CatudyColors.teal,
@@ -912,24 +924,11 @@ class CatudyDemoStore extends ChangeNotifier {
   final unlockablePets = <UnlockablePet>[
     const UnlockablePet(
       id: 'mochi',
-      name: 'Mochi',
-      requiredPoints: 0,
-      description: 'Başlangıç odak dostu.',
+      name: 'Beyaz Kedi',
+      requiredPoints: 90,
+      description: '90 dakika odak ile açılır.',
       accent: CatudyColors.violet,
-    ),
-    const UnlockablePet(
-      id: 'miso',
-      name: 'Miso',
-      requiredPoints: 1000,
-      description: '1000 odak puanında kilidi açılır.',
-      accent: CatudyColors.coral,
-    ),
-    const UnlockablePet(
-      id: 'luna',
-      name: 'Luna',
-      requiredPoints: 2500,
-      description: '2500 odak puanında kilidi açılır.',
-      accent: CatudyColors.teal,
+      assetPath: CatudyAssets.whiteCat,
     ),
   ];
 
@@ -957,6 +956,7 @@ class CatudyDemoStore extends ChangeNotifier {
         accent: accessory.accent,
         icon: accessory.icon,
         assetPath: accessory.trimmedAssetPath,
+        occupiedSlots: accessory.occupiedSlots,
         variants: [
           for (final variant in accessory.variants)
             ShopItemVariant(
@@ -970,7 +970,7 @@ class CatudyDemoStore extends ChangeNotifier {
     const ShopItem(
       id: 'soft_study_nook',
       name: 'Yumuşak Çalışma Alanı',
-      description: 'Mochi için minderli, alçak bir çalışma köşesi.',
+      description: 'Kedin için minderli, alçak bir çalışma köşesi.',
       price: 110,
       slot: 'room_study',
       rarity: 'common',
@@ -1082,11 +1082,12 @@ class CatudyDemoStore extends ChangeNotifier {
   FocusRecord? lastResult;
   DateTime selectedCalendarDate = DateTime.now();
   String selectedPetId = 'mochi';
-  String petName = 'Mochi';
+  String petName = 'Beyaz Kedi';
   bool petNameChosen = false;
   String profileAvatarId = 'catudy';
   String? customProfileImageBase64;
   String? equippedPetItemId = _starterPetItemId;
+  final equippedPetItemIds = <String, String>{};
   String? equippedProfileItemId;
   PremiumEntitlement premiumEntitlement = const PremiumEntitlement.inactive();
   LockSettings lockSettings = const LockSettings();
@@ -1340,12 +1341,51 @@ class CatudyDemoStore extends ChangeNotifier {
   List<String> get petNameSuggestions {
     final base = selectedPet.name;
     final localized = languageCode == 'en'
-        ? const ['Nova', 'Mochi', 'Pip']
-        : const ['Mochi', 'Pamuk', 'Pati'];
+        ? const ['Snow', 'Nova', 'Pip']
+        : const ['Pamuk', 'Pati', 'Bulut'];
     return [
       base,
       ...localized.where((name) => name.toLowerCase() != base.toLowerCase()),
     ].take(3).toList();
+  }
+
+  List<String> get equippedPetAccessoryIds {
+    final ordered = <String>[];
+    for (final slot in _petAccessorySlotOrder) {
+      final id = equippedPetItemIds[slot];
+      if (id != null && !ordered.contains(id) && ownsItem(id)) {
+        ordered.add(id);
+      }
+    }
+    for (final id in equippedPetItemIds.values) {
+      if (!ordered.contains(id) && ownsItem(id)) {
+        ordered.add(id);
+      }
+    }
+    return ordered;
+  }
+
+  bool isPetAccessoryEquipped(ShopItem item) {
+    if (!item.isPetAccessory || item.occupiedSlots.isEmpty) {
+      return false;
+    }
+    return item.occupiedSlots.every((slot) {
+      final equippedId = equippedPetItemIds[slot];
+      return equippedId != null && item.containsItemId(equippedId);
+    });
+  }
+
+  String? equippedVariantIdFor(ShopItem item) {
+    if (!item.isPetAccessory) {
+      return null;
+    }
+    for (final slot in item.occupiedSlots) {
+      final equippedId = equippedPetItemIds[slot];
+      if (equippedId != null && item.containsItemId(equippedId)) {
+        return equippedId;
+      }
+    }
+    return null;
   }
 
   FocusRecommendation get focusRecommendation {
@@ -1828,8 +1868,8 @@ class CatudyDemoStore extends ChangeNotifier {
       LeaderboardProfile(
         userId: 'demo-ada',
         name: languageCode == 'en' ? 'Ada' : 'Ada',
-        petId: 'miso',
-        petName: 'Miso',
+        petId: 'mochi',
+        petName: languageCode == 'en' ? 'White Cat' : 'Beyaz Kedi',
         equippedPetItemId: 'black_sunglasses',
         roomItemIds: const {
           'room_study': 'soft_study_nook',
@@ -1847,8 +1887,8 @@ class CatudyDemoStore extends ChangeNotifier {
       LeaderboardProfile(
         userId: 'demo-deniz',
         name: languageCode == 'en' ? 'Deniz' : 'Deniz',
-        petId: 'luna',
-        petName: 'Luna',
+        petId: 'mochi',
+        petName: languageCode == 'en' ? 'White Cat' : 'Beyaz Kedi',
         equippedPetItemId: null,
         roomItemIds: const {
           'room_study': 'moonlit_study_nook',
@@ -3158,7 +3198,7 @@ class CatudyDemoStore extends ChangeNotifier {
     if (item.isRoomFurniture) {
       equippedRoomItemIds[item.slot] = item.id;
     } else if (item.slot == 'pet') {
-      equippedPetItemId = item.id;
+      _equipPetAccessory(id);
     }
     petMood = (petMood + 6).clamp(0, 100);
     _commit();
@@ -3495,11 +3535,30 @@ class CatudyDemoStore extends ChangeNotifier {
     if (item.isRoomFurniture) {
       equippedRoomItemIds[item.slot] = item.id;
     } else if (item.slot == 'pet') {
-      equippedPetItemId = id;
+      _equipPetAccessory(id);
     } else {
       equippedProfileItemId = item.id;
     }
     _commit();
+  }
+
+  void _equipPetAccessory(String id) {
+    final item = shopItemById(id);
+    if (item == null || !item.isPetAccessory || !ownedItems.contains(item.id)) {
+      return;
+    }
+    final slots = item.occupiedSlots.isEmpty
+        ? const <String>['head']
+        : item.occupiedSlots;
+    for (final slot in slots) {
+      equippedPetItemIds[slot] = id;
+    }
+    equippedPetItemId = id;
+  }
+
+  void _syncEquippedPetItemIdFromSlots() {
+    final ids = equippedPetAccessoryIds;
+    equippedPetItemId = ids.isEmpty ? null : ids.first;
   }
 
   Future<void> signInAsGuest() async {
@@ -4971,9 +5030,7 @@ class CatudyDemoStore extends ChangeNotifier {
       ..add(_starterPetItemId);
     ownedCosmeticIds.clear();
     equippedRoomItemIds.clear();
-    unlockedPetIds
-      ..clear()
-      ..add('mochi');
+    unlockedPetIds.clear();
     _pendingUnlockedPetIds.clear();
     lockedApps.clear();
     lockLocations.clear();
@@ -5028,11 +5085,14 @@ class CatudyDemoStore extends ChangeNotifier {
     lastResult = null;
     selectedCalendarDate = DateTime.now();
     selectedPetId = 'mochi';
-    petName = 'Mochi';
+    petName = selectedPet.name;
     petNameChosen = false;
     profileAvatarId = 'catudy';
     customProfileImageBase64 = null;
     equippedPetItemId = _starterPetItemId;
+    equippedPetItemIds
+      ..clear()
+      ..addAll(const {'head': _starterPetItemId});
     equippedProfileItemId = null;
     premiumEntitlement = const PremiumEntitlement.inactive();
     lockSettings = const LockSettings();
@@ -5215,14 +5275,15 @@ class CatudyDemoStore extends ChangeNotifier {
     unlockedPetIds
       ..clear()
       ..addAll(_readStringList(json['unlockedPetIds']));
-    if (unlockedPetIds.isEmpty) {
-      unlockedPetIds.add('mochi');
-    }
+    _unlockEligiblePets();
     selectedPetId = _readString(json, 'selectedPetId', 'mochi');
-    if (!unlockedPetIds.contains(selectedPetId)) {
+    if (!unlockablePets.any((item) => item.id == selectedPetId)) {
       selectedPetId = 'mochi';
     }
     petName = _readString(json, 'petName', selectedPet.name);
+    if ({'mochi', 'miso', 'luna'}.contains(petName.trim().toLowerCase())) {
+      petName = selectedPet.name;
+    }
     petNameChosen = _readBool(json, 'petNameChosen', false);
     profileAvatarId = _readString(json, 'profileAvatarId', 'catudy');
     customProfileImageBase64 = _readNullableString(
@@ -5230,6 +5291,9 @@ class CatudyDemoStore extends ChangeNotifier {
       'customProfileImageBase64',
     );
     equippedPetItemId = _readNullableString(json, 'equippedPetItemId');
+    equippedPetItemIds
+      ..clear()
+      ..addAll(_readStringMap(json['equippedPetItemIds']));
     equippedProfileItemId = _readNullableString(json, 'equippedProfileItemId');
     premiumEntitlement = PremiumEntitlement.fromJson(
       _readNullableMap(json['premiumEntitlement']),
@@ -5282,14 +5346,12 @@ class CatudyDemoStore extends ChangeNotifier {
     if (equippedPetItemId != null && !ownsItem(equippedPetItemId!)) {
       equippedPetItemId = null;
     }
-    if (equippedPetItemId == null && ownedItems.contains(_starterPetItemId)) {
-      equippedPetItemId = _starterPetItemId;
-    }
     if (equippedProfileItemId != null &&
         !ownedItems.contains(equippedProfileItemId)) {
       equippedProfileItemId = null;
     }
     _normalizeRoomEquipment();
+    _normalizePetAccessoryEquipment();
     _normalizeCosmeticSelections();
 
     final activeJson = _readNullableMap(json['activeSession']);
@@ -5461,6 +5523,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'profileAvatarId': profileAvatarId,
     'customProfileImageBase64': customProfileImageBase64,
     'equippedPetItemId': equippedPetItemId,
+    'equippedPetItemIds': Map<String, String>.from(equippedPetItemIds),
     'equippedProfileItemId': equippedProfileItemId,
     'equippedRoomItemIds': Map<String, String>.from(equippedRoomItemIds),
     'premiumEntitlement': premiumEntitlement.toJson(),
@@ -5517,6 +5580,28 @@ class CatudyDemoStore extends ChangeNotifier {
         equippedRoomItemIds.putIfAbsent(item.slot, () => item.id);
       }
     }
+  }
+
+  void _normalizePetAccessoryEquipment() {
+    if (equippedPetItemIds.isEmpty &&
+        equippedPetItemId != null &&
+        ownsItem(equippedPetItemId!)) {
+      _equipPetAccessory(equippedPetItemId!);
+    }
+    equippedPetItemIds.removeWhere((slot, id) {
+      final item = shopItemById(id);
+      final slots = item?.occupiedSlots.isEmpty == true
+          ? const <String>['head']
+          : item?.occupiedSlots ?? const <String>[];
+      return item == null ||
+          !item.isPetAccessory ||
+          !ownsItem(id) ||
+          !slots.contains(slot);
+    });
+    if (equippedPetItemIds.isEmpty && ownedItems.contains(_starterPetItemId)) {
+      _equipPetAccessory(_starterPetItemId);
+    }
+    _syncEquippedPetItemIdFromSlots();
   }
 
   void _normalizeCosmeticSelections() {

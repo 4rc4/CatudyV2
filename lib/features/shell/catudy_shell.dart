@@ -292,15 +292,13 @@ class _CatudyShellState extends State<CatudyShell> {
     if (from == 'profile' &&
         (path.startsWith('/community') ||
             path.startsWith('/plus') ||
-            path.startsWith('/season') ||
-            path.startsWith('/crates'))) {
+            path.startsWith('/season'))) {
       return '/profile';
     }
     if (from == 'home' &&
         (path.startsWith('/community') ||
             path.startsWith('/plus') ||
-            path.startsWith('/season') ||
-            path.startsWith('/crates'))) {
+            path.startsWith('/season'))) {
       return '/';
     }
     if (from == 'stats' && path.startsWith('/plus')) {
@@ -315,7 +313,7 @@ class _CatudyShellState extends State<CatudyShell> {
     if (path.startsWith('/season/rewards')) {
       return '/season';
     }
-    if (path.startsWith('/season') || path.startsWith('/crates')) {
+    if (path.startsWith('/season')) {
       return '/plus';
     }
     if (path.startsWith('/plus')) {
@@ -377,8 +375,7 @@ class _CatudyShellState extends State<CatudyShell> {
     if (fromIndex != null &&
         (path.startsWith('/community') ||
             path.startsWith('/plus') ||
-            path.startsWith('/season') ||
-            path.startsWith('/crates'))) {
+            path.startsWith('/season'))) {
       return fromIndex;
     }
     if (path.startsWith('/stats')) {
@@ -389,8 +386,7 @@ class _CatudyShellState extends State<CatudyShell> {
     }
     if (path.startsWith('/pet-room') ||
         path.startsWith('/shop') ||
-        path.startsWith('/inventory') ||
-        path.startsWith('/crates')) {
+        path.startsWith('/inventory')) {
       return 3;
     }
     if (path.startsWith('/profile') ||

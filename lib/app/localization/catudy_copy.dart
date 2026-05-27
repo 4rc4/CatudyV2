@@ -219,12 +219,8 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'community.lobbiesTitle': 'Birlikte odaklanma odaları',
     'community.lobbiesBody':
         'Arkadaşlarınla aynı ritme gir; süreyi seç, kodla katıl veya sakin bir lobi kur.',
-    'community.lobbyComposerTitle': 'Lobi kur veya katıl',
-    'community.lobbyComposerBody':
-        'V1’de public keşif yok; güvenli akış kodla katılma ve mevcut lobidir.',
     'community.currentLobbyTitle': 'Aktif lobi',
-    'community.noLobbyBody':
-        'Henüz aktif lobi yok. Bir lobi kurabilir veya arkadaşından gelen kodla katılabilirsin.',
+    'community.noLobbyBody': 'Henüz aktif lobi yok.',
 
     'season.focusPassTitle': 'Focus Pass',
     'season.heroTitle': 'Monthly Focus Pass',
@@ -280,7 +276,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'stats.bestDay': 'En iyi gün',
     'stats.focusTimeThisPeriod': 'Odak süresi',
     'stats.emptyMochiInsight':
-        'Mochi veri topluyor; birkaç seans sonra ritmin daha görünür olacak.',
+        'Kedin veri topluyor; birkaç seans sonra ritmin daha görünür olacak.',
     'stats.mochiBestInsight': '{day} günleri odak süren yüksek görünüyor.',
     'stats.sessionsInfo': 'Bu aralıkta tamamlanan gerçek odak seansı: {count}.',
     'stats.averageSessionInfo': 'Ortalama: {minutes} dk.',
@@ -404,7 +400,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'focus.timerTitle': 'Odak Timer',
     'focus.lobbyTimerTitle': 'Lobi Timer',
     'focus.noActiveSession': 'Aktif seans yok. Yeni bir odak seansı başlat.',
-    'focus.ritualBody': 'Mochi sessizce yanında; yalnızca bu seansa odaklan.',
+    'focus.ritualBody': 'Kedin sessizce yanında; yalnızca bu seansa odaklan.',
     'focus.endFocus': 'Odağı Bitir',
     'focus.paused': 'Seans duraklatıldı. Hazır olduğunda devam et.',
     'focus.breakActive': 'Mola aktif. Süre mola bitene kadar ilerlemez.',
@@ -422,8 +418,8 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'focus.resultSaved': '{category} için {minutes} dakika kaydedildi.',
     'focus.seeStats': 'İstatistikleri gör',
     'focus.openShop': 'Mağazayı aç',
-    'focus.petUnlocked': 'Yeni pet açıldı',
-    'focus.petUnlockedBody': '{pet} envantere eklendi.',
+    'focus.petUnlocked': 'Yeni kedi açıldı',
+    'focus.petUnlockedBody': 'Yeni kedi envantere eklendi.',
     'focus.resultSummary': 'Seans özeti',
     'focus.resultPointsEarned': 'Kazanılan puan',
     'focus.resultGoldEarned': 'Kazanılan coin',
@@ -439,7 +435,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
 
     'pet.room': 'Pet Odası',
     'pet.roomName': '{pet} Odası',
-    'pet.roomSubtitle': 'Mochi burada dinlenir, bekler ve seninle çalışır.',
+    'pet.roomSubtitle': 'Kedin burada dinlenir, bekler ve seninle çalışır.',
     'pet.noCosmetic': 'Takılı kozmetik yok',
     'pet.shop': 'Mağaza',
     'pet.inventory': 'Envanter',
@@ -451,9 +447,6 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'pet.roomBoost': 'Oda boostu',
     'pet.customizeTitle': 'Odayı düzenle',
     'pet.customizeBody': 'Sahip olduklarını tak, yenilerini mağazadan ekle.',
-    'pet.roomMaintenanceTitle': 'Oda yenileniyor',
-    'pet.roomMaintenanceBody':
-        'Bu alan şu an inşaat halinde; bazı eşyalar yerinden oynayabilir.',
     'pet.nameDialogTitle': 'Petinin ismi ne olsun?',
     'pet.nameDialogBody':
         'İstersen önerilerden birini seçebilir ya da kendi ismini yazabilirsin.',
@@ -461,7 +454,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'pet.nameSave': 'İsmi kaydet',
 
     'shop.title': 'Mağaza',
-    'shop.petUnlocks': 'Pet Kilitleri',
+    'shop.petUnlocks': 'Kediler',
     'shop.roomFurniture': 'Oda Mobilyaları',
     'shop.cosmetics': 'Kozmetikler',
     'shop.rewardBoost': 'odak ödülü',
@@ -475,13 +468,17 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'shop.plusCosmetics': 'Plus Kozmetikleri',
     'shop.plusOnly': 'Plus',
     'shop.category.room': 'Oda',
-    'shop.category.pet': 'Pet',
+    'shop.category.pet': 'Aksesuarlar',
+    'shop.category.accessories': 'Aksesuarlar',
+    'shop.category.cats': 'Cats',
     'shop.category.profile': 'Profil',
     'shop.category.extras': 'Ekstralar',
     'shop.category.crates': 'Kutular',
     'shop.section.roomBackgrounds': 'Oda temaları',
     'shop.noRoomBackgrounds': 'Şimdilik satılacak oda teması yok.',
     'shop.section.petItems': 'Pet aksesuarları',
+    'shop.section.accessories': 'Aksesuarlar',
+    'shop.section.cats': 'Cats',
     'shop.section.petStyles': 'Pet stilleri',
     'shop.section.profileItems': 'Profil aksesuarları',
     'shop.section.profileStyles': 'Profil stilleri',
@@ -491,12 +488,13 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'shop.room.slot.bed': 'Uyku alanı',
     'shop.room.slot.decor': 'Işık ve dekor',
     'shop.room.slot.shelf': 'Raflar',
+    'shop.catRequiredMinutes': '{minutes} dk çalışma',
 
     'item.focus_badge.name': 'Odak Rozeti',
     'item.focus_badge.description': 'Herkese açık profilinde gösterilir.',
     'item.soft_study_nook.name': 'Yumuşak Çalışma Alanı',
     'item.soft_study_nook.description':
-        'Mochi için minderli, alçak bir çalışma köşesi.',
+        'Kedin için minderli, alçak bir çalışma köşesi.',
     'item.moonlit_study_nook.name': 'Ay Işıklı Çalışma Alanı',
     'item.moonlit_study_nook.description':
         'Odak seanslarında defter ve ışığıyla öne çıkan alan.',
@@ -515,7 +513,8 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
 
     'inventory.title': 'Envanter',
     'inventory.ownedItems': 'Sahip olunanlar',
-    'inventory.pets': 'Petler',
+    'inventory.pets': 'Kediler',
+    'inventory.accessories': 'Aksesuarlar',
     'inventory.equipped': 'Tak',
     'inventory.roomEquipped': 'Odada yerinde',
     'inventory.roomFurniture': 'Oda mobilyası',
@@ -525,7 +524,9 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'inventory.profileCosmetic': 'Profil kozmetiği',
     'inventory.premiumCosmetics': 'Plus Kozmetikleri',
     'inventory.category.room': 'Oda',
-    'inventory.category.pet': 'Pet',
+    'inventory.category.pet': 'Aksesuarlar',
+    'inventory.category.accessories': 'Aksesuarlar',
+    'inventory.category.cats': 'Cats',
     'inventory.category.profile': 'Profil',
     'inventory.category.extras': 'Ekstralar',
     'inventory.roomEffects': 'Oda efektleri',
@@ -541,6 +542,10 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'inventory.cosmeticSlot.profile_badge': 'Profil rozeti',
     'inventory.cosmeticSlot.widget_theme': 'Widget teması',
     'inventory.cosmeticSlot.dialogue_pack': 'Diyalog paketi',
+    'inventory.slot.head': 'Kafa',
+    'inventory.slot.eyes': 'Göz',
+    'inventory.slot.nose': 'Burun',
+    'inventory.slot.mouth': 'Ağız',
 
     'profile.title': 'Profil',
     'profile.subtitle': 'Odak meraklısı ve çalışma dostu',
@@ -887,7 +892,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
         'Hafta, ay ve tüm zaman aralıklarında odak ritmini görürsün. Grafiklere dokununca kısa açıklamalar açılır.',
     'tour.petTitle': 'Pet odası',
     'tour.petBody':
-        'Mochi burada yaşar. Mutluluk, açlık ve enerji barlarına dokunarak ne anlama geldiklerini görebilirsin.',
+        'Kedin burada yaşar. Mutluluk, açlık ve enerji barlarına dokunarak ne anlama geldiklerini görebilirsin.',
     'tour.profileTitle': 'Profil',
     'tour.profileBody':
         'Toplam odak, seans sayısı, favori kategori, takılı eşyalar ve pet özetin burada görünür.',
@@ -896,7 +901,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
         'Profilinde ve lobilerde görünecek adı seç. Bunu daha sonra profilden değiştirebilirsin.',
     'onboarding.petTitle': 'Petini seç',
     'onboarding.petBody':
-        'Mochi başlangıç dostun. Puan kazandıkça yeni petlerin kilidi açılır.',
+        'Başlangıç kedin burada. Odak dakikaları kazandıkça yeni kediler açılır.',
     'onboarding.goalTitle': 'Günlük hedef',
     'onboarding.goalBody':
         'Bugün için gerçekçi bir odak dakikası hedefi belirle.',
@@ -1119,12 +1124,8 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'community.lobbiesTitle': 'Focus rooms with friends',
     'community.lobbiesBody':
         'Enter the same rhythm with friends; pick a duration, join by code, or create a calm lobby.',
-    'community.lobbyComposerTitle': 'Create or join a lobby',
-    'community.lobbyComposerBody':
-        'V1 has no public discovery; the safe flow is code join and current lobby state.',
     'community.currentLobbyTitle': 'Active lobby',
-    'community.noLobbyBody':
-        'No active lobby yet. Create one or join with a code from a friend.',
+    'community.noLobbyBody': 'No active lobby yet.',
 
     'season.focusPassTitle': 'Focus Pass',
     'season.heroTitle': 'Monthly Focus Pass',
@@ -1180,7 +1181,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'stats.bestDay': 'Best day',
     'stats.focusTimeThisPeriod': 'Focused time',
     'stats.emptyMochiInsight':
-        'Mochi is gathering data; your rhythm will become clearer after a few sessions.',
+        'Your cat is gathering data; your rhythm will become clearer after a few sessions.',
     'stats.mochiBestInsight': 'Your focus time looks strong on {day}.',
     'stats.sessionsInfo':
         'Real focus sessions completed in this range: {count}.',
@@ -1307,7 +1308,8 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'focus.timerTitle': 'Focus Timer',
     'focus.lobbyTimerTitle': 'Lobby Timer',
     'focus.noActiveSession': 'No active session. Start a new focus session.',
-    'focus.ritualBody': 'Mochi is beside you; only this session matters now.',
+    'focus.ritualBody':
+        'Your cat is beside you; only this session matters now.',
     'focus.endFocus': 'End Focus',
     'focus.paused': 'Session paused. Continue when you are ready.',
     'focus.breakActive': 'Break is active. The timer waits until it ends.',
@@ -1325,8 +1327,8 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'focus.resultSaved': '{minutes} minutes saved for {category}.',
     'focus.seeStats': 'See stats',
     'focus.openShop': 'Open shop',
-    'focus.petUnlocked': 'New pet unlocked',
-    'focus.petUnlockedBody': '{pet} was added to inventory.',
+    'focus.petUnlocked': 'New cat unlocked',
+    'focus.petUnlockedBody': 'A new cat was added to inventory.',
     'focus.resultSummary': 'Session summary',
     'focus.resultPointsEarned': 'Points earned',
     'focus.resultGoldEarned': 'Coin earned',
@@ -1342,7 +1344,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
 
     'pet.room': 'Pet Room',
     'pet.roomName': "{pet}'s Room",
-    'pet.roomSubtitle': 'Mochi rests, waits, and studies with you here.',
+    'pet.roomSubtitle': 'Your cat rests, waits, and studies with you here.',
     'pet.noCosmetic': 'No cosmetic equipped',
     'pet.shop': 'Shop',
     'pet.inventory': 'Inventory',
@@ -1354,16 +1356,13 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'pet.roomBoost': 'Room boost',
     'pet.customizeTitle': 'Style the room',
     'pet.customizeBody': 'Equip what you own or add new pieces from the shop.',
-    'pet.roomMaintenanceTitle': 'Room refresh in progress',
-    'pet.roomMaintenanceBody':
-        'This room is under construction, so a few details may shift for now.',
     'pet.nameDialogTitle': 'What should your pet be called?',
     'pet.nameDialogBody': 'Pick a suggestion or type your own pet name.',
     'pet.nameField': 'Pet name',
     'pet.nameSave': 'Save name',
 
     'shop.title': 'Shop',
-    'shop.petUnlocks': 'Pet Unlocks',
+    'shop.petUnlocks': 'Cats',
     'shop.roomFurniture': 'Room Furniture',
     'shop.cosmetics': 'Cosmetics',
     'shop.rewardBoost': 'focus reward',
@@ -1377,13 +1376,17 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'shop.plusCosmetics': 'Plus Cosmetics',
     'shop.plusOnly': 'Plus',
     'shop.category.room': 'Room',
-    'shop.category.pet': 'Pet',
+    'shop.category.pet': 'Accessories',
+    'shop.category.accessories': 'Accessories',
+    'shop.category.cats': 'Cats',
     'shop.category.profile': 'Profile',
     'shop.category.extras': 'Extras',
     'shop.category.crates': 'Crates',
     'shop.section.roomBackgrounds': 'Room themes',
     'shop.noRoomBackgrounds': 'No room themes are available yet.',
     'shop.section.petItems': 'Pet accessories',
+    'shop.section.accessories': 'Accessories',
+    'shop.section.cats': 'Cats',
     'shop.section.petStyles': 'Pet styles',
     'shop.section.profileItems': 'Profile accessories',
     'shop.section.profileStyles': 'Profile styles',
@@ -1393,12 +1396,13 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'shop.room.slot.bed': 'Sleep corner',
     'shop.room.slot.decor': 'Lighting & decor',
     'shop.room.slot.shelf': 'Shelves',
+    'shop.catRequiredMinutes': '{minutes} min focus',
 
     'item.focus_badge.name': 'Focus Badge',
     'item.focus_badge.description': 'Shown on your public profile.',
     'item.soft_study_nook.name': 'Soft Study Nook',
     'item.soft_study_nook.description':
-        'A cushioned low study corner made for Mochi.',
+        'A cushioned low study corner made for your cat.',
     'item.moonlit_study_nook.name': 'Moonlit Study Nook',
     'item.moonlit_study_nook.description':
         'A notebook and moon lamp setup for focus sessions.',
@@ -1417,7 +1421,8 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
 
     'inventory.title': 'Inventory',
     'inventory.ownedItems': 'Owned items',
-    'inventory.pets': 'Pets',
+    'inventory.pets': 'Cats',
+    'inventory.accessories': 'Accessories',
     'inventory.equipped': 'Equip',
     'inventory.roomEquipped': 'Placed in room',
     'inventory.roomFurniture': 'Room furniture',
@@ -1427,7 +1432,9 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'inventory.profileCosmetic': 'Profile cosmetic',
     'inventory.premiumCosmetics': 'Plus Cosmetics',
     'inventory.category.room': 'Room',
-    'inventory.category.pet': 'Pet',
+    'inventory.category.pet': 'Accessories',
+    'inventory.category.accessories': 'Accessories',
+    'inventory.category.cats': 'Cats',
     'inventory.category.profile': 'Profile',
     'inventory.category.extras': 'Extras',
     'inventory.roomEffects': 'Room effects',
@@ -1443,6 +1450,10 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'inventory.cosmeticSlot.profile_badge': 'Profile badge',
     'inventory.cosmeticSlot.widget_theme': 'Widget theme',
     'inventory.cosmeticSlot.dialogue_pack': 'Dialogue pack',
+    'inventory.slot.head': 'Head',
+    'inventory.slot.eyes': 'Eyes',
+    'inventory.slot.nose': 'Nose',
+    'inventory.slot.mouth': 'Mouth',
 
     'profile.title': 'Profile',
     'profile.subtitle': 'Focus enthusiast and study buddy',
@@ -1791,7 +1802,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
         'See your focus rhythm by week, month, and all time. Tap charts to open short explanations.',
     'tour.petTitle': 'Pet room',
     'tour.petBody':
-        'Mochi lives here. Tap happiness, hunger, and energy bars to see what they mean.',
+        'Your cat lives here. Tap happiness, hunger, and energy bars to see what they mean.',
     'tour.profileTitle': 'Profile',
     'tour.profileBody':
         'Total focus, sessions, favorite category, equipped items, and your pet summary live here.',
@@ -1800,7 +1811,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
         'Choose the name shown on your profile and in lobbies. You can change it later.',
     'onboarding.petTitle': 'Choose your pet',
     'onboarding.petBody':
-        'Mochi is your starting companion. New pets unlock as you earn points.',
+        'Your starting cat lives here. New cats unlock as you earn focus minutes.',
     'onboarding.goalTitle': 'Daily target',
     'onboarding.goalBody': 'Set a realistic focus-minute target for today.',
     'onboarding.friendTitle': 'Friend code',

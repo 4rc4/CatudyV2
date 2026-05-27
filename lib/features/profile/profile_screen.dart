@@ -689,7 +689,7 @@ class _ProfileAvatar extends StatelessWidget {
       }
     }
     if (id == 'mochi') {
-      return Image.asset(CatudyAssets.mascot, fit: BoxFit.contain);
+      return Image.asset(CatudyAssets.whiteCat, fit: BoxFit.contain);
     }
     if (id == 'study') {
       return const Icon(Icons.menu_book_rounded, color: CatudyColors.violet);

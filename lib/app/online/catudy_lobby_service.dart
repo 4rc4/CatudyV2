@@ -72,7 +72,7 @@ class CatudyOnlineLobbyMember {
       userId: _readString(json, 'user_id'),
       displayName: _readString(json, 'display_name', 'Guest Cat'),
       petId: _readString(json, 'pet_id', 'mochi'),
-      petName: _readString(json, 'pet_name', 'Mochi'),
+      petName: _readString(json, 'pet_name', 'White Cat'),
       equippedPetItemId: _readNullableString(json, 'equipped_pet_item_id'),
       ready: _readBool(json, 'ready'),
       owner: _readBool(json, 'owner'),
@@ -407,7 +407,7 @@ class CatudySupabaseLobbyService {
     required bool ready,
   }) async {
     final cleanName = displayName.trim().isEmpty ? 'Guest Cat' : displayName;
-    final cleanPetName = petName.trim().isEmpty ? 'Mochi' : petName.trim();
+    final cleanPetName = petName.trim().isEmpty ? 'White Cat' : petName.trim();
     await _client.from('catudy_lobby_members').upsert({
       'lobby_id': lobbyId,
       'user_id': userId,
