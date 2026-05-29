@@ -27,11 +27,13 @@ class AppLockScreen extends StatefulWidget {
 class _AppLockScreenState extends State<AppLockScreen>
     with WidgetsBindingObserver {
   final _service = CatudyAppLockService.instance;
+  final _permissionPanelKey = GlobalKey();
   AppLockPermissionStatus _permissionStatus =
       AppLockPermissionStatus.unsupported;
   List<CatudyInstalledApp> _installedApps = const [];
   Future<List<CatudyInstalledApp>>? _installedAppsFuture;
   bool _loadingApps = false;
+  bool _permissionsExpandedOverride = false;
 
   @override
   void initState() {
@@ -57,65 +59,96 @@ class _AppLockScreenState extends State<AppLockScreen>
   @override
   Widget build(BuildContext context) {
     return StoreBuilder(
-      builder: (context, store) => ScreenScaffold(
-        title: store.t('appLock.title'),
-        showBack: true,
-        fallbackBackPath: '/settings',
-        children: [
-          CatudyPanel(
-            color: CatudyColors.lavenderSoft,
-            accentColor: CatudyColors.violet,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CatudySectionHeader(
-                  title: store.t('appLock.header'),
-                  subtitle: store.t('appLock.headerBody'),
-                  icon: Icons.lock_clock_rounded,
-                  accentColor: CatudyColors.violet,
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile(
-                  value: store.lockSettings.enabled,
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: (value) {
-                    store.updateLockSettings(enabled: value);
-                    _syncNativeRules(startService: value);
-                  },
-                  title: Text(store.t('appLock.masterSwitch')),
-                  subtitle: Text(store.t('appLock.masterSwitchBody')),
-                ),
-              ],
+      builder: (context, store) {
+        final permissionsGranted = _allPermissionsGranted;
+        final permissionsExpanded =
+            !permissionsGranted || _permissionsExpandedOverride;
+        return ScreenScaffold(
+          title: store.t('appLock.title'),
+          showBack: true,
+          fallbackBackPath: '/settings',
+          children: [
+            CatudyPanel(
+              color: CatudyColors.lavenderSoft,
+              accentColor: CatudyColors.violet,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CatudySectionHeader(
+                    title: store.t('appLock.header'),
+                    subtitle: store.t('appLock.headerBody'),
+                    icon: Icons.lock_clock_rounded,
+                    accentColor: CatudyColors.violet,
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    value: store.lockSettings.enabled,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (value) {
+                      store.updateLockSettings(enabled: value);
+                      _syncNativeRules(startService: value);
+                    },
+                    title: Text(store.t('appLock.masterSwitch')),
+                    subtitle: Text(store.t('appLock.masterSwitchBody')),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
-          _PermissionPanel(
-            store: store,
-            status: _permissionStatus,
-            androidSupported: _service.isAndroid,
-            onUsage: () =>
-                _openPermissionSettings(_service.openUsageAccessSettings),
-            onOverlay: () =>
-                _openPermissionSettings(_service.openOverlaySettings),
-            onLocation: () =>
-                _openPermissionSettings(_service.openLocationSettings),
-          ),
-          const SizedBox(height: 14),
-          _LockedAppsPanel(
-            store: store,
-            loadingApps: _loadingApps,
-            onAdd: () => _pickInstalledApp(context, store),
-            onSync: () => _syncNativeRules(startService: true),
-          ),
-          const SizedBox(height: 14),
-          _LocationsPanel(
-            store: store,
-            onAdd: () => _pickLocation(context, store),
-            onSync: () => _syncNativeRules(startService: true),
-          ),
-        ],
-      ),
+            const SizedBox(height: 14),
+            _PermissionPanel(
+              key: _permissionPanelKey,
+              store: store,
+              status: _permissionStatus,
+              androidSupported: _service.isAndroid,
+              expanded: permissionsExpanded,
+              allGranted: permissionsGranted,
+              onExpand: _expandPermissions,
+              onUsage: () =>
+                  _openPermissionSettings(_service.openUsageAccessSettings),
+              onOverlay: () =>
+                  _openPermissionSettings(_service.openOverlaySettings),
+              onLocation: () =>
+                  _openPermissionSettings(_service.openLocationSettings),
+            ),
+            const SizedBox(height: 14),
+            _LockedAppsPanel(
+              store: store,
+              loadingApps: _loadingApps,
+              onAdd: () => _pickInstalledApp(context, store),
+              onSync: () => _syncNativeRules(startService: true),
+            ),
+            const SizedBox(height: 14),
+            _LocationsPanel(
+              store: store,
+              onAdd: () => _pickLocation(context, store),
+              onSync: () => _syncNativeRules(startService: true),
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  bool get _allPermissionsGranted =>
+      _service.isAndroid &&
+      _permissionStatus.usageAccess &&
+      _permissionStatus.overlay &&
+      _permissionStatus.location &&
+      _permissionStatus.backgroundLocation;
+
+  void _expandPermissions() {
+    setState(() => _permissionsExpandedOverride = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _permissionPanelKey.currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          alignment: 0.08,
+        );
+      }
+    });
   }
 
   Future<void> _refreshPermissions() async {
@@ -254,9 +287,13 @@ class _AppLockScreenState extends State<AppLockScreen>
 
 class _PermissionPanel extends StatelessWidget {
   const _PermissionPanel({
+    super.key,
     required this.store,
     required this.status,
     required this.androidSupported,
+    required this.expanded,
+    required this.allGranted,
+    required this.onExpand,
     required this.onUsage,
     required this.onOverlay,
     required this.onLocation,
@@ -265,12 +302,46 @@ class _PermissionPanel extends StatelessWidget {
   final CatudyDemoStore store;
   final AppLockPermissionStatus status;
   final bool androidSupported;
+  final bool expanded;
+  final bool allGranted;
+  final VoidCallback onExpand;
   final Future<void> Function() onUsage;
   final Future<void> Function() onOverlay;
   final Future<void> Function() onLocation;
 
   @override
   Widget build(BuildContext context) {
+    if (allGranted && !expanded) {
+      return CatudyPanel(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        accentColor: CatudyColors.blueFor(context),
+        child: InkWell(
+          onTap: onExpand,
+          borderRadius: BorderRadius.circular(14),
+          child: Row(
+            children: [
+              Icon(
+                Icons.admin_panel_settings_rounded,
+                color: CatudyColors.blueFor(context),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  store.t('appLock.permissions'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: CatudyColors.blueFor(context),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return CatudyPanel(
       accentColor: CatudyColors.blueFor(context),
       child: Column(
@@ -441,7 +512,8 @@ class _LockedAppTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unlocked = store.isLockedAppUnlocked(app.packageName);
+    final unlocked =
+        app.focusLockEnabled && store.isLockedAppUnlocked(app.packageName);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -467,13 +539,6 @@ class _LockedAppTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Switch(
-                    value: app.enabled,
-                    onChanged: (value) {
-                      store.setLockedAppEnabled(app.packageName, value);
-                      onChanged();
-                    },
-                  ),
                 ],
               ),
               Text(
@@ -483,50 +548,76 @@ class _LockedAppTile extends StatelessWidget {
                 style: TextStyle(color: CatudyColors.mutedFor(context)),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  DropdownButton<int>(
-                    value: _minuteOptions.contains(app.requiredFocusMinutes)
-                        ? app.requiredFocusMinutes
-                        : 25,
-                    items: [
-                      for (final minutes in _minuteOptions)
-                        DropdownMenuItem(
-                          value: minutes,
-                          child: Text(
-                            store.t('appLock.requiredMinutes', {
-                              'minutes': minutes,
-                            }),
+              _LockModeSwitch(
+                icon: Icons.timer_rounded,
+                title: store.t('appLock.focusLock'),
+                subtitle: store.t('appLock.focusLockBody'),
+                value: app.focusLockEnabled,
+                color: CatudyColors.violet,
+                onChanged: (value) {
+                  store.setLockedAppFocusLockEnabled(app.packageName, value);
+                  onChanged();
+                },
+              ),
+              if (app.focusLockEnabled) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    DropdownButton<int>(
+                      value: _minuteOptions.contains(app.requiredFocusMinutes)
+                          ? app.requiredFocusMinutes
+                          : 25,
+                      items: [
+                        for (final minutes in _minuteOptions)
+                          DropdownMenuItem(
+                            value: minutes,
+                            child: Text(
+                              store.t('appLock.requiredMinutes', {
+                                'minutes': minutes,
+                              }),
+                            ),
                           ),
-                        ),
-                    ],
-                    onChanged: (minutes) {
-                      if (minutes == null) {
-                        return;
-                      }
-                      store.updateLockedAppMinutes(app.packageName, minutes);
-                      onChanged();
-                    },
-                  ),
-                  if (unlocked)
-                    Chip(
-                      avatar: const Icon(Icons.lock_open_rounded, size: 18),
-                      label: Text(store.t('appLock.unlockedToday')),
+                      ],
+                      onChanged: (minutes) {
+                        if (minutes == null) {
+                          return;
+                        }
+                        store.updateLockedAppMinutes(app.packageName, minutes);
+                        onChanged();
+                      },
                     ),
-                  TextButton.icon(
-                    onPressed: () {
-                      store.prepareAppUnlockFocus(app.packageName);
-                      context.go(
-                        '/focus/start?unlockApp=${Uri.encodeComponent(app.packageName)}',
-                      );
-                    },
-                    icon: const Icon(Icons.timer_rounded),
-                    label: Text(store.t('appLock.startFocus')),
-                  ),
-                ],
+                    if (unlocked)
+                      Chip(
+                        avatar: const Icon(Icons.lock_open_rounded, size: 18),
+                        label: Text(store.t('appLock.unlockedToday')),
+                      ),
+                    TextButton.icon(
+                      onPressed: () {
+                        store.prepareAppUnlockFocus(app.packageName);
+                        context.go(
+                          '/focus/start?unlockApp=${Uri.encodeComponent(app.packageName)}',
+                        );
+                      },
+                      icon: const Icon(Icons.timer_rounded),
+                      label: Text(store.t('appLock.startFocus')),
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 8),
+              _LockModeSwitch(
+                icon: Icons.location_on_rounded,
+                title: store.t('appLock.locationLock'),
+                subtitle: store.t('appLock.locationLockBody'),
+                value: app.locationLockEnabled,
+                color: CatudyColors.tealDark,
+                onChanged: (value) {
+                  store.setLockedAppLocationLockEnabled(app.packageName, value);
+                  onChanged();
+                },
               ),
             ],
           ),
@@ -540,6 +631,54 @@ class _LockedAppTile extends StatelessWidget {
           tooltip: store.t('common.delete'),
         ),
       ],
+    );
+  }
+}
+
+class _LockModeSwitch extends StatelessWidget {
+  const _LockModeSwitch({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.color,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final Color color;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: value ? 0.10 : 0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: SwitchListTile(
+        value: value,
+        dense: true,
+        contentPadding: const EdgeInsets.only(left: 10, right: 2),
+        secondary: Icon(icon, color: color, size: 20),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            color: CatudyColors.mutedFor(context),
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+          ),
+        ),
+        onChanged: onChanged,
+      ),
     );
   }
 }
@@ -593,7 +732,8 @@ class _LocationsPanel extends StatelessWidget {
               store.updateLockSettings(strictLocationLocksEnabled: value);
               onSync();
             },
-            title: Text(store.t('appLock.strictLocation')),
+            title: Text(store.t('appLock.locationMasterSwitch')),
+            subtitle: Text(store.t('appLock.locationMasterSwitchBody')),
           ),
           if (!store.canAddLockLocation && !store.hasPremiumAccess)
             TextButton.icon(
@@ -885,6 +1025,7 @@ class _LocationPickerDialogState extends State<_LocationPickerDialog> {
   var _searchResults = <_LocationSearchResult>[];
   bool _searching = false;
   bool _loadingCurrentLocation = false;
+  bool _mapExpanded = false;
   String? _searchMessage;
 
   @override
@@ -908,7 +1049,11 @@ class _LocationPickerDialogState extends State<_LocationPickerDialog> {
     final store = widget.store;
     final size = MediaQuery.sizeOf(context);
     final compact = size.width < 430;
-    final mapHeight = compact ? 250.0 : 310.0;
+    final mapHeight = _mapExpanded
+        ? (size.height * 0.52).clamp(320.0, 520.0).toDouble()
+        : compact
+        ? 250.0
+        : 310.0;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: SafeArea(
@@ -1056,10 +1201,29 @@ class _LocationPickerDialogState extends State<_LocationPickerDialog> {
                                 ),
                                 Positioned(
                                   left: 10,
-                                  right: 10,
+                                  right: 62,
                                   top: 10,
                                   child: _MapHint(
                                     text: store.t('appLock.tapMapHint'),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 10,
+                                  top: 10,
+                                  child: IconButton.filledTonal(
+                                    onPressed: () => setState(
+                                      () => _mapExpanded = !_mapExpanded,
+                                    ),
+                                    tooltip: store.t(
+                                      _mapExpanded
+                                          ? 'appLock.collapseMap'
+                                          : 'appLock.expandMap',
+                                    ),
+                                    icon: Icon(
+                                      _mapExpanded
+                                          ? Icons.fullscreen_exit_rounded
+                                          : Icons.fullscreen_rounded,
+                                    ),
                                   ),
                                 ),
                                 Positioned(

@@ -2,6 +2,7 @@ package com.catudy.catudy_app
 
 import android.Manifest
 import android.app.AppOpsManager
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -73,6 +74,23 @@ class MainActivity : FlutterActivity() {
                 "stopLockService" -> {
                     stopService(Intent(this, CatudyAppLockService::class.java))
                     result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "catudy/device_controls"
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "isDoNotDisturbAccessGranted" -> result.success(hasDoNotDisturbAccess())
+                "openDoNotDisturbAccessSettings" -> {
+                    openSettings(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+                    result.success(null)
+                }
+                "setDoNotDisturb" -> {
+                    val enabled = (call.arguments as? Map<*, *>)?.get("enabled") == true
+                    result.success(setDoNotDisturb(enabled))
                 }
                 else -> result.notImplemented()
             }
@@ -225,7 +243,49 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun hasDoNotDisturbAccess(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return false
+        }
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        return notificationManager?.isNotificationPolicyAccessGranted == true
+    }
+
+    private fun setDoNotDisturb(enabled: Boolean): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || !hasDoNotDisturbAccess()) {
+            return false
+        }
+        val notificationManager = getSystemService(NotificationManager::class.java)
+            ?: return false
+        val prefs = getSharedPreferences(DEVICE_CONTROLS_PREFS, Context.MODE_PRIVATE)
+        return runCatching {
+            if (enabled) {
+                if (!prefs.contains(KEY_PREVIOUS_DND_FILTER)) {
+                    prefs.edit()
+                        .putInt(
+                            KEY_PREVIOUS_DND_FILTER,
+                            notificationManager.currentInterruptionFilter
+                        )
+                        .apply()
+                }
+                notificationManager.setInterruptionFilter(
+                    NotificationManager.INTERRUPTION_FILTER_NONE
+                )
+            } else {
+                val previousFilter = prefs.getInt(
+                    KEY_PREVIOUS_DND_FILTER,
+                    NotificationManager.INTERRUPTION_FILTER_ALL
+                )
+                notificationManager.setInterruptionFilter(previousFilter)
+                prefs.edit().remove(KEY_PREVIOUS_DND_FILTER).apply()
+            }
+            true
+        }.getOrDefault(false)
+    }
+
     companion object {
         private const val APP_ICON_SIZE_PX = 64
+        private const val DEVICE_CONTROLS_PREFS = "catudy_device_controls"
+        private const val KEY_PREVIOUS_DND_FILTER = "previous_dnd_filter"
     }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../catudy_assets.dart';
+import '../device/catudy_device_controls.dart';
 import '../lock/catudy_app_lock_models.dart';
 import '../lock/catudy_app_lock_service.dart';
 import '../localization/catudy_copy.dart';
@@ -1055,6 +1056,7 @@ class CatudyDemoStore extends ChangeNotifier {
   String profileShareBaseUrl = '';
   bool offlineMode = true;
   bool dndReminder = true;
+  bool focusDndEnabled = true;
   bool notifications = true;
   bool dailyGoalReminderEnabled = true;
   bool publicStatsVisible = true;
@@ -1139,7 +1141,8 @@ class CatudyDemoStore extends ChangeNotifier {
 
   bool get hasActiveStrictLockLocation =>
       lockSettings.strictLocationLocksEnabled &&
-      lockLocations.any((item) => item.active);
+      lockLocations.any((item) => item.active) &&
+      lockedApps.any((item) => item.enabled && item.locationLockEnabled);
 
   bool get canSendBuddyPass {
     if (!hasPremiumAccess) {
@@ -2754,6 +2757,7 @@ class CatudyDemoStore extends ChangeNotifier {
     }
     _commit();
     _syncAppLockRulesToPlatform();
+    _setFocusDoNotDisturb(true);
     _scheduleActiveFocusCompletion();
     _syncNotifications();
   }
@@ -2768,6 +2772,7 @@ class CatudyDemoStore extends ChangeNotifier {
     _focusCompletionTimer?.cancel();
     _commit();
     _syncAppLockRulesToPlatform();
+    _setFocusDoNotDisturb(false);
     _syncNotifications();
   }
 
@@ -2802,6 +2807,7 @@ class CatudyDemoStore extends ChangeNotifier {
     }
     _commit();
     _syncAppLockRulesToPlatform();
+    _setFocusDoNotDisturb(false);
     _syncNotifications();
     return record;
   }
@@ -3022,6 +3028,7 @@ class CatudyDemoStore extends ChangeNotifier {
         appName: appName,
         requiredFocusMinutes: requiredFocusMinutes,
         enabled: true,
+        focusLockEnabled: true,
         appIconBase64: app.appIconBase64,
       );
       _commitAppLockRules();
@@ -3037,6 +3044,8 @@ class CatudyDemoStore extends ChangeNotifier {
         requiredFocusMinutes:
             requiredFocusMinutes ?? lockSettings.defaultRequiredFocusMinutes,
         enabled: true,
+        focusLockEnabled: true,
+        locationLockEnabled: false,
         appIconBase64: app.appIconBase64,
       ),
     );
@@ -3086,7 +3095,41 @@ class CatudyDemoStore extends ChangeNotifier {
     }
     lockedApps[index] = lockedApps[index].copyWith(
       enabled: enabled,
+      focusLockEnabled: enabled
+          ? lockedApps[index].focusLockEnabled ||
+                !lockedApps[index].locationLockEnabled
+          : false,
+      locationLockEnabled: enabled
+          ? lockedApps[index].locationLockEnabled
+          : false,
       clearUnlockedUntil: !enabled,
+    );
+    _commitAppLockRules();
+  }
+
+  void setLockedAppFocusLockEnabled(String packageName, bool enabled) {
+    final index = lockedApps.indexWhere(
+      (item) => item.packageName == packageName,
+    );
+    if (index == -1) {
+      return;
+    }
+    lockedApps[index] = lockedApps[index].copyWith(
+      focusLockEnabled: enabled,
+      clearUnlockedUntil: !enabled,
+    );
+    _commitAppLockRules();
+  }
+
+  void setLockedAppLocationLockEnabled(String packageName, bool enabled) {
+    final index = lockedApps.indexWhere(
+      (item) => item.packageName == packageName,
+    );
+    if (index == -1) {
+      return;
+    }
+    lockedApps[index] = lockedApps[index].copyWith(
+      locationLockEnabled: enabled,
     );
     _commitAppLockRules();
   }
@@ -3146,7 +3189,7 @@ class CatudyDemoStore extends ChangeNotifier {
 
   void prepareAppUnlockFocus(String packageName) {
     final lockedApp = lockedAppByPackage(packageName);
-    if (lockedApp == null) {
+    if (lockedApp == null || !lockedApp.focusLockEnabled) {
       return;
     }
     pendingUnlockPackageName = packageName;
@@ -3159,12 +3202,15 @@ class CatudyDemoStore extends ChangeNotifier {
     DateTime? at,
     bool strictLocationActive = false,
   }) {
-    if (strictLocationActive) {
-      return false;
-    }
     final now = at ?? DateTime.now();
     final lockedApp = lockedAppByPackage(packageName);
-    return lockedApp?.isUnlockedAt(now) ?? false;
+    if (lockedApp == null || !lockedApp.focusLockEnabled) {
+      return false;
+    }
+    if (strictLocationActive && lockedApp.locationLockEnabled) {
+      return false;
+    }
+    return lockedApp.isUnlockedAt(now);
   }
 
   bool isLockedAppBlocked(
@@ -3176,10 +3222,14 @@ class CatudyDemoStore extends ChangeNotifier {
     if (lockedApp == null || !lockedApp.enabled || !lockSettings.enabled) {
       return false;
     }
-    if (strictLocationActive && lockSettings.strictLocationLocksEnabled) {
-      return true;
-    }
-    return !lockedApp.isUnlockedAt(at ?? DateTime.now());
+    final locationBlocked =
+        strictLocationActive &&
+        lockSettings.strictLocationLocksEnabled &&
+        lockedApp.locationLockEnabled;
+    final focusBlocked =
+        lockedApp.focusLockEnabled &&
+        !lockedApp.isUnlockedAt(at ?? DateTime.now());
+    return locationBlocked || focusBlocked;
   }
 
   bool buyItem(String id) {
@@ -4214,6 +4264,7 @@ class CatudyDemoStore extends ChangeNotifier {
     required String name,
     required String apiUrl,
     required bool dnd,
+    required bool focusDnd,
     required bool petNotifications,
     String? profileShareUrl,
     bool? profileStatsVisible,
@@ -4232,6 +4283,9 @@ class CatudyDemoStore extends ChangeNotifier {
       publicStatsVisible = profileStatsVisible;
     }
     dndReminder = dnd;
+    final notificationsChanged = notifications != petNotifications;
+    final focusDndWasEnabled = focusDndEnabled;
+    focusDndEnabled = focusDnd;
     notifications = petNotifications;
     final nextLanguageCode = _normalizeLanguageCode(language);
     final languageChanged = nextLanguageCode != languageCode;
@@ -4245,7 +4299,16 @@ class CatudyDemoStore extends ChangeNotifier {
       _ => 'system',
     };
     _commit();
-    if (languageChanged) {
+    if (focusDndWasEnabled && !focusDnd && activeSession != null) {
+      unawaited(
+        CatudyDeviceControls.instance
+            .setDoNotDisturb(false)
+            .catchError((Object _) => false),
+      );
+    } else if (!focusDndWasEnabled && focusDnd && activeSession != null) {
+      _setFocusDoNotDisturb(true);
+    }
+    if (languageChanged || notificationsChanged) {
       _syncNotifications();
     }
     if (syncDisplayName) {
@@ -4352,6 +4415,9 @@ class CatudyDemoStore extends ChangeNotifier {
         _restoreFromJson(state);
       }
       _completeExpiredRestoredSession(DateTime.now());
+      if (activeSession != null) {
+        _setFocusDoNotDisturb(true);
+      }
     } catch (_) {
       _applyDefaults();
     }
@@ -4472,6 +4538,17 @@ class CatudyDemoStore extends ChangeNotifier {
       return;
     }
     unawaited(sync().catchError((Object _) {}));
+  }
+
+  void _setFocusDoNotDisturb(bool enabled) {
+    if (!focusDndEnabled) {
+      return;
+    }
+    unawaited(
+      CatudyDeviceControls.instance
+          .setDoNotDisturb(enabled)
+          .catchError((Object _) => false),
+    );
   }
 
   void _refreshPetVitals({bool notify = false}) {
@@ -5007,6 +5084,7 @@ class CatudyDemoStore extends ChangeNotifier {
       _commit();
     }
     _syncAppLockRulesToPlatform();
+    _setFocusDoNotDisturb(false);
     _syncNotifications();
   }
 
@@ -5055,6 +5133,7 @@ class CatudyDemoStore extends ChangeNotifier {
     profileShareBaseUrl = '';
     offlineMode = true;
     dndReminder = true;
+    focusDndEnabled = true;
     notifications = true;
     dailyGoalReminderEnabled = true;
     publicStatsVisible = true;
@@ -5209,6 +5288,7 @@ class CatudyDemoStore extends ChangeNotifier {
     profileShareBaseUrl = _readString(json, 'profileShareBaseUrl', '');
     offlineMode = _readBool(json, 'offlineMode', true);
     dndReminder = _readBool(json, 'dndReminder', true);
+    focusDndEnabled = _readBool(json, 'focusDndEnabled', true);
     notifications = _readBool(json, 'notifications', true);
     dailyGoalReminderEnabled = _readBool(
       json,
@@ -5398,7 +5478,7 @@ class CatudyDemoStore extends ChangeNotifier {
     final until = _endOfDay(record.createdAt);
     for (var index = 0; index < lockedApps.length; index += 1) {
       final app = lockedApps[index];
-      if (!app.enabled) {
+      if (!app.enabled || !app.focusLockEnabled) {
         continue;
       }
       if (unlockPackageName != null && app.packageName != unlockPackageName) {
@@ -5497,6 +5577,7 @@ class CatudyDemoStore extends ChangeNotifier {
     'profileShareBaseUrl': profileShareBaseUrl,
     'offlineMode': offlineMode,
     'dndReminder': dndReminder,
+    'focusDndEnabled': focusDndEnabled,
     'notifications': notifications,
     'dailyGoalReminderEnabled': dailyGoalReminderEnabled,
     'publicStatsVisible': publicStatsVisible,

@@ -96,6 +96,10 @@ Future<void> _scheduleLocalizedNotifications() async {
     languageCode: store.languageCode,
     enabled: store.notifications && store.dailyGoalReminderEnabled,
   );
+  await CatudyNotificationService.instance.schedulePetCareReminders(
+    languageCode: store.languageCode,
+    enabled: store.notifications,
+  );
   final activeSession = store.activeSession;
   if (store.notifications && activeSession != null) {
     await CatudyNotificationService.instance.scheduleFocusCompleteNotification(

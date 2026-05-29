@@ -865,6 +865,8 @@ class _RoomTopBar extends StatelessWidget {
               TextButton.icon(
                 onPressed: onRename,
                 style: TextButton.styleFrom(
+                  foregroundColor: CatudyColors.coral,
+                  backgroundColor: CatudyColors.coral.withValues(alpha: 0.10),
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(0, 28),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,

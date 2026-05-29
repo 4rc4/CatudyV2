@@ -21,8 +21,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return StoreBuilder(
       builder: (context, store) {
         return SingleChildScrollView(
@@ -33,42 +31,153 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 12),
               _FocusHeroCard(store: store),
               const SizedBox(height: 14),
+              _TodayRemindersPanel(store: store),
+              const SizedBox(height: 14),
               _DailyGoalPanel(store: store),
               const SizedBox(height: 14),
               _SecondaryHomePanel(store: store),
               CatudyTestAdBanner(show: !store.hasPremiumAccess),
               const SizedBox(height: 14),
               _PetCompanionCard(store: store),
-              const SizedBox(height: 14),
-              CatudyPanel(
-                accentColor: CatudyColors.teal,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      store.t('home.todayReminders'),
-                      style: textTheme.titleLarge?.copyWith(
-                        color: CatudyColors.mutedFor(context),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    if (store.todosForDay(DateTime.now()).isEmpty)
-                      Text(
-                        store.t('home.noTodayReminders'),
-                        style: TextStyle(color: CatudyColors.mutedFor(context)),
-                      )
-                    else
-                      for (final todo in store.todosForDay(DateTime.now()))
-                        _HomeTodoTile(todo: todo),
-                  ],
-                ),
-              ),
             ],
           ),
         );
       },
     );
+  }
+}
+
+class _TodayRemindersPanel extends StatelessWidget {
+  const _TodayRemindersPanel({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final todayTodos = store.todosForDay(DateTime.now());
+    return CatudyPanel(
+      accentColor: CatudyColors.teal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            store.t('home.todayReminders'),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: CatudyColors.mutedFor(context),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _QuickReminderComposer(store: store),
+          const SizedBox(height: 12),
+          if (todayTodos.isEmpty)
+            Text(
+              store.t('home.noTodayReminders'),
+              style: TextStyle(color: CatudyColors.mutedFor(context)),
+            )
+          else
+            for (final todo in todayTodos) _HomeTodoTile(todo: todo),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickReminderComposer extends StatefulWidget {
+  const _QuickReminderComposer({required this.store});
+
+  final CatudyDemoStore store;
+
+  @override
+  State<_QuickReminderComposer> createState() => _QuickReminderComposerState();
+}
+
+class _QuickReminderComposerState extends State<_QuickReminderComposer> {
+  late final TextEditingController _controller;
+  late TimeOfDay _time;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+    final nextHour = DateTime.now().add(const Duration(hours: 1));
+    _time = TimeOfDay(hour: nextHour.hour, minute: 0);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final timeLabel =
+        '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}';
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: CatudyColors.surfaceFor(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: CatudyColors.teal.withValues(alpha: 0.18)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _addReminder(),
+                decoration: InputDecoration(
+                  hintText: widget.store.t('home.quickReminderHint'),
+                  isDense: true,
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _pickTime,
+              icon: const Icon(Icons.schedule_rounded, size: 18),
+              label: Text(timeLabel),
+            ),
+            IconButton.filled(
+              onPressed: _addReminder,
+              icon: const Icon(Icons.add_rounded),
+              tooltip: widget.store.t('home.quickReminderAdd'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(context: context, initialTime: _time);
+    if (picked == null || !mounted) {
+      return;
+    }
+    setState(() => _time = picked);
+  }
+
+  void _addReminder() {
+    final todo = widget.store.addTodoReminder(
+      date: DateTime.now(),
+      time: _time,
+      title: _controller.text,
+    );
+    if (todo == null) {
+      return;
+    }
+    _controller.clear();
+    if (widget.store.notifications) {
+      unawaited(
+        CatudyNotificationService.instance.scheduleReminder(
+          todo,
+          languageCode: widget.store.languageCode,
+        ),
+      );
+    }
   }
 }
 

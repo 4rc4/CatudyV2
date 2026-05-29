@@ -589,7 +589,7 @@ class _ProductGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         const spacing = 7.0;
-        final columns = constraints.maxWidth >= 285 ? 3 : 2;
+        const columns = 2;
         final width =
             (constraints.maxWidth - (spacing * (columns - 1))) / columns;
         return Wrap(
@@ -625,7 +625,7 @@ class _ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 184,
-      padding: const EdgeInsets.all(7),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: CatudyColors.surfaceFor(context),
         borderRadius: BorderRadius.circular(8),
@@ -690,16 +690,19 @@ class _ProductCard extends StatelessWidget {
               filledButtonTheme: FilledButtonThemeData(
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(0, 28),
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: const TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 11.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
             ),
-            child: SizedBox(height: 28, child: action),
+            child: SizedBox(height: 36, child: action),
           ),
         ],
       ),

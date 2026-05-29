@@ -28,11 +28,20 @@ class LockedApp {
     required this.appName,
     required this.requiredFocusMinutes,
     required this.enabled,
+    this.focusLockEnabled = true,
+    this.locationLockEnabled = false,
     this.appIconBase64,
     this.unlockedUntil,
   });
 
   factory LockedApp.fromJson(Map<String, dynamic> json) {
+    final legacyEnabled = _readBool(json, 'enabled', true);
+    final focusLockEnabled = _readBool(json, 'focusLockEnabled', legacyEnabled);
+    final locationLockEnabled = _readBool(
+      json,
+      'locationLockEnabled',
+      legacyEnabled,
+    );
     return LockedApp(
       packageName: _readString(json, 'packageName', ''),
       appName: _readString(json, 'appName', ''),
@@ -41,7 +50,13 @@ class LockedApp {
         'requiredFocusMinutes',
         LockSettings.defaultFocusMinutes,
       ).clamp(1, 240).toInt(),
-      enabled: _readBool(json, 'enabled', true),
+      enabled: _readBool(
+        json,
+        'enabled',
+        focusLockEnabled || locationLockEnabled,
+      ),
+      focusLockEnabled: focusLockEnabled,
+      locationLockEnabled: locationLockEnabled,
       appIconBase64:
           _readNullableString(json, 'appIconBase64') ??
           _readNullableString(json, 'appIcon'),
@@ -53,6 +68,8 @@ class LockedApp {
   final String appName;
   final int requiredFocusMinutes;
   final bool enabled;
+  final bool focusLockEnabled;
+  final bool locationLockEnabled;
   final String? appIconBase64;
   final DateTime? unlockedUntil;
 
@@ -65,17 +82,24 @@ class LockedApp {
     String? appName,
     int? requiredFocusMinutes,
     bool? enabled,
+    bool? focusLockEnabled,
+    bool? locationLockEnabled,
     String? appIconBase64,
     DateTime? unlockedUntil,
     bool clearUnlockedUntil = false,
   }) {
+    final nextFocusLockEnabled = focusLockEnabled ?? this.focusLockEnabled;
+    final nextLocationLockEnabled =
+        locationLockEnabled ?? this.locationLockEnabled;
     return LockedApp(
       packageName: packageName,
       appName: appName ?? this.appName,
       requiredFocusMinutes:
           requiredFocusMinutes?.clamp(1, 240).toInt() ??
           this.requiredFocusMinutes,
-      enabled: enabled ?? this.enabled,
+      enabled: enabled ?? (nextFocusLockEnabled || nextLocationLockEnabled),
+      focusLockEnabled: nextFocusLockEnabled,
+      locationLockEnabled: nextLocationLockEnabled,
       appIconBase64: appIconBase64 ?? this.appIconBase64,
       unlockedUntil: clearUnlockedUntil
           ? null
@@ -88,6 +112,8 @@ class LockedApp {
     'appName': appName,
     'requiredFocusMinutes': requiredFocusMinutes,
     'enabled': enabled,
+    'focusLockEnabled': focusLockEnabled,
+    'locationLockEnabled': locationLockEnabled,
     if (appIconBase64?.isNotEmpty == true) 'appIconBase64': appIconBase64,
     'unlockedUntil': unlockedUntil?.toIso8601String(),
   };

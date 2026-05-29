@@ -41,6 +41,14 @@ object AppLockRuleStore {
                         appName = app.optString("appName", packageName),
                         requiredFocusMinutes = app.optInt("requiredFocusMinutes", 25),
                         enabled = app.optBoolean("enabled", true),
+                        focusLockEnabled = app.optBoolean(
+                            "focusLockEnabled",
+                            app.optBoolean("enabled", true)
+                        ),
+                        locationLockEnabled = app.optBoolean(
+                            "locationLockEnabled",
+                            app.optBoolean("enabled", true)
+                        ),
                         unlockedUntilMillis = parseInstantMillis(
                             app.optString("unlockedUntil", "")
                         )
@@ -121,6 +129,8 @@ data class LockedAppRule(
     val appName: String,
     val requiredFocusMinutes: Int,
     val enabled: Boolean,
+    val focusLockEnabled: Boolean,
+    val locationLockEnabled: Boolean,
     val unlockedUntilMillis: Long?,
 )
 

@@ -91,15 +91,17 @@ class CatudyAppLockService : Service() {
             hideOverlay()
             return
         }
-        val strictLocationActive = rules.strictLocationLocksEnabled &&
+        val locationLockActive = rule.locationLockEnabled &&
+            rules.strictLocationLocksEnabled &&
             isInsideActiveLockLocation()
         val now = System.currentTimeMillis()
         val unlocked = rule.unlockedUntilMillis?.let { it > now } == true
-        if (!strictLocationActive && unlocked) {
+        val focusLockActive = rule.focusLockEnabled && !unlocked
+        if (!locationLockActive && !focusLockActive) {
             hideOverlay()
             return
         }
-        showOverlay(rule, strictLocationActive)
+        showOverlay(rule, locationLockActive, focusLockActive)
     }
 
     private fun currentForegroundPackage(): String? {
@@ -121,7 +123,11 @@ class CatudyAppLockService : Service() {
         return latestPackage
     }
 
-    private fun showOverlay(rule: LockedAppRule, strictLocationActive: Boolean) {
+    private fun showOverlay(
+        rule: LockedAppRule,
+        locationLockActive: Boolean,
+        focusLockActive: Boolean
+    ) {
         if (!Settings.canDrawOverlays(this)) {
             return
         }
@@ -154,14 +160,16 @@ class CatudyAppLockService : Service() {
         card.addView(lockBadge())
         card.addView(lockTitle(if (isTurkish()) "Bu uygulama kilitli" else "This app is locked"))
         card.addView(lockAppName(rule.appName))
-        card.addView(lockBody(rule, strictLocationActive))
-        card.addView(lockProgress(rule, strictLocationActive))
-        card.addView(lockButton(
-            if (isTurkish()) "Catudy'de odak ba\u015Flat" else "Start focus in Catudy"
-        ) {
-            hideOverlay()
-            launchCatudy("catudy:///focus/start?unlockApp=${Uri.encode(rule.packageName)}")
-        })
+        card.addView(lockBody(rule, locationLockActive))
+        card.addView(lockProgress(rule, locationLockActive))
+        if (focusLockActive && !locationLockActive) {
+            card.addView(lockButton(
+                if (isTurkish()) "Catudy'de odak ba\u015Flat" else "Start focus in Catudy"
+            ) {
+                hideOverlay()
+                launchCatudy("catudy:///focus/start?unlockApp=${Uri.encode(rule.packageName)}")
+            })
+        }
         card.addView(lockButton(
             if (isTurkish()) "Kilit ayarlar\u0131" else "Lock settings"
         ) {
@@ -236,8 +244,8 @@ class CatudyAppLockService : Service() {
         }
     }
 
-    private fun lockBody(rule: LockedAppRule, strictLocationActive: Boolean): TextView {
-        val body = if (strictLocationActive) {
+    private fun lockBody(rule: LockedAppRule, locationLockActive: Boolean): TextView {
+        val body = if (locationLockActive) {
             if (isTurkish()) {
                 "${rule.appName} se\u00E7ili konumdayken kapal\u0131 kal\u0131r. Konum kural\u0131n\u0131 Catudy'den kapatabilirsin."
             } else {
@@ -260,8 +268,8 @@ class CatudyAppLockService : Service() {
         }
     }
 
-    private fun lockProgress(rule: LockedAppRule, strictLocationActive: Boolean): LinearLayout {
-        val progress = progressFor(rule, strictLocationActive)
+    private fun lockProgress(rule: LockedAppRule, locationLockActive: Boolean): LinearLayout {
+        val progress = progressFor(rule, locationLockActive)
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(12), dp(14), dp(12))
@@ -281,7 +289,7 @@ class CatudyAppLockService : Service() {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
                 addView(TextView(this@CatudyAppLockService).apply {
-                    text = if (strictLocationActive) {
+                    text = if (locationLockActive) {
                         if (isTurkish()) "Konum kural\u0131" else "Location rule"
                     } else {
                         if (isTurkish()) "Kalan odak" else "Remaining focus"
@@ -334,9 +342,9 @@ class CatudyAppLockService : Service() {
 
     private fun progressFor(
         rule: LockedAppRule,
-        strictLocationActive: Boolean
+        locationLockActive: Boolean
     ): LockProgress {
-        if (strictLocationActive) {
+        if (locationLockActive) {
             return LockProgress(
                 label = if (isTurkish()) "Aktif" else "Active",
                 value = 0.0

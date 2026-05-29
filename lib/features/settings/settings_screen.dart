@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/demo/catudy_demo_store.dart';
+import '../../app/device/catudy_device_controls.dart';
 import '../../app/notifications/catudy_notification_service.dart';
 import '../../app/theme/catudy_colors.dart';
 import '../../shared/widgets/catudy_panel.dart';
@@ -16,10 +17,14 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen>
+    with WidgetsBindingObserver {
+  final _deviceControls = CatudyDeviceControls.instance;
   late final TextEditingController _nameController;
   late final TextEditingController _monthlyGoalController;
   bool _dnd = true;
+  bool _focusDnd = true;
+  bool _dndAccessGranted = false;
   bool _notifications = true;
   bool _dailyGoalReminderEnabled = true;
   bool _publicStatsVisible = true;
@@ -29,24 +34,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final store = catudyDemoStore;
     _nameController = TextEditingController(text: store.displayName);
     _monthlyGoalController = TextEditingController(
       text: store.monthlyGoalMinutes.toString(),
     );
     _dnd = store.dndReminder;
+    _focusDnd = store.focusDndEnabled;
     _notifications = store.notifications;
     _dailyGoalReminderEnabled = store.dailyGoalReminderEnabled;
     _publicStatsVisible = store.publicStatsVisible;
     _language = store.languageCode;
     _themeMode = store.themeModeCode;
+    _refreshDndAccess();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _monthlyGoalController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshDndAccess();
+    }
   }
 
   @override
@@ -132,6 +148,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                   title: Text(store.t('settings.dnd')),
                 ),
+                SwitchListTile(
+                  value: _focusDnd,
+                  onChanged: (value) {
+                    setState(() => _focusDnd = value);
+                    _save(store);
+                    if (value &&
+                        _deviceControls.isAndroid &&
+                        !_dndAccessGranted) {
+                      _openDndAccessSettings();
+                    }
+                  },
+                  title: Text(store.t('settings.focusDnd')),
+                  subtitle: Text(
+                    _focusDnd && _deviceControls.isAndroid && !_dndAccessGranted
+                        ? store.t('settings.focusDndPermissionBody')
+                        : store.t('settings.focusDndBody'),
+                  ),
+                ),
+                if (_focusDnd &&
+                    _deviceControls.isAndroid &&
+                    !_dndAccessGranted)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: _openDndAccessSettings,
+                      icon: const Icon(Icons.do_not_disturb_on_rounded),
+                      label: Text(store.t('settings.openDndAccess')),
+                    ),
+                  ),
                 SwitchListTile(
                   value: _notifications,
                   onChanged: (value) {
@@ -286,10 +331,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             accentColor: CatudyColors.teal,
             child: Row(
               children: [
-                const Icon(
-                  Icons.widgets_rounded,
-                  color: CatudyColors.teal,
-                ),
+                const Icon(Icons.widgets_rounded, color: CatudyColors.teal),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -472,6 +514,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       name: _nameController.text,
       apiUrl: store.apiBaseUrl,
       dnd: _dnd,
+      focusDnd: _focusDnd,
       petNotifications: _notifications,
       profileStatsVisible: _publicStatsVisible,
       language: language ?? _language,
@@ -483,6 +526,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
       languageCode: store.languageCode,
       enabled: store.notifications && store.dailyGoalReminderEnabled,
     );
+  }
+
+  Future<void> _refreshDndAccess() async {
+    final granted = await _deviceControls.isDoNotDisturbAccessGranted();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _dndAccessGranted = granted);
+  }
+
+  Future<void> _openDndAccessSettings() async {
+    await _deviceControls.openDoNotDisturbAccessSettings();
+    if (!mounted) {
+      return;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    await _refreshDndAccess();
   }
 
   Future<void> _pickGoalReminderTime(

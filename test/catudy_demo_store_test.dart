@@ -471,6 +471,7 @@ void main() {
       );
       store.completeFocus();
       store.addLockLocation(name: 'School', latitude: 41, longitude: 29);
+      store.setLockedAppLocationLockEnabled('com.example.strict', true);
 
       expect(store.isLockedAppUnlocked('com.example.strict'), isTrue);
       expect(
@@ -486,6 +487,26 @@ void main() {
           strictLocationActive: true,
         ),
         isFalse,
+      );
+
+      store.setLockedAppLocationLockEnabled('com.example.strict', false);
+      expect(
+        store.isLockedAppBlocked(
+          'com.example.strict',
+          strictLocationActive: true,
+        ),
+        isFalse,
+      );
+
+      store.setLockedAppFocusLockEnabled('com.example.strict', false);
+      store.setLockedAppLocationLockEnabled('com.example.strict', true);
+      expect(store.isLockedAppBlocked('com.example.strict'), isFalse);
+      expect(
+        store.isLockedAppBlocked(
+          'com.example.strict',
+          strictLocationActive: true,
+        ),
+        isTrue,
       );
     },
   );
@@ -659,6 +680,7 @@ void main() {
         name: store.displayName,
         apiUrl: store.apiBaseUrl,
         dnd: store.dndReminder,
+        focusDnd: store.focusDndEnabled,
         petNotifications: store.notifications,
         profileStatsVisible: false,
         language: store.languageCode,
@@ -863,6 +885,7 @@ void main() {
       name: store.displayName,
       apiUrl: store.apiBaseUrl,
       dnd: store.dndReminder,
+      focusDnd: store.focusDndEnabled,
       petNotifications: store.notifications,
       language: 'en',
       themeMode: store.themeModeCode,
@@ -894,6 +917,7 @@ void main() {
       name: store.displayName,
       apiUrl: store.apiBaseUrl,
       dnd: store.dndReminder,
+      focusDnd: store.focusDndEnabled,
       petNotifications: store.notifications,
       language: 'en',
       themeMode: store.themeModeCode,

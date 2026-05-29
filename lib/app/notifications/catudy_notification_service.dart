@@ -159,6 +159,39 @@ class CatudyNotificationService {
     await _plugin.cancel(id: 900002);
   }
 
+  Future<void> schedulePetCareReminders({
+    required String languageCode,
+    required bool enabled,
+  }) async {
+    await initialize();
+    final reminders = _petCareReminders(languageCode);
+    for (final reminder in reminders) {
+      await _plugin.cancel(id: reminder.id);
+    }
+    if (!enabled) {
+      return;
+    }
+    for (final reminder in reminders) {
+      await _plugin.zonedSchedule(
+        id: reminder.id,
+        title: reminder.title,
+        body: reminder.body,
+        scheduledDate: _nextDailyTime(reminder.hour, reminder.minute),
+        notificationDetails: NotificationDetails(
+          android: _androidDetails(
+            channelId: 'catudy_pet',
+            languageCode: languageCode,
+            importance: Importance.defaultImportance,
+            priority: Priority.defaultPriority,
+          ),
+          iOS: const DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
+    }
+  }
+
   Future<void> showFriendRequestNotification({
     required String name,
     required String languageCode,
@@ -278,6 +311,22 @@ class CatudyNotificationService {
     return (parsed ?? todo.id.hashCode) & 0x7fffffff;
   }
 
+  tz.TZDateTime _nextDailyTime(int hour, int minute) {
+    final now = tz.TZDateTime.now(tz.local);
+    var next = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
+    if (!next.isAfter(now)) {
+      next = next.add(const Duration(days: 1));
+    }
+    return next;
+  }
+
   AndroidNotificationDetails _androidDetails({
     required String channelId,
     required String languageCode,
@@ -329,7 +378,48 @@ class CatudyNotificationService {
       'catudy_goals' => 'Catudy günlük odak hedefi hatırlatmaları',
       'catudy_social' => 'Catudy sosyal güncellemeleri',
       'catudy_focus' => 'Catudy odak seansı güncellemeleri',
+      'catudy_pet' => 'Catudy pet bakım bildirimleri',
       _ => 'Catudy çalışma hatırlatmaları',
     };
   }
+}
+
+class _PetCareReminder {
+  const _PetCareReminder({
+    required this.id,
+    required this.hour,
+    required this.minute,
+    required this.title,
+    required this.body,
+  });
+
+  final int id;
+  final int hour;
+  final int minute;
+  final String title;
+  final String body;
+}
+
+List<_PetCareReminder> _petCareReminders(String languageCode) {
+  final english = languageCode == 'en';
+  return [
+    _PetCareReminder(
+      id: 920101,
+      hour: 13,
+      minute: 0,
+      title: english ? 'Cat update' : 'Kedi bildirimi',
+      body: english
+          ? 'Your cat is waiting for a quick check-in.'
+          : 'Kedin kısa bir kontrol bekliyor.',
+    ),
+    _PetCareReminder(
+      id: 920102,
+      hour: 20,
+      minute: 30,
+      title: english ? 'Focus care time' : 'Odak bakım zamanı',
+      body: english
+          ? 'A real focus session keeps your cat balanced.'
+          : 'Gerçek bir odak seansı kedinin ritmini dengeler.',
+    ),
+  ];
 }

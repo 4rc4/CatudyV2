@@ -215,6 +215,7 @@ Future<void> _pumpCatudy(
     name: 'Guest Cat',
     apiUrl: 'http://127.0.0.1:5099',
     dnd: true,
+    focusDnd: true,
     petNotifications: true,
     language: 'tr',
     themeMode: 'system',
