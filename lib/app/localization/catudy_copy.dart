@@ -779,12 +779,20 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'appLock.addApp': 'Uygulama ekle',
     'appLock.noLockedApps': 'Henüz kilitli uygulama yok.',
     'appLock.searchApps': 'Uygulama ara',
+    'appLock.inactiveLock': 'Pasif',
     'appLock.requiredMinutes': '{minutes} dk odak',
     'appLock.unlockedToday': 'Bugün açık',
     'appLock.startFocus': 'Odak başlat',
     'appLock.focusLock': 'Odak kilidi',
     'appLock.focusLockBody':
         'Uygulama, odak hedefi tamamlanana kadar kapalı kalır.',
+    'appLock.focusLockSwitch': 'Odak kilidi aktif',
+    'appLock.focusLockSwitchBody':
+        'Kilitli uygulamalar odak tamamlanana kadar kapalı kalır.',
+    'appLock.minutesInputLabel': 'Dakika',
+    'appLock.minutesInfoTitle': 'Dakika nedir?',
+    'appLock.minutesInfoBody':
+        'Kilitli uygulamaları açmak için tamamlanması gereken odak süresidir.',
     'appLock.locationLock': 'Konum kilidi',
     'appLock.locationLockBody':
         'Seçili konumların içindeyken bu uygulama kapalı kalır.',
@@ -801,7 +809,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'appLock.strictLocation': 'Konumdayken uygulamalar kapalı kalsın.',
     'appLock.locationMasterSwitch': 'Konum kilitleri aktif',
     'appLock.locationMasterSwitchBody':
-        'Konum modu açık uygulamalar seçili alanlarda kilitlenir.',
+        'Kilitli uygulamalar seçili alanlarda kapalı kalır.',
     'appLock.locationDetails': '{radius} m yarıçap',
     'appLock.locationName': 'Konum adı',
     'appLock.searchLocation': 'Konum ara',
@@ -1707,12 +1715,20 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'appLock.addApp': 'Add app',
     'appLock.noLockedApps': 'No locked apps yet.',
     'appLock.searchApps': 'Search apps',
+    'appLock.inactiveLock': 'Inactive',
     'appLock.requiredMinutes': '{minutes} min focus',
     'appLock.unlockedToday': 'Unlocked today',
     'appLock.startFocus': 'Start focus',
     'appLock.focusLock': 'Focus lock',
     'appLock.focusLockBody':
         'The app stays closed until the focus target is done.',
+    'appLock.focusLockSwitch': 'Focus lock enabled',
+    'appLock.focusLockSwitchBody':
+        'Locked apps stay closed until focus is completed.',
+    'appLock.minutesInputLabel': 'Minutes',
+    'appLock.minutesInfoTitle': 'What are minutes?',
+    'appLock.minutesInfoBody':
+        'This is the focus time required to open locked apps.',
     'appLock.locationLock': 'Location lock',
     'appLock.locationLockBody':
         'The app stays closed while you are inside selected locations.',
@@ -1729,7 +1745,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'appLock.strictLocation': 'Keep apps closed inside this location.',
     'appLock.locationMasterSwitch': 'Location locks enabled',
     'appLock.locationMasterSwitchBody':
-        'Apps with location mode lock inside selected areas.',
+        'Locked apps stay closed inside selected areas.',
     'appLock.locationDetails': '{radius} m radius',
     'appLock.locationName': 'Location name',
     'appLock.searchLocation': 'Search location',

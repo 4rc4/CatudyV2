@@ -1139,6 +1139,23 @@ class CatudyDemoStore extends ChangeNotifier {
       hasPremiumAccess ||
       lockLocations.length < CatudyDemoStore.freeLockLocationLimit;
 
+  bool get lockedAppsFocusLockEnabled => lockedApps.isEmpty
+      ? lockSettings.focusLockEnabled
+      : lockedApps.any((item) => item.focusLockEnabled);
+
+  bool get lockedAppsLocationLockEnabled =>
+      lockSettings.strictLocationLocksEnabled &&
+      (lockSettings.locationLockEnabled ||
+          lockedApps.any((item) => item.locationLockEnabled));
+
+  int get lockedAppsRequiredFocusMinutes {
+    final focusedApps = lockedApps.where((item) => item.focusLockEnabled);
+    if (focusedApps.isEmpty) {
+      return lockSettings.defaultRequiredFocusMinutes;
+    }
+    return focusedApps.first.requiredFocusMinutes;
+  }
+
   bool get hasActiveStrictLockLocation =>
       lockSettings.strictLocationLocksEnabled &&
       lockLocations.any((item) => item.active) &&
@@ -3027,8 +3044,10 @@ class CatudyDemoStore extends ChangeNotifier {
       lockedApps[existingIndex] = lockedApps[existingIndex].copyWith(
         appName: appName,
         requiredFocusMinutes: requiredFocusMinutes,
-        enabled: true,
-        focusLockEnabled: true,
+        enabled:
+            lockSettings.focusLockEnabled || lockSettings.locationLockEnabled,
+        focusLockEnabled: lockSettings.focusLockEnabled,
+        locationLockEnabled: lockSettings.locationLockEnabled,
         appIconBase64: app.appIconBase64,
       );
       _commitAppLockRules();
@@ -3043,9 +3062,10 @@ class CatudyDemoStore extends ChangeNotifier {
         appName: appName,
         requiredFocusMinutes:
             requiredFocusMinutes ?? lockSettings.defaultRequiredFocusMinutes,
-        enabled: true,
-        focusLockEnabled: true,
-        locationLockEnabled: false,
+        enabled:
+            lockSettings.focusLockEnabled || lockSettings.locationLockEnabled,
+        focusLockEnabled: lockSettings.focusLockEnabled,
+        locationLockEnabled: lockSettings.locationLockEnabled,
         appIconBase64: app.appIconBase64,
       ),
     );
@@ -3086,6 +3106,20 @@ class CatudyDemoStore extends ChangeNotifier {
     _commitAppLockRules();
   }
 
+  void updateLockedAppsRequiredFocusMinutes(int minutes) {
+    final safeMinutes = minutes.clamp(1, 240).toInt();
+    for (var index = 0; index < lockedApps.length; index += 1) {
+      lockedApps[index] = lockedApps[index].copyWith(
+        requiredFocusMinutes: safeMinutes,
+        clearUnlockedUntil: true,
+      );
+    }
+    lockSettings = lockSettings.copyWith(
+      defaultRequiredFocusMinutes: safeMinutes,
+    );
+    _commitAppLockRules();
+  }
+
   void setLockedAppEnabled(String packageName, bool enabled) {
     final index = lockedApps.indexWhere(
       (item) => item.packageName == packageName,
@@ -3107,6 +3141,20 @@ class CatudyDemoStore extends ChangeNotifier {
     _commitAppLockRules();
   }
 
+  void setLockedAppsFocusLockEnabled(bool enabled) {
+    for (var index = 0; index < lockedApps.length; index += 1) {
+      lockedApps[index] = lockedApps[index].copyWith(
+        focusLockEnabled: enabled,
+        clearUnlockedUntil: !enabled,
+      );
+    }
+    lockSettings = lockSettings.copyWith(
+      enabled: lockSettings.enabled || enabled,
+      focusLockEnabled: enabled,
+    );
+    _commitAppLockRules();
+  }
+
   void setLockedAppFocusLockEnabled(String packageName, bool enabled) {
     final index = lockedApps.indexWhere(
       (item) => item.packageName == packageName,
@@ -3117,6 +3165,20 @@ class CatudyDemoStore extends ChangeNotifier {
     lockedApps[index] = lockedApps[index].copyWith(
       focusLockEnabled: enabled,
       clearUnlockedUntil: !enabled,
+    );
+    _commitAppLockRules();
+  }
+
+  void setLockedAppsLocationLockEnabled(bool enabled) {
+    for (var index = 0; index < lockedApps.length; index += 1) {
+      lockedApps[index] = lockedApps[index].copyWith(
+        locationLockEnabled: enabled,
+      );
+    }
+    lockSettings = lockSettings.copyWith(
+      enabled: lockSettings.enabled || enabled,
+      locationLockEnabled: enabled,
+      strictLocationLocksEnabled: enabled,
     );
     _commitAppLockRules();
   }
@@ -3176,15 +3238,25 @@ class CatudyDemoStore extends ChangeNotifier {
 
   void updateLockSettings({
     bool? enabled,
+    bool? focusLockEnabled,
     int? defaultRequiredFocusMinutes,
+    bool? locationLockEnabled,
     bool? strictLocationLocksEnabled,
   }) {
     lockSettings = lockSettings.copyWith(
       enabled: enabled,
+      focusLockEnabled: focusLockEnabled,
       defaultRequiredFocusMinutes: defaultRequiredFocusMinutes,
+      locationLockEnabled: locationLockEnabled,
       strictLocationLocksEnabled: strictLocationLocksEnabled,
     );
     _commitAppLockRules();
+  }
+
+  void prepareLockedAppsUnlockFocus() {
+    pendingUnlockPackageName = null;
+    selectedDurationMinutes = lockedAppsRequiredFocusMinutes;
+    _commit();
   }
 
   void prepareAppUnlockFocus(String packageName) {

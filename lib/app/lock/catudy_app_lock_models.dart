@@ -220,7 +220,9 @@ class UnlockSession {
 class LockSettings {
   const LockSettings({
     this.enabled = false,
+    this.focusLockEnabled = true,
     this.defaultRequiredFocusMinutes = defaultFocusMinutes,
+    this.locationLockEnabled = false,
     this.strictLocationLocksEnabled = true,
   });
 
@@ -230,11 +232,13 @@ class LockSettings {
     }
     return LockSettings(
       enabled: _readBool(json, 'enabled', false),
+      focusLockEnabled: _readBool(json, 'focusLockEnabled', true),
       defaultRequiredFocusMinutes: _readInt(
         json,
         'defaultRequiredFocusMinutes',
         defaultFocusMinutes,
       ).clamp(1, 240).toInt(),
+      locationLockEnabled: _readBool(json, 'locationLockEnabled', false),
       strictLocationLocksEnabled: _readBool(
         json,
         'strictLocationLocksEnabled',
@@ -246,19 +250,25 @@ class LockSettings {
   static const defaultFocusMinutes = 25;
 
   final bool enabled;
+  final bool focusLockEnabled;
   final int defaultRequiredFocusMinutes;
+  final bool locationLockEnabled;
   final bool strictLocationLocksEnabled;
 
   LockSettings copyWith({
     bool? enabled,
+    bool? focusLockEnabled,
     int? defaultRequiredFocusMinutes,
+    bool? locationLockEnabled,
     bool? strictLocationLocksEnabled,
   }) {
     return LockSettings(
       enabled: enabled ?? this.enabled,
+      focusLockEnabled: focusLockEnabled ?? this.focusLockEnabled,
       defaultRequiredFocusMinutes:
           defaultRequiredFocusMinutes?.clamp(1, 240).toInt() ??
           this.defaultRequiredFocusMinutes,
+      locationLockEnabled: locationLockEnabled ?? this.locationLockEnabled,
       strictLocationLocksEnabled:
           strictLocationLocksEnabled ?? this.strictLocationLocksEnabled,
     );
@@ -266,7 +276,9 @@ class LockSettings {
 
   Map<String, dynamic> toJson() => {
     'enabled': enabled,
+    'focusLockEnabled': focusLockEnabled,
     'defaultRequiredFocusMinutes': defaultRequiredFocusMinutes,
+    'locationLockEnabled': locationLockEnabled,
     'strictLocationLocksEnabled': strictLocationLocksEnabled,
   };
 }

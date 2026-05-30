@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
@@ -12,6 +12,7 @@ import '../../app/demo/catudy_demo_store.dart';
 import '../../app/lock/catudy_app_lock_models.dart';
 import '../../app/lock/catudy_app_lock_service.dart';
 import '../../app/theme/catudy_colors.dart';
+import '../../shared/widgets/catudy_info_bubble.dart';
 import '../../shared/widgets/catudy_panel.dart';
 import '../../shared/widgets/catudy_section_header.dart';
 import '../../shared/widgets/screen_scaffold.dart';
@@ -115,6 +116,11 @@ class _AppLockScreenState extends State<AppLockScreen>
               store: store,
               loadingApps: _loadingApps,
               onAdd: () => _pickInstalledApp(context, store),
+              onSync: () => _syncNativeRules(startService: true),
+            ),
+            const SizedBox(height: 14),
+            _FocusLockPanel(
+              store: store,
               onSync: () => _syncNativeRules(startService: true),
             ),
             const SizedBox(height: 14),
@@ -508,12 +514,8 @@ class _LockedAppTile extends StatelessWidget {
   final LockedApp app;
   final VoidCallback onChanged;
 
-  static const _minuteOptions = [5, 10, 15, 25, 40, 60, 90, 120];
-
   @override
   Widget build(BuildContext context) {
-    final unlocked =
-        app.focusLockEnabled && store.isLockedAppUnlocked(app.packageName);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -547,77 +549,37 @@ class _LockedAppTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: CatudyColors.mutedFor(context)),
               ),
-              const SizedBox(height: 8),
-              _LockModeSwitch(
-                icon: Icons.timer_rounded,
-                title: store.t('appLock.focusLock'),
-                subtitle: store.t('appLock.focusLockBody'),
-                value: app.focusLockEnabled,
-                color: CatudyColors.violet,
-                onChanged: (value) {
-                  store.setLockedAppFocusLockEnabled(app.packageName, value);
-                  onChanged();
-                },
-              ),
-              if (app.focusLockEnabled) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    DropdownButton<int>(
-                      value: _minuteOptions.contains(app.requiredFocusMinutes)
-                          ? app.requiredFocusMinutes
-                          : 25,
-                      items: [
-                        for (final minutes in _minuteOptions)
-                          DropdownMenuItem(
-                            value: minutes,
-                            child: Text(
-                              store.t('appLock.requiredMinutes', {
-                                'minutes': minutes,
-                              }),
-                            ),
-                          ),
-                      ],
-                      onChanged: (minutes) {
-                        if (minutes == null) {
-                          return;
-                        }
-                        store.updateLockedAppMinutes(app.packageName, minutes);
-                        onChanged();
-                      },
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (app.focusLockEnabled)
+                    _LockStatusChip(
+                      icon: Icons.timer_rounded,
+                      label: store.t('appLock.focusLock'),
+                      color: CatudyColors.violet,
                     ),
-                    if (unlocked)
-                      Chip(
-                        avatar: const Icon(Icons.lock_open_rounded, size: 18),
-                        label: Text(store.t('appLock.unlockedToday')),
-                      ),
-                    TextButton.icon(
-                      onPressed: () {
-                        store.prepareAppUnlockFocus(app.packageName);
-                        context.go(
-                          '/focus/start?unlockApp=${Uri.encodeComponent(app.packageName)}',
-                        );
-                      },
-                      icon: const Icon(Icons.timer_rounded),
-                      label: Text(store.t('appLock.startFocus')),
+                  if (app.locationLockEnabled)
+                    _LockStatusChip(
+                      icon: Icons.location_on_rounded,
+                      label: store.t('appLock.locationLock'),
+                      color: CatudyColors.tealDark,
                     ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 8),
-              _LockModeSwitch(
-                icon: Icons.location_on_rounded,
-                title: store.t('appLock.locationLock'),
-                subtitle: store.t('appLock.locationLockBody'),
-                value: app.locationLockEnabled,
-                color: CatudyColors.tealDark,
-                onChanged: (value) {
-                  store.setLockedAppLocationLockEnabled(app.packageName, value);
-                  onChanged();
-                },
+                  if (!app.focusLockEnabled && !app.locationLockEnabled)
+                    _LockStatusChip(
+                      icon: Icons.power_settings_new_rounded,
+                      label: store.t('appLock.inactiveLock'),
+                      color: CatudyColors.mutedFor(context),
+                    ),
+                  if (store.isLockedAppUnlocked(app.packageName))
+                    _LockStatusChip(
+                      icon: Icons.lock_open_rounded,
+                      label: store.t('appLock.unlockedToday'),
+                      color: CatudyColors.yellow,
+                    ),
+                ],
               ),
             ],
           ),
@@ -631,6 +593,47 @@ class _LockedAppTile extends StatelessWidget {
           tooltip: store.t('common.delete'),
         ),
       ],
+    );
+  }
+}
+
+class _LockStatusChip extends StatelessWidget {
+  const _LockStatusChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: CatudyColors.blueFor(context),
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -683,6 +686,200 @@ class _LockModeSwitch extends StatelessWidget {
   }
 }
 
+class _FocusLockPanel extends StatelessWidget {
+  const _FocusLockPanel({required this.store, required this.onSync});
+
+  final CatudyDemoStore store;
+  final VoidCallback onSync;
+
+  @override
+  Widget build(BuildContext context) {
+    final focusEnabled = store.lockedAppsFocusLockEnabled;
+    final canStartFocus =
+        focusEnabled && store.lockedApps.any((item) => item.focusLockEnabled);
+    return CatudyPanel(
+      accentColor: CatudyColors.violet,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CatudySectionHeader(
+            title: store.t('appLock.focusLock'),
+            subtitle: store.t('appLock.focusLockBody'),
+            icon: Icons.timer_rounded,
+            accentColor: CatudyColors.violet,
+          ),
+          const SizedBox(height: 12),
+          _LockModeSwitch(
+            icon: Icons.lock_clock_rounded,
+            title: store.t('appLock.focusLockSwitch'),
+            subtitle: store.t('appLock.focusLockSwitchBody'),
+            value: focusEnabled,
+            color: CatudyColors.violet,
+            onChanged: (value) {
+              store.setLockedAppsFocusLockEnabled(value);
+              onSync();
+            },
+          ),
+          const SizedBox(height: 12),
+          _FocusMinutesInput(
+            store: store,
+            minutes: store.lockedAppsRequiredFocusMinutes,
+            enabled: focusEnabled,
+            onChanged: (minutes) {
+              store.updateLockedAppsRequiredFocusMinutes(minutes);
+              onSync();
+            },
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: canStartFocus
+                  ? () {
+                      store.prepareLockedAppsUnlockFocus();
+                      context.go('/focus/start');
+                    }
+                  : null,
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: Text(store.t('appLock.startFocus')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FocusMinutesInput extends StatefulWidget {
+  const _FocusMinutesInput({
+    required this.store,
+    required this.minutes,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final CatudyDemoStore store;
+  final int minutes;
+  final bool enabled;
+  final ValueChanged<int> onChanged;
+
+  @override
+  State<_FocusMinutesInput> createState() => _FocusMinutesInputState();
+}
+
+class _FocusMinutesInputState extends State<_FocusMinutesInput> {
+  late final TextEditingController _controller;
+  late final FocusNode _focusNode;
+  late int _syncedMinutes;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncedMinutes = widget.minutes;
+    _controller = TextEditingController(text: '$_syncedMinutes');
+    _focusNode = FocusNode()..addListener(_handleFocusChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant _FocusMinutesInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.minutes != _syncedMinutes && !_focusNode.hasFocus) {
+      _syncedMinutes = widget.minutes;
+      _controller.text = '$_syncedMinutes';
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode
+      ..removeListener(_handleFocusChanged)
+      ..dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = widget.store;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              store.t('appLock.minutesInputLabel'),
+              style: TextStyle(
+                color: CatudyColors.blueFor(context),
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Builder(
+              builder: (buttonContext) {
+                return IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: store.t('appLock.minutesInfoTitle'),
+                  onPressed: () {
+                    final box = buttonContext.findRenderObject() as RenderBox?;
+                    final anchor = box == null
+                        ? Offset.zero
+                        : box.localToGlobal(box.size.center(Offset.zero));
+                    CatudyInfoBubble.show(
+                      context,
+                      title: store.t('appLock.minutesInfoTitle'),
+                      message: store.t('appLock.minutesInfoBody'),
+                      anchor: anchor,
+                    );
+                  },
+                  icon: const Icon(Icons.info_rounded, size: 20),
+                );
+              },
+            ),
+          ],
+        ),
+        TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          enabled: widget.enabled,
+          keyboardType: TextInputType.number,
+          textInputAction: TextInputAction.done,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onSubmitted: (_) => _commit(),
+          onTapOutside: (_) {
+            _commit();
+            FocusScope.of(context).unfocus();
+          },
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.timer_rounded),
+            suffixText: store.t('common.minutesShort'),
+            border: const OutlineInputBorder(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleFocusChanged() {
+    if (!_focusNode.hasFocus) {
+      _commit();
+    }
+  }
+
+  void _commit() {
+    final parsed = int.tryParse(_controller.text);
+    final minutes = (parsed ?? widget.minutes).clamp(1, 240).toInt();
+    _controller.text = '$minutes';
+    _controller.selection = TextSelection.collapsed(
+      offset: _controller.text.length,
+    );
+    if (minutes == _syncedMinutes) {
+      return;
+    }
+    _syncedMinutes = minutes;
+    widget.onChanged(minutes);
+  }
+}
+
 class _LocationsPanel extends StatelessWidget {
   const _LocationsPanel({
     required this.store,
@@ -696,6 +893,7 @@ class _LocationsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locationEnabled = store.lockedAppsLocationLockEnabled;
     final limitLabel = store.hasPremiumAccess
         ? store.t('appLock.plusUnlimited')
         : store.t('appLock.locationLimit', {
@@ -711,7 +909,7 @@ class _LocationsPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: CatudySectionHeader(
-                  title: store.t('appLock.locations'),
+                  title: store.t('appLock.locationLock'),
                   subtitle: limitLabel,
                   icon: Icons.location_on_rounded,
                   accentColor: CatudyColors.tealDark,
@@ -724,16 +922,17 @@ class _LocationsPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            value: store.lockSettings.strictLocationLocksEnabled,
+          const SizedBox(height: 12),
+          _LockModeSwitch(
+            icon: Icons.my_location_rounded,
+            title: store.t('appLock.locationMasterSwitch'),
+            subtitle: store.t('appLock.locationMasterSwitchBody'),
+            value: locationEnabled,
+            color: CatudyColors.tealDark,
             onChanged: (value) {
-              store.updateLockSettings(strictLocationLocksEnabled: value);
+              store.setLockedAppsLocationLockEnabled(value);
               onSync();
             },
-            title: Text(store.t('appLock.locationMasterSwitch')),
-            subtitle: Text(store.t('appLock.locationMasterSwitchBody')),
           ),
           if (!store.canAddLockLocation && !store.hasPremiumAccess)
             TextButton.icon(
@@ -1017,6 +1216,8 @@ class _LocationPickerDialog extends StatefulWidget {
 
 class _LocationPickerDialogState extends State<_LocationPickerDialog> {
   static const _initialPoint = LatLng(41.0082, 28.9784);
+  static const _streetMapTiles =
+      'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
   late LatLng _point = _initialPoint;
   double _radiusMeters = 150;
   final _mapController = MapController();
@@ -1048,12 +1249,11 @@ class _LocationPickerDialogState extends State<_LocationPickerDialog> {
   Widget build(BuildContext context) {
     final store = widget.store;
     final size = MediaQuery.sizeOf(context);
+    if (_mapExpanded) {
+      return _buildExpandedMapDialog(context, store, size);
+    }
     final compact = size.width < 430;
-    final mapHeight = _mapExpanded
-        ? (size.height * 0.52).clamp(320.0, 520.0).toDouble()
-        : compact
-        ? 250.0
-        : 310.0;
+    final mapHeight = compact ? 250.0 : 310.0;
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: SafeArea(
@@ -1148,111 +1348,9 @@ class _LocationPickerDialogState extends State<_LocationPickerDialog> {
                           ),
                         ],
                         const SizedBox(height: 12),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: SizedBox(
-                            height: mapHeight,
-                            child: Stack(
-                              children: [
-                                FlutterMap(
-                                  mapController: _mapController,
-                                  options: MapOptions(
-                                    initialCenter: _point,
-                                    initialZoom: 14,
-                                    onTap: (_, point) =>
-                                        setState(() => _point = point),
-                                  ),
-                                  children: [
-                                    TileLayer(
-                                      urlTemplate:
-                                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                      userAgentPackageName:
-                                          'com.catudy.catudy_app',
-                                    ),
-                                    CircleLayer(
-                                      circles: [
-                                        CircleMarker(
-                                          point: _point,
-                                          radius: _radiusMeters,
-                                          useRadiusInMeter: true,
-                                          color: CatudyColors.violet.withValues(
-                                            alpha: 0.18,
-                                          ),
-                                          borderColor: CatudyColors.violet,
-                                          borderStrokeWidth: 2,
-                                        ),
-                                      ],
-                                    ),
-                                    MarkerLayer(
-                                      markers: [
-                                        Marker(
-                                          point: _point,
-                                          width: 46,
-                                          height: 46,
-                                          child: const Icon(
-                                            Icons.location_pin,
-                                            color: CatudyColors.coral,
-                                            size: 44,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Positioned(
-                                  left: 10,
-                                  right: 62,
-                                  top: 10,
-                                  child: _MapHint(
-                                    text: store.t('appLock.tapMapHint'),
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 10,
-                                  top: 10,
-                                  child: IconButton.filledTonal(
-                                    onPressed: () => setState(
-                                      () => _mapExpanded = !_mapExpanded,
-                                    ),
-                                    tooltip: store.t(
-                                      _mapExpanded
-                                          ? 'appLock.collapseMap'
-                                          : 'appLock.expandMap',
-                                    ),
-                                    icon: Icon(
-                                      _mapExpanded
-                                          ? Icons.fullscreen_exit_rounded
-                                          : Icons.fullscreen_rounded,
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 10,
-                                  bottom: 10,
-                                  child: FilledButton.tonalIcon(
-                                    onPressed: _loadingCurrentLocation
-                                        ? null
-                                        : _useCurrentLocation,
-                                    icon: _loadingCurrentLocation
-                                        ? const SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : const Icon(
-                                            Icons.my_location_rounded,
-                                            size: 18,
-                                          ),
-                                    label: Text(
-                                      store.t('appLock.useCurrentLocation'),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        SizedBox(
+                          height: mapHeight,
+                          child: _buildMapFrame(store),
                         ),
                         const SizedBox(height: 12),
                         _RadiusControl(
@@ -1307,6 +1405,187 @@ class _LocationPickerDialogState extends State<_LocationPickerDialog> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildExpandedMapDialog(
+    BuildContext context,
+    CatudyDemoStore store,
+    Size size,
+  ) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(8),
+      child: SafeArea(
+        child: SizedBox(
+          width: size.width - 16,
+          height: size.height * 0.96,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        store.t('appLock.addLocation'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: CatudyColors.blueFor(context),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    IconButton.filledTonal(
+                      onPressed: () => setState(() => _mapExpanded = false),
+                      tooltip: store.t('appLock.collapseMap'),
+                      icon: const Icon(Icons.fullscreen_exit_rounded),
+                    ),
+                    const SizedBox(width: 6),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Expanded(child: _buildMapFrame(store)),
+                const SizedBox(height: 10),
+                _RadiusControl(
+                  radiusMeters: _radiusMeters,
+                  onChanged: (value) => setState(() => _radiusMeters = value),
+                  store: store,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  store.t('appLock.selectedCoordinates', {
+                    'lat': _point.latitude.toStringAsFixed(5),
+                    'lng': _point.longitude.toStringAsFixed(5),
+                  }),
+                  style: TextStyle(
+                    color: CatudyColors.mutedFor(context),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(store.t('common.cancel')),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () => Navigator.pop(
+                          context,
+                          _PickedLockLocation(
+                            name: _nameController.text,
+                            point: _point,
+                            radiusMeters: _radiusMeters,
+                          ),
+                        ),
+                        icon: const Icon(Icons.save_rounded),
+                        label: Text(store.t('appLock.saveLocation')),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapFrame(CatudyDemoStore store) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Stack(
+        children: [
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _point,
+              initialZoom: 14,
+              onTap: (_, point) => setState(() => _point = point),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: _streetMapTiles,
+                userAgentPackageName: 'com.catudy.catudy_app',
+              ),
+              CircleLayer(
+                circles: [
+                  CircleMarker(
+                    point: _point,
+                    radius: _radiusMeters,
+                    useRadiusInMeter: true,
+                    color: CatudyColors.violet.withValues(alpha: 0.18),
+                    borderColor: CatudyColors.violet,
+                    borderStrokeWidth: 2,
+                  ),
+                ],
+              ),
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: _point,
+                    width: 46,
+                    height: 46,
+                    child: const Icon(
+                      Icons.location_pin,
+                      color: CatudyColors.coral,
+                      size: 44,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Positioned(
+            left: 10,
+            right: 62,
+            top: 10,
+            child: _MapHint(text: store.t('appLock.tapMapHint')),
+          ),
+          Positioned(
+            right: 10,
+            top: 10,
+            child: IconButton.filledTonal(
+              onPressed: () => setState(() => _mapExpanded = !_mapExpanded),
+              tooltip: store.t(
+                _mapExpanded ? 'appLock.collapseMap' : 'appLock.expandMap',
+              ),
+              icon: Icon(
+                _mapExpanded
+                    ? Icons.fullscreen_exit_rounded
+                    : Icons.fullscreen_rounded,
+              ),
+            ),
+          ),
+          Positioned(
+            right: 10,
+            bottom: 10,
+            child: FilledButton.tonalIcon(
+              onPressed: _loadingCurrentLocation ? null : _useCurrentLocation,
+              icon: _loadingCurrentLocation
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.my_location_rounded, size: 18),
+              label: Text(store.t('appLock.useCurrentLocation')),
+            ),
+          ),
+        ],
       ),
     );
   }
