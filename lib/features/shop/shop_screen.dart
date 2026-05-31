@@ -479,7 +479,7 @@ class _ShopItemCard extends StatelessWidget {
     final owned = store.ownedItems.contains(item.id);
     return _ProductCard(
       accent: item.accent,
-      art: ShopItemArt(item: item, size: 58),
+      art: ShopItemArt(item: item, size: 96, showBackground: false),
       title: store.itemName(item),
       chips: [
         _MetaChip(label: '${item.price} ${store.t('common.gold')}'),
@@ -508,7 +508,7 @@ class _PremiumCosmeticCard extends StatelessWidget {
     final locked = item.premiumOnly && !store.hasPremiumAccess;
     return _ProductCard(
       accent: item.accent,
-      art: _CosmeticArt(item: item),
+      art: _CosmeticArt(item: item, size: 56),
       title: item.name,
       chips: [
         if (item.directPrice != null)
@@ -550,8 +550,8 @@ class _CatUnlockCard extends StatelessWidget {
       accent: pet.accent,
       art: CatudyPetAvatar(
         assetPath: pet.assetPath,
-        width: 58,
-        height: 58,
+        width: 94,
+        height: 94,
         fit: BoxFit.contain,
       ),
       title: unlocked
@@ -624,7 +624,7 @@ class _ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 184,
+      height: 218,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: CatudyColors.surfaceFor(context),
@@ -639,8 +639,9 @@ class _ProductCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 62,
-                  height: 62,
+                  width: 106,
+                  height: 106,
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(8),
@@ -657,12 +658,12 @@ class _ProductCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: CatudyColors.blueFor(context),
-                    fontSize: 11.5,
-                    height: 1.08,
+                    fontSize: 10.8,
+                    height: 1.05,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 4),
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 3,
@@ -673,7 +674,7 @@ class _ProductCard extends StatelessWidget {
             ),
           ),
           if (progress != null) ...[
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             ClipRRect(
               borderRadius: BorderRadius.circular(999),
               child: LinearProgressIndicator(
@@ -684,25 +685,25 @@ class _ProductCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           Theme(
             data: Theme.of(context).copyWith(
               filledButtonTheme: FilledButtonThemeData(
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 28),
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  minimumSize: const Size(0, 26),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: 10.8,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
               ),
             ),
-            child: SizedBox(height: 36, child: action),
+            child: SizedBox(height: 32, child: action),
           ),
         ],
       ),
@@ -711,13 +712,14 @@ class _ProductCard extends StatelessWidget {
 }
 
 class _CosmeticArt extends StatelessWidget {
-  const _CosmeticArt({required this.item});
+  const _CosmeticArt({required this.item, this.size = 34});
 
   final CosmeticItem item;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    return Icon(item.icon, color: item.accent, size: 34);
+    return Icon(item.icon, color: item.accent, size: size);
   }
 }
 
@@ -729,7 +731,7 @@ class _MetaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
       decoration: BoxDecoration(
         color: CatudyColors.surfaceStrongFor(context),
         borderRadius: BorderRadius.circular(999),
@@ -740,7 +742,7 @@ class _MetaChip extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: CatudyColors.mutedFor(context),
-          fontSize: 9,
+          fontSize: 8.5,
           fontWeight: FontWeight.w800,
         ),
       ),
