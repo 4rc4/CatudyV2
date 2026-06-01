@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.3.5+20305
+version: 2.4.2+20402
 environment:
   sdk: ^3.11.0
 
@@ -48,7 +48,6 @@ dependencies:
   flutter_map: ^8.2.2
   http: ^1.6.0
   latlong2: ^0.9.1
-  open_file: ^3.5.10
   path_provider: ^2.1.5
   google_mobile_ads: ^8.0.0
 
@@ -81,7 +80,13 @@ flutter:
     - assets/cat_accessories/wearables/
     - assets/cat_accessories/wearables/aligned/
     - assets/cat_accessories/wearables/trimmed/
-    - assets/room/
+    - assets/room/catudy_room_background_v2.png
+    - assets/room/SOL_TABLO_ÇİÇEK.png
+    - assets/room/SOL_TABLO_UZAY.png
+    - assets/room/SOL_TABLO_PARA.png
+    - assets/room/RAF_UZAY.png
+    - assets/room/PUF_UZAY.png
+    - assets/room/KITAPLIK_UZAY.png
 
   fonts:
     - family: Baloo 2

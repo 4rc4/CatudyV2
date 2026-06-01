@@ -107,24 +107,44 @@ class CatudyLeaderboardService {
     if (userId == null) {
       return null;
     }
-    await _client.from('catudy_leaderboard').upsert({
-      'user_id': userId,
-      'display_name': displayName.trim().isEmpty
-          ? 'Guest Cat'
-          : displayName.trim(),
-      'pet_id': petId,
-      'pet_name': petName.trim().isEmpty ? 'White Cat' : petName.trim(),
-      'equipped_pet_item_id': equippedPetItemId,
-      'room_item_ids': roomItemIds,
-      'points': points,
-      'total_minutes': totalMinutes,
-      'streak_days': streakDays,
-      'sessions_count': sessionsCount,
-      'favorite_category': favoriteCategory,
-      'stats_public': statsPublic,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }, onConflict: 'user_id');
+    await _client.rpc(
+      'catudy_update_public_profile',
+      params: {
+        'p_display_name': displayName.trim().isEmpty
+            ? 'Guest Cat'
+            : displayName.trim(),
+        'p_pet_id': petId.trim().isEmpty ? 'mochi' : petId.trim(),
+        'p_pet_name': petName.trim().isEmpty ? 'White Cat' : petName.trim(),
+        'p_equipped_pet_item_id': equippedPetItemId,
+        'p_room_item_ids': roomItemIds,
+        'p_stats_public': statsPublic,
+      },
+    );
     return userId;
+  }
+
+  Future<bool> completeFocusSession({
+    required String clientSessionId,
+    required String categoryId,
+    required int minutes,
+    required DateTime completedAt,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null || clientSessionId.isEmpty || minutes <= 0) {
+      return false;
+    }
+    final result = await _client.rpc(
+      'catudy_complete_focus_session',
+      params: {
+        'p_client_session_id': clientSessionId,
+        'p_category_id': categoryId.trim().isEmpty
+            ? 'study'
+            : categoryId.trim(),
+        'p_minutes': minutes.clamp(1, 240).toInt(),
+        'p_completed_at': completedAt.toUtc().toIso8601String(),
+      },
+    );
+    return result == true;
   }
 }
 

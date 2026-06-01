@@ -516,15 +516,9 @@ class _PlanSelector extends StatelessWidget {
             width: double.infinity,
             height: 54,
             child: FilledButton.icon(
-              onPressed: store.hasPremiumAccess
-                  ? store.clearPremiumEntitlement
-                  : store.activatePremiumDemo,
+              onPressed: null,
               icon: const Icon(Icons.workspace_premium_rounded),
-              label: Text(
-                store.hasPremiumAccess
-                    ? store.t('premium.clearDemo')
-                    : store.t('premium.activateDemo'),
-              ),
+              label: Text(store.t('premium.comingSoon')),
             ),
           ),
           const SizedBox(height: 10),

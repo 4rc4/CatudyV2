@@ -21,7 +21,9 @@ param(
   [int]$AppBuildNumber,
 
   [Parameter(Mandatory = $true)]
-  [string]$ApkVersion
+  [string]$ApkVersion,
+
+  [string]$PlayStoreUrl = 'https://play.google.com/store/apps/details?id=com.catudy.app'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -32,11 +34,10 @@ $manifestPath = Join-Path $SiteDownloadDir $UpdateManifestName
 $manifest = [ordered]@{
   version = $AppVersion
   buildNumber = $AppBuildNumber
-  apkUrl = "https://catudy.com/downloads/$ApkFileName"
-  latestApkUrl = "https://catudy.com/downloads/$ApkLatestName"
+  playStoreUrl = $PlayStoreUrl
   releaseNotes = [ordered]@{
-    tr = 'Yeni Catudy surumu hazir.'
-    en = 'A new Catudy version is ready.'
+    tr = 'Yeni Catudy surumu Google Play uzerinden hazir.'
+    en = 'A new Catudy version is ready on Google Play.'
   }
   publishedAt = (Get-Date).ToUniversalTime().ToString('o')
 }
@@ -49,18 +50,17 @@ $json = $manifest | ConvertTo-Json -Depth 5
 
 $indexPath = Join-Path $SiteDir 'site\index.html'
 $html = [IO.File]::ReadAllText($indexPath, $utf8Bom)
-$latestHref = "./downloads/$ApkLatestName"
-$versionLabel = "Android APK $ApkVersion"
+$versionLabel = "Google Play"
 
 $html = [regex]::Replace(
   $html,
   'href="(?:https://catudy\.com/|\.\/)?downloads/catudy-android-demo-[^"]+\.apk"',
-  "href=`"$latestHref`""
+  "href=`"$PlayStoreUrl`""
 )
 $html = [regex]::Replace(
   $html,
-  'download(?:="[^"]*")?(\s+data-i18n="downloadButton")',
-  "download=`"$ApkFileName`"`$1"
+  '\sdownload(?:="[^"]*")?(\s+data-i18n="downloadButton")',
+  '$1'
 )
 $html = [regex]::Replace(
   $html,

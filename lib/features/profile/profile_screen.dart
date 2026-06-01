@@ -142,6 +142,12 @@ class ProfileScreen extends StatelessWidget {
     CatudyDemoStore store,
   ) async {
     store.clearVisitedProfile();
+    if (store.authUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(store.t('profile.shareRequiresSignIn'))),
+      );
+      return;
+    }
     final link = _profileShareLink(store);
     final text = store.t('profile.shareText', {
       'name': store.displayName,
@@ -171,7 +177,7 @@ class ProfileScreen extends StatelessWidget {
   }
 
   static String _profileShareLink(CatudyDemoStore store) {
-    final userId = Uri.encodeComponent(store.publicUserCode);
+    final userId = Uri.encodeComponent(store.authUserId!);
     return 'https://catudy.com/public-profile?user=$userId';
   }
 

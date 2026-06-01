@@ -126,27 +126,17 @@ class CatudySupabaseLobbyService {
     for (var attempt = 0; attempt < 6; attempt++) {
       final code = _generateCode();
       try {
-        final lobbyJson = await _client
-            .from('catudy_lobbies')
-            .insert({
-              'code': code,
-              'owner_user_id': userId,
-              'category_id': categoryId,
-              'duration_minutes': durationMinutes,
-              'status': 'waiting',
-            })
-            .select()
-            .single();
-        final lobby = CatudyOnlineLobby.fromJson(lobbyJson);
-        await _upsertMember(
-          lobbyId: lobby.id,
-          userId: userId,
-          displayName: displayName,
-          petId: petId,
-          petName: petName,
-          equippedPetItemId: equippedPetItemId,
-          owner: true,
-          ready: true,
+        final lobby = await _callLobbyRpc(
+          'catudy_create_lobby',
+          {
+            'p_code': code,
+            'p_display_name': displayName,
+            'p_pet_id': petId,
+            'p_pet_name': petName,
+            'p_equipped_pet_item_id': equippedPetItemId,
+            'p_category_id': categoryId,
+            'p_duration_minutes': durationMinutes,
+          },
         );
         return CatudyLobbyJoinResult(lobby: lobby, userId: userId, owner: true);
       } catch (error) {
@@ -176,24 +166,17 @@ class CatudySupabaseLobbyService {
     var userId = await _ensureAnonymousUser(displayName);
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        final lobbyJson = await _client
-            .from('catudy_lobbies')
-            .select()
-            .eq('code', code.trim().toUpperCase())
-            .neq('status', 'finished')
-            .single();
-        final lobby = CatudyOnlineLobby.fromJson(lobbyJson);
-        final owner = lobby.ownerUserId == userId;
-        await _upsertMember(
-          lobbyId: lobby.id,
-          userId: userId,
-          displayName: displayName,
-          petId: petId,
-          petName: petName,
-          equippedPetItemId: equippedPetItemId,
-          owner: owner,
-          ready: false,
+        final lobby = await _callLobbyRpc(
+          'catudy_join_lobby',
+          {
+            'p_code': code.trim().toUpperCase(),
+            'p_display_name': displayName,
+            'p_pet_id': petId,
+            'p_pet_name': petName,
+            'p_equipped_pet_item_id': equippedPetItemId,
+          },
         );
+        final owner = lobby.ownerUserId == userId;
         return CatudyLobbyJoinResult(
           lobby: lobby,
           userId: userId,
@@ -232,15 +215,10 @@ class CatudySupabaseLobbyService {
     required String userId,
     required bool ready,
   }) async {
-    await _client
-        .from('catudy_lobby_members')
-        .update({
-          'ready': ready,
-          'connected': true,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('lobby_id', lobbyId)
-        .eq('user_id', userId);
+    await _client.rpc(
+      'catudy_set_lobby_ready',
+      params: {'p_lobby_id': lobbyId, 'p_ready': ready},
+    );
   }
 
   Future<void> setBreakVote({
@@ -248,15 +226,11 @@ class CatudySupabaseLobbyService {
     required String userId,
     required bool approved,
   }) async {
-    await _client
-        .from('catudy_lobby_members')
-        .update({
-          'break_vote': approved,
-          'break_vote_updated_at': DateTime.now().toUtc().toIso8601String(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('lobby_id', lobbyId)
-        .eq('user_id', userId);
+    await submitBreakVote(
+      lobbyId: lobbyId,
+      userId: userId,
+      approved: approved,
+    );
   }
 
   Future<void> submitBreakVote({
@@ -264,17 +238,10 @@ class CatudySupabaseLobbyService {
     required String userId,
     required bool approved,
   }) async {
-    try {
-      await _client.rpc(
-        'catudy_submit_lobby_break_vote',
-        params: {'target_lobby_id': lobbyId, 'approved': approved},
-      );
-    } catch (error) {
-      if (!_isMissingRpc(error)) {
-        rethrow;
-      }
-      await setBreakVote(lobbyId: lobbyId, userId: userId, approved: approved);
-    }
+    await _client.rpc(
+      'catudy_submit_lobby_break_vote',
+      params: {'target_lobby_id': lobbyId, 'approved': approved},
+    );
   }
 
   Future<void> startLobby({
@@ -283,22 +250,14 @@ class CatudySupabaseLobbyService {
     required String categoryId,
     required int durationMinutes,
   }) async {
-    await _client
-        .from('catudy_lobbies')
-        .update({
-          'status': 'running',
-          'started_at': DateTime.now().toUtc().toIso8601String(),
-          'category_id': categoryId,
-          'duration_minutes': durationMinutes,
-          'paused_at': null,
-          'paused_seconds': 0,
-          'pause_reason': null,
-          'break_vote_round': 0,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', lobbyId)
-        .eq('owner_user_id', ownerUserId);
-    await _tryClearBreakVotes(lobbyId);
+    await _client.rpc(
+      'catudy_start_lobby',
+      params: {
+        'p_lobby_id': lobbyId,
+        'p_category_id': categoryId,
+        'p_duration_minutes': durationMinutes,
+      },
+    );
   }
 
   Future<void> pauseLobby({
@@ -306,17 +265,10 @@ class CatudySupabaseLobbyService {
     required String ownerUserId,
     required String reason,
   }) async {
-    await _client
-        .from('catudy_lobbies')
-        .update({
-          'paused_at': DateTime.now().toUtc().toIso8601String(),
-          'pause_reason': reason,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', lobbyId)
-        .eq('owner_user_id', ownerUserId)
-        .eq('status', 'running');
-    await _tryClearBreakVotes(lobbyId);
+    await _client.rpc(
+      'catudy_pause_lobby',
+      params: {'p_lobby_id': lobbyId, 'p_reason': reason},
+    );
   }
 
   Future<void> resumeLobby({
@@ -324,48 +276,33 @@ class CatudySupabaseLobbyService {
     required String ownerUserId,
     required int pausedSeconds,
   }) async {
-    await _client
-        .from('catudy_lobbies')
-        .update({
-          'paused_at': null,
-          'paused_seconds': pausedSeconds.clamp(0, 86400 * 30).toInt(),
-          'pause_reason': null,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', lobbyId)
-        .eq('owner_user_id', ownerUserId)
-        .eq('status', 'running');
-    await _tryClearBreakVotes(lobbyId);
+    await _client.rpc(
+      'catudy_resume_lobby',
+      params: {
+        'p_lobby_id': lobbyId,
+        'p_paused_seconds': pausedSeconds.clamp(0, 86400 * 30).toInt(),
+      },
+    );
   }
 
   Future<void> finishLobby({
     required String lobbyId,
     required String ownerUserId,
   }) async {
-    await _client
-        .from('catudy_lobbies')
-        .update({
-          'status': 'finished',
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', lobbyId)
-        .eq('owner_user_id', ownerUserId);
+    await _client.rpc(
+      'catudy_finish_lobby',
+      params: {'p_lobby_id': lobbyId},
+    );
   }
 
   Future<void> leaveLobby({
     required String lobbyId,
     required String userId,
   }) async {
-    await _client
-        .from('catudy_lobby_members')
-        .update({
-          'connected': false,
-          'ready': false,
-          'break_vote': null,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('lobby_id', lobbyId)
-        .eq('user_id', userId);
+    await _client.rpc(
+      'catudy_leave_lobby',
+      params: {'p_lobby_id': lobbyId},
+    );
   }
 
   Future<String> _ensureAnonymousUser(String displayName) async {
@@ -396,46 +333,23 @@ class CatudySupabaseLobbyService {
     return user.id;
   }
 
-  Future<void> _upsertMember({
-    required String lobbyId,
-    required String userId,
-    required String displayName,
-    required String petId,
-    required String petName,
-    required String? equippedPetItemId,
-    required bool owner,
-    required bool ready,
-  }) async {
-    final cleanName = displayName.trim().isEmpty ? 'Guest Cat' : displayName;
-    final cleanPetName = petName.trim().isEmpty ? 'White Cat' : petName.trim();
-    await _client.from('catudy_lobby_members').upsert({
-      'lobby_id': lobbyId,
-      'user_id': userId,
-      'display_name': cleanName,
-      'pet_id': petId.trim().isEmpty ? 'mochi' : petId.trim(),
-      'pet_name': cleanPetName,
-      'equipped_pet_item_id': equippedPetItemId,
-      'ready': ready,
-      'owner': owner,
-      'connected': true,
-      'break_vote': null,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }, onConflict: 'lobby_id,user_id');
-  }
-
-  Future<void> _tryClearBreakVotes(String lobbyId) async {
-    try {
-      await _client
-          .from('catudy_lobby_members')
-          .update({
-            'break_vote': null,
-            'break_vote_updated_at': DateTime.now().toUtc().toIso8601String(),
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('lobby_id', lobbyId);
-    } catch (_) {
-      // Older RLS policies may only allow users to update their own row.
+  Future<CatudyOnlineLobby> _callLobbyRpc(
+    String functionName,
+    Map<String, Object?> params,
+  ) async {
+    final result = await _client.rpc(functionName, params: params);
+    if (result is Map<String, dynamic>) {
+      return CatudyOnlineLobby.fromJson(result);
     }
+    if (result is Map) {
+      return CatudyOnlineLobby.fromJson(Map<String, dynamic>.from(result));
+    }
+    if (result is List && result.isNotEmpty && result.first is Map) {
+      return CatudyOnlineLobby.fromJson(
+        Map<String, dynamic>.from(result.first as Map),
+      );
+    }
+    throw StateError('Lobby RPC returned an unexpected response.');
   }
 
   String _generateCode() {
@@ -505,16 +419,6 @@ bool _isAuthError(Object error) {
       text.contains('unauthorized') ||
       text.contains('invalid token') ||
       text.contains('session');
-}
-
-bool _isMissingRpc(Object error) {
-  if (error is PostgrestException) {
-    return error.code == '42883' || error.message.contains('schema cache');
-  }
-  final text = '$error'.toLowerCase();
-  return text.contains('catudy_submit_lobby_break_vote') ||
-      text.contains('function') && text.contains('not found') ||
-      text.contains('schema cache');
 }
 
 String _errorText(Object? error) {

@@ -86,10 +86,16 @@ String _initialLocation() {
 
 Future<void> _scheduleLocalizedNotifications() async {
   final store = catudyDemoStore;
-  await CatudyNotificationService.instance.schedulePendingReminders(
-    store.todos,
-    languageCode: store.languageCode,
-  );
+  if (store.notifications) {
+    await CatudyNotificationService.instance.schedulePendingReminders(
+      store.todos,
+      languageCode: store.languageCode,
+    );
+  } else {
+    for (final todo in store.todos) {
+      await CatudyNotificationService.instance.cancelReminder(todo);
+    }
+  }
   await CatudyNotificationService.instance.scheduleDailyGoalReminder(
     hour: store.dailyGoalReminderHour,
     minute: store.dailyGoalReminderMinute,

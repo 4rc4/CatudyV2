@@ -64,7 +64,9 @@ Catudy; hesabını oluşturmak, odak seanslarını takip etmek, görevlerini/hat
 
 Toplanabilecek veriler: görünen ad, e-posta veya giriş sağlayıcı bilgisi, profil tercihin, odak kayıtların, manuel takvim kayıtların, görevlerin, hatırlatmaların, pet/oda ilerlemen, mağaza-envanter seçimlerin, arkadaşlık/lobi verilerin, uygulama ayarların ve teknik hata kayıtları.
 
-Konumunu, rehberini, fotoğraflarını veya diğer uygulamalarını izlemek için kullanmayız. Verilerini satmayız, reklam profili oluşturmak için kullanmayız ve kişisel üretkenlik verilerini iznin olmadan üçüncü kişilerle paylaşmayız.
+Ek izinler yalnızca ilgili özelliği açtığında istenir. Uygulama kilidi için seçtiğin uygulamaların paket adları ve simgeleri cihazında işlenebilir; seçtiğin profil fotoğrafı/avatar uygulamada gösterilebilir; bildirim izni sadece hatırlatmalar ve sosyal/pet uyarıları için kullanılır. Konum verisi arka planda izlenmez; yakınlık ya da cihaz özelliği gerektiren bir akış eklenirse ayrıca izin istenir.
+
+Giriş yaptığında verilerin Supabase üzerinde bulut senkronizasyonu için saklanabilir. Reklam SDK'sı bulunabilir; kişisel üretkenlik verilerini reklam profili oluşturmak için kullanmayız. Verilerini satmayız ve iznin olmadan üçüncü kişilerle paylaşmayız.
 
 Veriler cihazında saklanabilir ve hesabına giriş yaptığında senkronizasyon için güvenli bulut servislerine aktarılabilir. Aktarım sırasında şifreleme kullanılır. Hesabını veya yerel verilerini ayarlardan silebilirsin; sunucu tarafındaki kalıcı silme işlemleri için destek kanalları veya uygulama içi hesap silme akışı kullanılabilir.
 
@@ -568,6 +570,8 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'profile.shareText': '{name} Catudy profil bağlantısını paylaştı: {link}',
     'profile.shareCopied':
         'Paylaşım açılamadı, profil bağlantısı panoya kopyalandı.',
+    'profile.shareRequiresSignIn':
+        'Profil bağlantısı paylaşmak için giriş yapmalısın.',
     'profile.copyId': 'Kodumu kopyala',
     'profile.idCopied': 'Kullanıcı kodu kopyalandı.',
     'profile.myId': 'Kullanıcı kodu',
@@ -643,6 +647,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'premium.featureCosmetics': 'Premium kozmetik',
     'premium.activateDemo': 'Demo Plus aç',
     'premium.clearDemo': 'Demo Plus kapat',
+    'premium.comingSoon': 'Yakında',
     'premium.openSeason': 'Sezon Pass',
     'premium.openCrates': 'Kutular',
     'premium.widgetThemes': 'Widget temaları',
@@ -651,7 +656,7 @@ Uygulamanın tasarımı, markası, yazılımı ve görsel sistemi Catudy’ye ai
     'premium.syncError': 'Plus durumu şu an senkronize edilemedi.',
     'premium.backendTitle': 'Senkron',
     'premium.backendOnline': 'Sunucudan okunuyor.',
-    'premium.backendOffline': 'Yerel demo açık.',
+    'premium.backendOffline': 'Sunucu bağlantısı yok.',
     'premium.account': 'Hesap',
     'premium.notSignedIn': 'Giriş yapılmadı',
     'premium.status': 'Durum',
@@ -994,7 +999,9 @@ Catudy processes the information needed to create your account, track focus sess
 
 Data we may store includes display name, email or sign-in provider data, profile preferences, focus records, manual calendar records, tasks, reminders, pet and room progress, shop and inventory choices, friend/lobby data, app settings, and technical error logs.
 
-We do not use your location, contacts, photos, or other apps for tracking. We do not sell your data, build advertising profiles, or share personal productivity data with other people without your permission.
+Extra permissions are requested only when you enable the related feature. App lock may process the package names and icons of apps you choose on your device; a selected photo/avatar may be used for your profile; notification permission is used only for reminders and social/pet alerts. Location is not tracked in the background; any future location-based flow will ask separately.
+
+When you sign in, your data may be stored in Supabase for cloud sync. An ads SDK may be present; we do not use personal productivity data to build advertising profiles. We do not sell your data or share it with other people without your permission.
 
 Data may be stored on your device and, when you sign in, synced through secure cloud services. Transmission uses encryption. You can delete local data or your account from Settings; server-side permanent deletion may use the in-app account deletion flow or support channel.
 
@@ -1503,6 +1510,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'profile.shareText': '{name} shared a Catudy profile: {link}',
     'profile.shareCopied':
         'Sharing could not be opened, so the profile link was copied.',
+    'profile.shareRequiresSignIn': 'Sign in to share a profile link.',
     'profile.copyId': 'Copy my code',
     'profile.idCopied': 'User code copied.',
     'profile.myId': 'User code',
@@ -1577,6 +1585,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'premium.featureCosmetics': 'Premium cosmetics',
     'premium.activateDemo': 'Enable demo Plus',
     'premium.clearDemo': 'Disable demo Plus',
+    'premium.comingSoon': 'Coming soon',
     'premium.openSeason': 'Season Pass',
     'premium.openCrates': 'Crates',
     'premium.widgetThemes': 'Widget themes',
@@ -1585,7 +1594,7 @@ If these terms or privacy rules change, we may notify you in the app or by anoth
     'premium.syncError': 'Plus state could not be synced right now.',
     'premium.backendTitle': 'Sync',
     'premium.backendOnline': 'Read from server.',
-    'premium.backendOffline': 'Local demo is active.',
+    'premium.backendOffline': 'Server connection is unavailable.',
     'premium.account': 'Account',
     'premium.notSignedIn': 'Not signed in',
     'premium.status': 'Status',

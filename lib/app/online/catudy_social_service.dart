@@ -89,41 +89,22 @@ class CatudySocialService {
     if (userId == null) {
       throw StateError('Sign in before sending friend requests.');
     }
-    await _client.from('catudy_friend_requests').insert({
-      'requester_user_id': userId,
-      'receiver_user_id': receiverUserId,
-      'status': 'pending',
-    });
+    await _client.rpc(
+      'catudy_send_friend_request',
+      params: {'p_target_user_id': receiverUserId},
+    );
   }
 
   Future<void> acceptFriendRequest(String requestId) async {
-    await _client
-        .from('catudy_friend_requests')
-        .update({
-          'status': 'accepted',
-          'responded_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', requestId);
+    await _respondToFriendRequest(requestId, 'accepted');
   }
 
   Future<void> rejectFriendRequest(String requestId) async {
-    await _client
-        .from('catudy_friend_requests')
-        .update({
-          'status': 'rejected',
-          'responded_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', requestId);
+    await _respondToFriendRequest(requestId, 'rejected');
   }
 
   Future<void> cancelFriendRequest(String requestId) async {
-    await _client
-        .from('catudy_friend_requests')
-        .update({
-          'status': 'cancelled',
-          'responded_at': DateTime.now().toUtc().toIso8601String(),
-        })
-        .eq('id', requestId);
+    await _respondToFriendRequest(requestId, 'cancelled');
   }
 
   Future<void> removeFriend(String friendUserId) async {
@@ -131,16 +112,10 @@ class CatudySocialService {
     if (userId == null) {
       return;
     }
-    await _client
-        .from('catudy_friends')
-        .delete()
-        .eq('owner_user_id', userId)
-        .eq('friend_user_id', friendUserId);
-    await _client
-        .from('catudy_friends')
-        .delete()
-        .eq('owner_user_id', friendUserId)
-        .eq('friend_user_id', userId);
+    await _client.rpc(
+      'catudy_remove_friend',
+      params: {'p_target_user_id': friendUserId},
+    );
   }
 
   Future<void> blockUser(String blockedUserId) async {
@@ -148,11 +123,10 @@ class CatudySocialService {
     if (userId == null) {
       return;
     }
-    await _client.from('catudy_blocked_users').upsert({
-      'owner_user_id': userId,
-      'blocked_user_id': blockedUserId,
-    }, onConflict: 'owner_user_id,blocked_user_id');
-    await removeFriend(blockedUserId);
+    await _client.rpc(
+      'catudy_block_user',
+      params: {'p_target_user_id': blockedUserId},
+    );
   }
 
   Future<void> unblockUser(String blockedUserId) async {
@@ -160,11 +134,10 @@ class CatudySocialService {
     if (userId == null) {
       return;
     }
-    await _client
-        .from('catudy_blocked_users')
-        .delete()
-        .eq('owner_user_id', userId)
-        .eq('blocked_user_id', blockedUserId);
+    await _client.rpc(
+      'catudy_unblock_user',
+      params: {'p_target_user_id': blockedUserId},
+    );
   }
 
   Future<void> reportUser(String reportedUserId) async {
@@ -172,10 +145,17 @@ class CatudySocialService {
     if (userId == null) {
       return;
     }
-    await _client.from('catudy_profile_reports').insert({
-      'reporter_user_id': userId,
-      'reported_user_id': reportedUserId,
-    });
+    await _client.rpc(
+      'catudy_report_profile',
+      params: {'p_target_user_id': reportedUserId},
+    );
+  }
+
+  Future<void> _respondToFriendRequest(String requestId, String status) async {
+    await _client.rpc(
+      'catudy_respond_friend_request',
+      params: {'p_request_id': requestId, 'p_status': status},
+    );
   }
 }
 

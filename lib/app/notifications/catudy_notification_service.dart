@@ -12,6 +12,7 @@ class CatudyNotificationService {
 
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+  bool _permissionsRequested = false;
 
   Future<void> initialize() async {
     if (_initialized) {
@@ -33,7 +34,6 @@ class CatudyNotificationService {
       macOS: darwin,
     );
     await _plugin.initialize(settings: settings);
-    await _requestPermissions();
     _initialized = true;
   }
 
@@ -50,6 +50,7 @@ class CatudyNotificationService {
     if (!when.isAfter(DateTime.now())) {
       return;
     }
+    await requestPermissions();
     await _plugin.zonedSchedule(
       id: _notificationId(todo),
       title: _isEnglish(languageCode) ? 'Catudy reminder' : 'Catudy hatırlatma',
@@ -90,6 +91,7 @@ class CatudyNotificationService {
     if (!enabled) {
       return;
     }
+    await requestPermissions();
     var next = DateTime.now();
     next = DateTime(next.year, next.month, next.day, hour, minute);
     if (!next.isAfter(DateTime.now())) {
@@ -131,6 +133,7 @@ class CatudyNotificationService {
     if (!endAt.isAfter(DateTime.now())) {
       return;
     }
+    await requestPermissions();
     final english = _isEnglish(languageCode);
     await _plugin.zonedSchedule(
       id: id,
@@ -171,6 +174,7 @@ class CatudyNotificationService {
     if (!enabled) {
       return;
     }
+    await requestPermissions();
     for (final reminder in reminders) {
       await _plugin.zonedSchedule(
         id: reminder.id,
@@ -197,6 +201,7 @@ class CatudyNotificationService {
     required String languageCode,
   }) async {
     await initialize();
+    await requestPermissions();
     final english = _isEnglish(languageCode);
     await _plugin.show(
       id: 910001,
@@ -221,6 +226,7 @@ class CatudyNotificationService {
     required String languageCode,
   }) async {
     await initialize();
+    await requestPermissions();
     final english = _isEnglish(languageCode);
     await _plugin.show(
       id: 910002,
@@ -245,6 +251,7 @@ class CatudyNotificationService {
     required String languageCode,
   }) async {
     await initialize();
+    await requestPermissions();
     final english = _isEnglish(languageCode);
     final title = english ? 'Cat update' : 'Kedi bildirimi';
     final body = switch (alertType) {
@@ -288,7 +295,12 @@ class CatudyNotificationService {
     await _plugin.cancel(id: _notificationId(todo));
   }
 
-  Future<void> _requestPermissions() async {
+  Future<void> requestPermissions() async {
+    await initialize();
+    if (_permissionsRequested) {
+      return;
+    }
+    _permissionsRequested = true;
     await _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin

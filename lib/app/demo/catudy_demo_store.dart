@@ -547,7 +547,7 @@ class LeaderboardProfile {
 }
 
 class CatudyDemoStore extends ChangeNotifier {
-  static const currentTermsVersion = 1;
+  static const currentTermsVersion = 2;
   static const _starterPetItemId = 'pink_bow';
   static const _petAccessorySlotOrder = <String>[
     'head',
@@ -1057,8 +1057,8 @@ class CatudyDemoStore extends ChangeNotifier {
   bool offlineMode = true;
   bool dndReminder = true;
   bool focusDndEnabled = true;
-  bool notifications = true;
-  bool dailyGoalReminderEnabled = true;
+  bool notifications = false;
+  bool dailyGoalReminderEnabled = false;
   bool publicStatsVisible = true;
   bool introTourSeen = false;
   int acceptedTermsVersion = 0;
@@ -3352,6 +3352,9 @@ class CatudyDemoStore extends ChangeNotifier {
   }
 
   void activatePremiumDemo({Duration duration = const Duration(days: 30)}) {
+    if (kReleaseMode) {
+      return;
+    }
     final now = DateTime.now();
     premiumEntitlement = PremiumEntitlement(
       source: PremiumSource.subscription,
@@ -3403,20 +3406,9 @@ class CatudyDemoStore extends ChangeNotifier {
         notifyListeners();
       }
     }
-    final now = DateTime.now();
-    final code = 'PLUS-${_stableHash('$publicUserId|${now.toIso8601String()}')}'
-        .substring(0, 13)
-        .toUpperCase();
-    final pass = BuddyPass(
-      code: code,
-      createdAt: now,
-      expiresAt: now.add(const Duration(days: 30)),
-      redeemedByUserId: null,
-      redeemedAt: null,
-    );
-    issuedBuddyPasses.add(pass);
-    _commit();
-    return pass;
+    premiumError = t('buddy.authenticationRequired');
+    notifyListeners();
+    return null;
   }
 
   Future<bool> redeemBuddyPass(String code) async {
@@ -3448,15 +3440,9 @@ class CatudyDemoStore extends ChangeNotifier {
         notifyListeners();
       }
     }
-    final now = DateTime.now();
-    buddyPassRedemption = BuddyPassRedemption(code: clean, redeemedAt: now);
-    premiumEntitlement = PremiumEntitlement(
-      source: PremiumSource.buddyPass,
-      activatedAt: now,
-      expiresAt: now.add(const Duration(days: 30)),
-    );
-    _commit();
-    return true;
+    premiumError = t('buddy.authenticationRequired');
+    notifyListeners();
+    return false;
   }
 
   Future<void> _refreshPremiumStateAfterMutation() async {
@@ -4958,7 +4944,28 @@ class CatudyDemoStore extends ChangeNotifier {
     currentUserReady = false;
     localBreakVote = null;
     lastResult = record;
+    _syncCompletedFocusSession(record);
     return record;
+  }
+
+  void _syncCompletedFocusSession(FocusRecord record) {
+    final service = _leaderboardService;
+    if (service == null || authUserId == null || record.minutes <= 0) {
+      return;
+    }
+    unawaited(
+      service
+          .completeFocusSession(
+            clientSessionId: record.id,
+            categoryId: record.categoryId,
+            minutes: record.minutes,
+            completedAt: record.createdAt,
+          )
+          .then((_) => _refreshOnlineLeaderboard())
+          .catchError((Object _) {
+            return null;
+          }),
+    );
   }
 
   void _queueCompletionCelebrations({
@@ -5206,8 +5213,8 @@ class CatudyDemoStore extends ChangeNotifier {
     offlineMode = true;
     dndReminder = true;
     focusDndEnabled = true;
-    notifications = true;
-    dailyGoalReminderEnabled = true;
+    notifications = false;
+    dailyGoalReminderEnabled = false;
     publicStatsVisible = true;
     introTourSeen = false;
     acceptedTermsVersion = 0;
@@ -5361,11 +5368,11 @@ class CatudyDemoStore extends ChangeNotifier {
     offlineMode = _readBool(json, 'offlineMode', true);
     dndReminder = _readBool(json, 'dndReminder', true);
     focusDndEnabled = _readBool(json, 'focusDndEnabled', true);
-    notifications = _readBool(json, 'notifications', true);
+    notifications = _readBool(json, 'notifications', false);
     dailyGoalReminderEnabled = _readBool(
       json,
       'dailyGoalReminderEnabled',
-      true,
+      false,
     );
     publicStatsVisible = _readBool(json, 'publicStatsVisible', true);
     introTourSeen = _readBool(json, 'introTourSeen', false);
@@ -5447,14 +5454,11 @@ class CatudyDemoStore extends ChangeNotifier {
       ..clear()
       ..addAll(_readStringMap(json['equippedPetItemIds']));
     equippedProfileItemId = _readNullableString(json, 'equippedProfileItemId');
-    premiumEntitlement = PremiumEntitlement.fromJson(
-      _readNullableMap(json['premiumEntitlement']),
-    );
-    issuedBuddyPasses
-      ..clear()
-      ..addAll(_readMapList(json['issuedBuddyPasses']).map(BuddyPass.fromJson));
-    buddyPassRedemption = BuddyPassRedemption.fromJson(
-      _readNullableMap(json['buddyPassRedemption']),
+    premiumEntitlement = const PremiumEntitlement.inactive();
+    issuedBuddyPasses.clear();
+    buddyPassRedemption = const BuddyPassRedemption(
+      code: '',
+      redeemedAt: null,
     );
     shardWallet = ShardWallet.fromJson(_readNullableMap(json['shardWallet']));
     pityStates
@@ -5679,11 +5683,6 @@ class CatudyDemoStore extends ChangeNotifier {
     'equippedPetItemIds': Map<String, String>.from(equippedPetItemIds),
     'equippedProfileItemId': equippedProfileItemId,
     'equippedRoomItemIds': Map<String, String>.from(equippedRoomItemIds),
-    'premiumEntitlement': premiumEntitlement.toJson(),
-    'issuedBuddyPasses': issuedBuddyPasses
-        .map((item) => item.toJson())
-        .toList(),
-    'buddyPassRedemption': buddyPassRedemption.toJson(),
     'shardWallet': shardWallet.toJson(),
     'pityStates': {
       for (final entry in pityStates.entries) entry.key: entry.value.toJson(),
